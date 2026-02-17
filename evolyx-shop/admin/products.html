@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestion Produits - EVOLYX Admin</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+  <div class="admin-container">
+    <!-- SIDEBAR -->
+    <aside class="admin-sidebar">
+      <div class="sidebar-header">
+        <h2 style="color: #D4AF37; margin: 0;">EVOLYX</h2>
+        <p style="color: #999; font-size: 12px; margin: 0;">Admin Panel</p>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="nav-item">
+          <span class="icon">📊</span>
+          <span>Dashboard</span>
+        </a>
+        <a href="products.html" class="nav-item active">
+          <span class="icon">📦</span>
+          <span>Produits</span>
+        </a>
+        <a href="categories.html" class="nav-item">
+          <span class="icon">🏷️</span>
+          <span>Catégories</span>
+        </a>
+        <a href="orders.html" class="nav-item">
+          <span class="icon">🛒</span>
+          <span>Commandes</span>
+        </a>
+        <a href="variations.html" class="nav-item">
+          <span class="icon">🎨</span>
+          <span>Variations</span>
+        </a>
+        <a href="stats.html" class="nav-item">
+            <span class="icon">📈 </span>
+            <span>Statistiques</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="btn btn-secondary btn-sm" onclick="logout()" style="width: 100%;">
+          Déconnexion
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="admin-main">
+      <!-- TOPBAR -->
+      <div class="admin-topbar">
+        <div class="topbar-content">
+          <h1>Gestion Produits</h1>
+          <button class="btn btn-primary" onclick="openProductModal()">
+            ➕ Nouveau Produit
+          </button>
+        </div>
+      </div>
+
+      <!-- CONTENT AREA -->
+      <div class="admin-content">
+        <!-- Filters -->
+        <div class="admin-filters">
+          <div class="form-group">
+            <input type="text" id="searchInput" placeholder="Rechercher un produit..." />
+          </div>
+          <div class="form-group">
+            <select id="categoryFilter">
+              <option value="">Toutes les catégories</option>
+            </select>
+          </div>
+          <button class="btn btn-secondary" onclick="resetFilters()">Réinitialiser</button>
+        </div>
+
+        <div class="form-group" style="width: 100px;">
+          <select id="itemsPerPage" onchange="changeItemsPerPage()">
+            <option value="5">5</option>
+            <option value="10" selected>10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+          </select>
+        </div>
+
+        <!-- Products Table -->
+        <div class="dashboard-section card">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Image</th> 
+                <th>ID</th>
+                <th>Nom</th>
+                <th>Catégorie</th>
+                <th>Prix</th>
+                <th>Stock</th>
+                <th>Statut</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="productsTableBody">
+              <!-- Loaded dynamically -->
+            </tbody>
+          </table> 
+          <div class="pagination-controls" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding: 10px 0;">
+            <div class="pagination-info" id="paginationInfo">
+              Affichage 1-10 de <span id="totalProductsCount">0</span> produits
+            </div>
+            <div class="pagination-buttons" style="display: flex; gap: 5px;">
+              <button class="btn btn-sm btn-secondary" id="prevPageBtn" onclick="changePage('prev')" disabled>Précédent</button>
+              <span id="currentPageDisplay" style="padding: 5px 10px;">Page 1</span>
+              <button class="btn btn-sm btn-secondary" id="nextPageBtn" onclick="changePage('next')">Suivant</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ============================================
+       PRODUCT MODAL
+       ============================================ -->
+  <div class="admin-modal" id="productModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modalTitle">Nouveau Produit</h2>
+        <button class="modal-close" onclick="closeProductModal()">✕</button>
+      </div>
+
+      <form id="productForm" onsubmit="saveProduct(event)">
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Nom du produit</label>
+              <input type="text" id="productName" required />
+            </div>
+
+            <div class="form-group">
+              <label>Catégorie</label>
+              <select id="productCategory" required>
+                <option value="">Sélectionnez une catégorie</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Prix</label>
+              <input type="number" id="productPrice" step="0.01" required />
+            </div>
+
+            <div class="form-group">
+              <label>Stock</label>
+              <input type="number" id="productStock" min="0" required />
+            </div>
+
+            <div class="form-group form-group-full">
+              <label>Description</label>
+              <textarea id="productDescription" rows="4"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label>Vedette?</label>
+              <input type="checkbox" id="productFeatured" />
+            </div>
+
+            <div class="form-group">
+              <label>Actif?</label>
+              <input type="checkbox" id="productActive" checked />
+            </div>
+
+            <div class="form-group form-group-full">
+              <label>Images</label>
+              <div class="file-input-wrapper">
+                <input type="file" id="productImages" multiple accept="image/*" />
+                <label for="productImages" class="file-input-label">
+                  📸 Cliquez ou glissez des images
+                </label>
+              </div>
+              <div class="file-preview" id="imagePreview"></div>
+            </div>
+
+            <!-- Dans le modal, après la section images -->
+            <div class="form-group form-group-full">
+              <label>🎨 Variations du produit</label>
+              <div class="variations-container" id="variationsContainer">
+                <!-- Les variations seront ajoutées ici -->
+              </div>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="addVariationField()" style="margin-top: 10px;">
+                + Ajouter une variation
+              </button>
+            </div>
+
+            <!-- Palette de couleurs (cachée) -->
+            <div id="colorPalette" class="color-palette" style="display: none;">
+              <div class="color-palette-grid">
+                <div class="color-option" style="background: #D4AF37;" onclick="selectColor('Or', '#D4AF37')"></div>
+                <div class="color-option" style="background: #C0C0C0;" onclick="selectColor('Argent', '#C0C0C0')"></div>
+                <div class="color-option" style="background: #B76E79;" onclick="selectColor('Or Rose', '#B76E79')"></div>
+                <div class="color-option" style="background: #000000;" onclick="selectColor('Noir', '#000000')"></div>
+                <div class="color-option" style="background: #FFFFFF; border: 1px solid #ddd;" onclick="selectColor('Blanc', '#FFFFFF')"></div>
+                <div class="color-option" style="background: #FF0000;" onclick="selectColor('Rouge', '#FF0000')"></div>
+                <div class="color-option" style="background: #0000FF;" onclick="selectColor('Bleu', '#0000FF')"></div>
+                <div class="color-option" style="background: #00FF00;" onclick="selectColor('Vert', '#00FF00')"></div>
+                <div class="color-option" style="background: #FFC0CB;" onclick="selectColor('Rose', '#FFC0CB')"></div>
+                <div class="color-option" style="background: #800080;" onclick="selectColor('Violet', '#800080')"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeProductModal()">
+            Annuler
+          </button>
+          <button type="submit" class="btn btn-primary">
+            Enregistrer
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================
+       SCRIPTS
+       ============================================ -->
+  <script src="../js/api.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/admin-products.js"></script>
+</body>
+</html>

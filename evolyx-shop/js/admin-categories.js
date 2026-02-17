@@ -1,0 +1,154 @@
+/**
+ * @fileoverview Admin Categories Management
+ * CRUD operations for categories
+ * @author EVOLYX Team
+ */
+
+let allCategories = [];
+let selectedCategoryId = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  Auth.requireAuth();
+  loadCategories();
+});
+
+async function loadCategories() {
+  try {
+    const response = await API.getCategories();
+    allCategories = response.data || [];
+    renderCategories();
+    populateCategoryParentSelect();
+  } catch (error) {
+    console.error('Failed to load categories:', error);
+    Utils.showToast('Erreur lors du chargement des catégories', 'error');
+  }
+}
+
+function renderCategories() {
+  const tbody = document.getElementById('categoriesTableBody');
+  Utils.DOM.empty(tbody);
+
+  if (allCategories.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 30px;">Aucune catégorie</td></tr>';
+    return;
+  }
+
+  allCategories.forEach(cat => {
+    const parentName = cat.parent_id 
+      ? allCategories.find(c => c.id === cat.parent_id)?.name || '-' 
+      : 'Racine';
+    
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>#${cat.id}</td>
+      <td>${cat.name}</td>
+      <td>${cat.description || '-'}</td>
+      <td>${parentName}</td>
+      <td>${cat.active ? '<span style="color: green;">✓ Actif</span>' : '<span style="color: red;">✕ Inactif</span>'}</td>
+      <td>
+        <div class="action-buttons">
+          <button class="btn btn-sm btn-primary" onclick="editCategory(${cat.id})">✎ Éditer</button>
+          <button class="btn btn-sm" style="background: #EF4444; color: white;" onclick="deleteCategory(${cat.id})">✕ Supprimer</button>
+        </div>
+      </td>
+    `;
+    tbody.appendChild(row);
+  });
+}
+
+function populateCategoryParentSelect() {
+  const select = document.getElementById('categoryParent');
+  // Clear except first option
+  while (select.options.length > 1) {
+    select.remove(1);
+  }
+
+  allCategories.forEach(cat => {
+    if (cat.id !== selectedCategoryId) {
+      const option = document.createElement('option');
+      option.value = cat.id;
+      option.textContent = cat.name;
+      select.appendChild(option);
+    }
+  });
+}
+
+function openCategoryModal() {
+  selectedCategoryId = null;
+  document.getElementById('modalTitle').textContent = 'Nouvelle Catégorie';
+  document.getElementById('categoryForm').reset();
+  document.getElementById('categoryModal').classList.add('active');
+}
+
+function closeCategoryModal() {
+  document.getElementById('categoryModal').classList.remove('active');
+}
+
+async function editCategory(categoryId) {
+  try {
+    const response = await API.getCategory(categoryId);
+    const category = response.data;
+
+    selectedCategoryId = categoryId;
+    document.getElementById('modalTitle').textContent = 'Éditer Catégorie';
+    document.getElementById('categoryName').value = category.name;
+    document.getElementById('categoryDescription').value = category.description || '';
+    document.getElementById('categoryParent').value = category.parent_id || '';
+    document.getElementById('categoryActive').checked = category.active;
+
+    populateCategoryParentSelect();
+    document.getElementById('categoryModal').classList.add('active');
+  } catch (error) {
+    console.error('Failed to edit category:', error);
+    Utils.showToast('Erreur lors de la récupération de la catégorie', 'error');
+  }
+}
+
+async function saveCategory(event) {
+  event.preventDefault();
+
+  const categoryData = {
+    name: document.getElementById('categoryName').value,
+    description: document.getElementById('categoryDescription').value,
+    parent_id: document.getElementById('categoryParent').value || null,
+    active: document.getElementById('categoryActive').checked,
+  };
+
+  try {
+    if (selectedCategoryId) {
+      await API.updateCategory(selectedCategoryId, categoryData);
+      Utils.showToast('Catégorie mise à jour', 'success');
+    } else {
+      await API.createCategory(categoryData);
+      Utils.showToast('Catégorie créée', 'success');
+    }
+    closeCategoryModal();
+    loadCategories();
+  } catch (error) {
+    console.error('Failed to save category:', error);
+    Utils.showToast('Erreur lors de l\'enregistrement', 'error');
+  }
+}
+
+async function deleteCategory(categoryId) {
+  if (!confirm('Êtes-vous sûr de vouloir supprimer cette catégorie?')) return;
+
+  try {
+    await API.deleteCategory(categoryId);
+    Utils.showToast('Catégorie supprimée', 'success');
+    loadCategories();
+  } catch (error) {
+    console.error('Failed to delete category:', error);
+    Utils.showToast('Erreur lors de la suppression', 'error');
+  }
+}
+
+function logout() {
+  if (confirm('Êtes-vous sûr de vouloir vous déconnecter?')) {
+    Utils.Storage.remove('adminToken');
+    Utils.showToast('Déconnecté', 'info');
+    setTimeout(() => {
+      window.location.href = '../login.html';
+    }, 1000);
+  }
+}

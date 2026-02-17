@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EVOLYX - E-Commerce Premium</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+</head>
+<body>
+  <!-- ============================================
+       HEADER / NAVIGATION
+       ============================================ -->
+  <header class="header">
+    <div class="container">
+      <div class="header-content">
+        <div class="logo">
+          <h1>EVOLYX</h1>
+          <p class="text-gold">Luxury Shop</p>
+        </div>
+
+        <nav class="nav">
+          <a href="index.html" class="nav-link active">Accueil</a>
+          <a href="index.html#catalog" class="nav-link">Catalogue</a>
+          <a href="#" class="nav-link" id="adminLink">Admin</a>
+        </nav>
+
+        <div class="header-actions">
+          <a href="cart.html" class="cart-link">
+            <span>🛒</span>
+            <span class="cart-count" id="cartCount">0</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============================================
+       HERO SECTION
+       ============================================ -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-content">
+        <h1>Bienvenue chez EVOLYX</h1>
+        <p>Découvrez notre collection exclusive de produits premium</p>
+        <a href="#catalog" class="btn btn-primary btn-lg">Explorer</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================
+       CATALOG SECTION
+       ============================================ -->
+  <section class="catalog" id="catalog">
+    <div class="container">
+      <h2>Notre Catalogue</h2>
+
+      <!-- Filters -->
+      <div class="filters">
+        <div class="form-group">
+          <input 
+            type="text" 
+            id="searchInput" 
+            placeholder="Rechercher un produit..."
+            class="search-input"
+          >
+        </div>
+
+        <div class="form-group">
+          <select id="categoryFilter">
+            <option value="">Toutes les catégories</option>
+          </select>
+        </div>
+
+        <button class="btn btn-secondary" id="resetFilter">Réinitialiser</button>
+      </div>
+
+      <!-- Products Grid -->
+      <div class="products-grid" id="productsGrid">
+        <!-- Loaded dynamically -->
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination" id="pagination">
+        <!-- Loaded dynamically -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================
+       FOOTER
+       ============================================ -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h4>À Propos</h4>
+          <p>EVOLYX est votre destination premium pour des produits de qualité exceptionnelle.</p>
+        </div>
+
+        <div class="footer-section">
+          <h4>Liens Rapides</h4>
+          <ul>
+            <li><a href="index.html">Accueil</a></li>
+            <li><a href="order-tracking.html">Suivi Commande</a></li>
+            <li><a href="#">Contact</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-section">
+          <h4>Contact</h4>
+          <p>Email: info@evolyx.cm</p>
+          <p>WhatsApp: +237 654 804 907</p>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; 2026 EVOLYX. Tous droits réservés.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ============================================
+       SCRIPTS
+       ============================================ -->
+  <script src="js/api.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/catalog.js"></script>
+</body>
+</html>

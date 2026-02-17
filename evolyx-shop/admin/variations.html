@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestion Variations - EVOLYX Admin</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+  <div class="admin-container">
+    <!-- SIDEBAR -->
+    <aside class="admin-sidebar">
+      <div class="sidebar-header">
+        <h2 style="color: #D4AF37; margin: 0;">EVOLYX</h2>
+        <p style="color: #999; font-size: 12px; margin: 0;">Admin Panel</p>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="nav-item">
+          <span class="icon">📊</span>
+          <span>Dashboard</span>
+        </a>
+        <a href="products.html" class="nav-item">
+          <span class="icon">📦</span>
+          <span>Produits</span>
+        </a>
+        <a href="categories.html" class="nav-item">
+          <span class="icon">🏷️</span>
+          <span>Catégories</span>
+        </a>
+        <a href="orders.html" class="nav-item">
+          <span class="icon">🛒</span>
+          <span>Commandes</span>
+        </a>
+        <a href="variations.html" class="nav-item active">
+          <span class="icon">🎨</span>
+          <span>Variations</span>
+        </a>
+        <a href="stats.html" class="nav-item">
+            <span class="icon">📈 </span>
+            <span>Statistiques</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="btn btn-secondary btn-sm" onclick="logout()" style="width: 100%;">
+          Déconnexion
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="admin-main">
+      <!-- TOPBAR -->
+      <div class="admin-topbar">
+        <div class="topbar-content">
+          <h1>Gestion Variations</h1>
+          <button class="btn btn-primary" onclick="openVariationModal()">
+            ➕ Nouvelle Variation
+          </button>
+        </div>
+      </div>
+
+      <!-- CONTENT AREA -->
+      <div class="admin-content">
+        <!-- Filters -->
+        <div class="admin-filters">
+          <div class="form-group">
+            <select id="productFilter">
+              <option value="">Tous les produits</option>
+            </select>
+          </div>
+          <button class="btn btn-secondary" onclick="loadVariations()">Actualiser</button>
+        </div>
+
+        <!-- Variations Table -->
+        <div class="dashboard-section card">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Produit</th>
+                <th>Couleur</th>
+                <th>Taille</th>
+                <th>Stock</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="variationsTableBody">
+              <!-- Loaded dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ============================================
+       VARIATION MODAL
+       ============================================ -->
+  <div class="admin-modal" id="variationModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modalTitle">Nouvelle Variation</h2>
+        <button class="modal-close" onclick="closeVariationModal()">✕</button>
+      </div>
+
+      <form id="variationForm" onsubmit="saveVariation(event)">
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Produit</label>
+              <select id="variationProduct" required>
+                <option value="">Sélectionnez un produit</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Couleur</label>
+              <input type="text" id="variationColor" placeholder="Ex: Or, Noir, Bleu" required />
+            </div>
+
+            <div class="form-group">
+              <label>Taille</label>
+              <input type="text" id="variationSize" placeholder="Ex: S, M, L, XL" required />
+            </div>
+
+            <div class="form-group">
+              <label>Stock</label>
+              <input type="number" id="variationStock" min="0" required />
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeVariationModal()">
+            Annuler
+          </button>
+          <button type="submit" class="btn btn-primary">
+            Enregistrer
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================
+       SCRIPTS
+       ============================================ -->
+  <script src="../js/api.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/admin-variations.js"></script>
+</body>
+</html>

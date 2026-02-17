@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connexion Admin - EVOLYX</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body style="background: linear-gradient(135deg, #1A1A1A 0%, #2A2A2A 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center;">
+
+  <div class="login-container card" style="width: 100%; max-width: 400px;">
+    <div style="text-align: center; margin-bottom: 40px;">
+      <h1 style="color: #D4AF37; margin-bottom: 10px;">EVOLYX</h1>
+      <p style="color: #666;">Panel Administrateur</p>
+    </div>
+
+    <form id="loginForm" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label for="email">Email:</label>
+        <input 
+          type="email" 
+          id="email" 
+          name="email" 
+          required
+          placeholder="admin@email.com"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="password">Mot de passe:</label>
+        <input 
+          type="password" 
+          id="password" 
+          name="password" 
+          required
+          placeholder="Entrez votre mot de passe"
+        >
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; margin-top: 20px;">
+        Se connecter
+      </button> 
+    </form>
+
+    <p style="text-align: center; margin-top: 20px; color: #666; font-size: 14px;">
+      <a href="index.html" style="color: #D4AF37;">Retour à l'accueil</a>
+    </p>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/auth.js"></script>
+</body>
+</html>

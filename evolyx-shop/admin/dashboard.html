@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Admin - EVOLYX</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+  <!-- ============================================
+       ADMIN LAYOUT
+       ============================================ -->
+  <div class="admin-container">
+    <!-- SIDEBAR -->
+    <aside class="admin-sidebar">
+      <div class="sidebar-header">
+        <h2 style="color: #D4AF37; margin: 0;">EVOLYX</h2>
+        <p style="color: #999; font-size: 12px; margin: 0;">Admin Panel</p>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="nav-item active">
+          <span class="icon">📊</span>
+          <span>Dashboard</span>
+        </a>
+        <a href="products.html" class="nav-item">
+          <span class="icon">📦</span>
+          <span>Produits</span>
+        </a>
+        <a href="categories.html" class="nav-item">
+          <span class="icon">🏷️</span>
+          <span>Catégories</span>
+        </a>
+        <a href="orders.html" class="nav-item">
+          <span class="icon">🛒</span>
+          <span>Commandes</span>
+        </a>
+        <a href="variations.html" class="nav-item">
+          <span class="icon">🎨</span>
+          <span>Variations</span>
+        </a>
+        <a href="stats.html" class="nav-item a">
+            <span class="icon">📈 </span>
+            <span>Statistiques</span>
+        </a>
+        
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="btn btn-secondary btn-sm" onclick="logout()" style="width: 100%;">
+          Déconnexion
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="admin-main">
+      <!-- TOPBAR -->
+      <div class="admin-topbar">
+        <div class="topbar-content">
+          <h1>Dashboard</h1>
+          <div class="topbar-user">
+            <span id="userGreeting">Connecté</span>
+            <button class="btn btn-sm btn-secondary" onclick="logout()">Quitter</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTENT AREA -->
+      <div class="admin-content">
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">📦</div>
+            <div class="stat-info">
+              <p class="stat-label">Produits</p>
+              <p class="stat-value" id="totalProducts">0</p>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon">🛒</div>
+            <div class="stat-info">
+              <p class="stat-label">Commandes</p>
+              <p class="stat-value" id="totalOrders">0</p>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon">💰</div>
+            <div class="stat-info">
+              <p class="stat-label">Revenus (ce mois)</p>
+              <p class="stat-value text-gold" id="monthlyRevenue">0 FCFA</p>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon">⏳</div>
+            <div class="stat-info">
+              <p class="stat-label">Commandes en attente</p>
+              <p class="stat-value" id="pendingOrders">0</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Orders -->
+        <div class="dashboard-section card">
+          <div class="section-header">
+            <h2>Commandes Récentes</h2>
+            <a href="orders.html" class="btn btn-sm btn-primary">Voir tout</a>
+          </div>
+
+          <table class="dashboard-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Client</th>
+                <th>Montant</th>
+                <th>Statut</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="recentOrdersTable">
+              <!-- Loaded dynamically -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Top Products -->
+        <div class="dashboard-section card">
+          <div class="section-header">
+            <h2>Produits Populaires</h2>
+            <a href="products.html" class="btn btn-sm btn-primary">Voir tout</a>
+          </div>
+
+          <table class="dashboard-table">
+            <thead>
+              <tr>
+                <th>Produit</th>
+                <th>Ventes</th>
+                <th>Stock</th>
+                <th>Prix</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="topProductsTable">
+              <!-- Loaded dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ============================================
+       SCRIPTS
+       ============================================ -->
+  <script src="../js/api.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/admin-dashboard.js"></script>
+</body>
+</html>

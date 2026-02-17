@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Détail Produit - EVOLYX</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- ============================================
+       HEADER
+       ============================================ -->
+  <header class="header">
+    <div class="container">
+      <div class="header-content">
+        <div class="logo">
+          <h1>EVOLYX</h1>
+        </div>
+        <nav class="nav">
+          <a href="index.html" class="nav-link">Accueil</a>
+          <a href="index.html#catalog" class="nav-link">Catalogue</a>
+          <a href="#" class="nav-link" id="adminLink">Admin</a>
+        </nav>
+        <div class="header-actions">
+          <a href="cart.html" class="cart-link">
+            <span>🛒</span>
+            <span class="cart-count" id="cartCount">0</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============================================
+       PRODUCT DETAILS
+       ============================================ -->
+  <div class="container">
+    <div class="product-detail" id="productDetail">
+      <!-- Loaded dynamically -->
+    </div>
+  </div>
+
+  <!-- ============================================
+       FOOTER
+       ============================================ -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h4>À Propos</h4>
+          <p>EVOLYX est votre destination premium.</p>
+        </div>
+        <div class="footer-section">
+          <h4>Liens Rapides</h4>
+          <ul>
+            <li><a href="index.html">Accueil</a></li>
+            <li><a href="order-tracking.html">Suivi Commande</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 EVOLYX. Tous droits réservés.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ============================================
+       SCRIPTS
+       ============================================ -->
+  <script src="js/api.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/product-detail.js"></script>
+</body>
+</html>

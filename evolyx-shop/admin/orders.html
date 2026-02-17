@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestion Commandes - EVOLYX Admin</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+  <div class="admin-container">
+    <!-- SIDEBAR -->
+    <aside class="admin-sidebar">
+      <div class="sidebar-header">
+        <h2 style="color: #D4AF37; margin: 0;">EVOLYX</h2>
+        <p style="color: #999; font-size: 12px; margin: 0;">Admin Panel</p>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="nav-item">
+          <span class="icon">📊</span>
+          <span>Dashboard</span>
+        </a>
+        <a href="products.html" class="nav-item">
+          <span class="icon">📦</span>
+          <span>Produits</span>
+        </a>
+        <a href="categories.html" class="nav-item">
+          <span class="icon">🏷️</span>
+          <span>Catégories</span>
+        </a>
+        <a href="orders.html" class="nav-item active">
+          <span class="icon">🛒</span>
+          <span>Commandes</span>
+        </a>
+        <a href="variations.html" class="nav-item">
+          <span class="icon">🎨</span>
+          <span>Variations</span>
+        </a>
+        <a href="stats.html" class="nav-item">
+            <span class="icon">📈 </span>
+            <span>Statistiques</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="btn btn-secondary btn-sm" onclick="logout()" style="width: 100%;">
+          Déconnexion
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="admin-main">
+      <!-- TOPBAR -->
+      <div class="admin-topbar">
+        <div class="topbar-content">
+          <h1>Gestion Commandes</h1>
+        </div>
+      </div>
+
+      <!-- CONTENT AREA -->
+      <div class="admin-content">
+        <!-- Filters -->
+        <div class="admin-filters">
+          <div class="form-group">
+            <select id="statusFilter">
+              <option value="">Tous les statuts</option>
+              <option value="pending">En attente</option>
+              <option value="confirmed">Confirmée</option>
+              <option value="preparing">En préparation</option>
+              <option value="shipped">Expédiée</option>
+              <option value="delivered">Livrée</option>
+              <option value="cancelled">Annulée</option>
+            </select>
+          </div>
+          <button class="btn btn-secondary" onclick="loadOrders()">Actualiser</button>
+        </div>
+
+        <!-- Orders Table -->
+        <div class="dashboard-section card">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Client</th>
+                <th>Téléphone</th>
+                <th>Montant</th>
+                <th>Statut</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="ordersTableBody">
+              <!-- Loaded dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ============================================
+       ORDER DETAIL MODAL
+       ============================================ -->
+  <div class="admin-modal" id="orderModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="orderModalTitle">Détails Commande</h2>
+        <button class="modal-close" onclick="closeOrderModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div id="orderDetails">
+          <!-- Loaded dynamically -->
+        </div>
+
+        <div style="margin-top: 20px;">
+          <label>Changer le statut:</label>
+          <select id="orderStatusSelect">
+            <option value="pending">En attente</option>
+            <option value="confirmed">Confirmée</option>
+            <option value="preparing">En préparation</option>
+            <option value="shipped">Expédiée</option>
+            <option value="delivered">Livrée</option>
+            <option value="cancelled">Annulée</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeOrderModal()">
+          Fermer
+        </button>
+        <button type="button" class="btn btn-primary" onclick="updateOrderStatus()">
+          Mettre à jour le statut
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================
+       SCRIPTS
+       ============================================ -->
+  <script src="../js/api.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/admin-orders.js"></script>
+</body>
+</html>

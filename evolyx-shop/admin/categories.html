@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestion Catégories - EVOLYX Admin</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+  <div class="admin-container">
+    <!-- SIDEBAR -->
+    <aside class="admin-sidebar">
+      <div class="sidebar-header">
+        <h2 style="color: #D4AF37; margin: 0;">EVOLYX</h2>
+        <p style="color: #999; font-size: 12px; margin: 0;">Admin Panel</p>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="nav-item">
+          <span class="icon">📊</span>
+          <span>Dashboard</span>
+        </a>
+        <a href="products.html" class="nav-item">
+          <span class="icon">📦</span>
+          <span>Produits</span>
+        </a>
+        <a href="categories.html" class="nav-item active">
+          <span class="icon">🏷️</span>
+          <span>Catégories</span>
+        </a>
+        <a href="orders.html" class="nav-item">
+          <span class="icon">🛒</span>
+          <span>Commandes</span>
+        </a>
+        <a href="variations.html" class="nav-item">
+          <span class="icon">🎨</span>
+          <span>Variations</span>
+        </a>
+        <a href="stats.html" class="nav-item ">
+            <span class="icon">📈 </span>
+            <span>Statistiques</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="btn btn-secondary btn-sm" onclick="logout()" style="width: 100%;">
+          Déconnexion
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="admin-main">
+      <!-- TOPBAR -->
+      <div class="admin-topbar">
+        <div class="topbar-content">
+          <h1>Gestion Catégories</h1>
+          <button class="btn btn-primary" onclick="openCategoryModal()">
+            ➕ Nouvelle Catégorie
+          </button>
+        </div>
+      </div>
+
+      <!-- CONTENT AREA -->
+      <div class="admin-content">
+        <!-- Categories Table -->
+        <div class="dashboard-section card">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nom</th>
+                <th>Description</th>
+                <th>Parent</th>
+                <th>Statut</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="categoriesTableBody">
+              <!-- Loaded dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ============================================
+       CATEGORY MODAL
+       ============================================ -->
+  <div class="admin-modal" id="categoryModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modalTitle">Nouvelle Catégorie</h2>
+        <button class="modal-close" onclick="closeCategoryModal()">✕</button>
+      </div>
+
+      <form id="categoryForm" onsubmit="saveCategory(event)">
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-group form-group-full">
+              <label>Nom de la catégorie</label>
+              <input type="text" id="categoryName" required />
+            </div>
+
+            <div class="form-group form-group-full">
+              <label>Description</label>
+              <textarea id="categoryDescription" rows="4"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label>Catégorie parent</label>
+              <select id="categoryParent">
+                <option value="">Aucune (catégorie racine)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Actif?</label>
+              <input type="checkbox" id="categoryActive" checked />
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeCategoryModal()">
+            Annuler
+          </button>
+          <button type="submit" class="btn btn-primary">
+            Enregistrer
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================
+       SCRIPTS
+       ============================================ -->
+  <script src="../js/api.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/admin-categories.js"></script>
+</body>
+</html>
