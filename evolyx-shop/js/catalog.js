@@ -271,14 +271,14 @@ function createProductCard(product) {
   });
 
   const image = product.images && product.images.length > 0 
-    ? `${LINK}/${product.images[0].url}`
-    : `${LINK}/default.png`;
+    ? `${product.images[0].url}`
+    : `https://res.cloudinary.com/dvnxsn73m/image/upload/v1771500491/image_placeholder_iuqezd.png`;
 
   const categoryName = categories.find(c => c.id === product.category_id)?.name || 'Catégorie';
 
   card.innerHTML = `
     <div class="product-image">
-      <img src="${image}" alt="${product.name}" onerror="this.src='${LINK}/default.png'">
+      <img src="${image}" alt="${product.name}" onerror="this.src='https://res.cloudinary.com/dvnxsn73m/image/upload/v1771500491/image_placeholder_iuqezd.png'">
       ${product.is_featured ? '<span class="badge badge-featured">Vedette</span>' : ''}
     </div>
     <div class="product-info">

@@ -102,17 +102,18 @@ function renderProductDetail() {
           <div class="main-image">
             <img 
               id="mainImage"
-              src="${product.images?.[0] ? LINK + '/' + product.images[0].url : LINK + 'default.png'}" 
+              src="${product.images?.[0] ? product.images[0].url : 'https://res.cloudinary.com/dvnxsn73m/image/upload/v1771500491/image_placeholder_iuqezd.png'}" 
               alt="${product.name}"
-              onerror="this.src='${LINK}/default.png'"
+              onerror="this.src='https://res.cloudinary.com/dvnxsn73m/image/upload/v1771500491/image_placeholder_iuqezd.png'"
             >
           </div>
           <div class="thumbnail-images">
             ${product.images ? product.images.map((img, index) => `
               <img 
-                src="${LINK}/${img.url}" 
+                src="${img.url}" 
                 alt="thumbnail"
-                onclick="changeMainImage('${LINK}/${img.url}')"
+                onerror="this.src='https://res.cloudinary.com/dvnxsn73m/image/upload/v1771500491/image_placeholder_iuqezd.png'"
+                onclick="changeMainImage('${img.url}')"
                 class="thumbnail ${index === 0 ? 'active' : ''}"
               >
             `).join('') : ''}

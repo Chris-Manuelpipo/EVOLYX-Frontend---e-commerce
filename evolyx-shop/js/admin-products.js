@@ -163,13 +163,13 @@ function renderProducts(products) {
       : '<span style="color: red;"><i class="fas fa-toggle-off" style="color: #999;"></i>Inactif</span>';
     
     // ✅ Construire l'URL de l'image
-    let imageUrl = `${LINK}/default.png`;
+    let imageUrl = `https://res.cloudinary.com/dvnxsn73m/image/upload/v1771500491/image_placeholder_iuqezd.png`;
     
     if (product.images && product.images.length > 0) {
       const mainImage = product.images.find(img => img.is_main) || product.images[0];
-      imageUrl = `${LINK}/${mainImage.url}`;
+      imageUrl = ` ${mainImage.url}`;
     } else if (product.image) {
-      imageUrl = `${LINK}/${product.image}`;
+      imageUrl = ` ${product.image}`;
     }
     
     // ✅ Image avec gestion d'erreur
@@ -177,7 +177,7 @@ function renderProducts(products) {
       <img src="${imageUrl}" 
            alt="${product.name}" 
            style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;"
-           onerror="this.src='${LINK}/default.png'; this.style.opacity='0.5';"
+           onerror="this.src='https://res.cloudinary.com/dvnxsn73m/image/upload/v1771500491/image_placeholder_iuqezd.png'; this.style.opacity='0.5';"
       >
     `;
 
@@ -214,6 +214,7 @@ function openProductModal() {
   document.getElementById('productForm').reset();
   document.getElementById('imagePreview').innerHTML = '';
   document.getElementById('productModal').classList.add('active');
+  document.getElementById('productCostPrice').value = '';
 }
 
 function closeProductModal() {
@@ -243,6 +244,7 @@ async function editProduct(productId) {
     document.getElementById('productName').value = product.name;
     document.getElementById('productCategory').value = product.category_id;
     document.getElementById('productPrice').value = product.base_price;
+    document.getElementById('productCostPrice').value = product.cost_price || '';
     document.getElementById('productStock').value = product.stock;
     document.getElementById('productDescription').value = product.description || '';
     document.getElementById('productFeatured').checked = product.is_featured;
@@ -263,7 +265,7 @@ async function editProduct(productId) {
         const div = document.createElement('div');
         div.className = 'file-preview-item';
         div.innerHTML = `
-          <img src="${LINK}/${img.url}" alt="product">
+          <img src="${img.url}" alt="product">
           <button type="button" class="file-preview-remove" onclick="removeExistingImage(${img.id})">✕</button>
         `;
         preview.appendChild(div);
@@ -288,7 +290,8 @@ async function saveProduct(event) {
     name: document.getElementById('productName').value,
     category_id: parseInt(document.getElementById('productCategory').value),
     base_price: parseFloat(document.getElementById('productPrice').value),
-    stock: parseInt(document.getElementById('productStock').value),
+    cost_price: parseFloat(document.getElementById('productCostPrice').value) || null, 
+    stock: parseInt(document.getElementById('productStock').value) || 0,
     description: document.getElementById('productDescription').value,
     is_featured: document.getElementById('productFeatured').checked,
     is_active: document.getElementById('productActive').checked,

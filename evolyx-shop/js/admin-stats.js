@@ -29,25 +29,27 @@ async function loadStatsData() {
     const ordersResponse = await API.getAdminOrders();
     allOrders = ordersResponse.data || [];
 
-    // ✅ CORRIGÉ: Les produits sont dans response.products
-    const productsResponse = await API.getAdminProducts();
+    // Load products avec une limite suffisante
+    const productsResponse = await API.getAdminProducts({ limit: 999 });
     allProducts = productsResponse?.products || [];
-    
+
     // Load categories
     const categoriesResponse = await API.getCategories();
     allCategories = categoriesResponse.data || [];
-    
+
     console.log('📦 Commandes:', allOrders.length);
     console.log('📦 Produits:', allProducts.length);
     console.log('🏷️ Catégories:', allCategories.length);
 
     // Load out of stock products
     loadOutOfStockProducts();
-    
+    // dans loadStatsData, après allProducts = ...
+    updateStockValues();
+
     // Initial update
     updateStats();
     generateCalendar();
-    
+
   } catch (error) {
     console.error('Failed to load stats:', error);
     Utils.showToast('Erreur lors du chargement des statistiques', 'error');
@@ -59,40 +61,137 @@ async function loadStatsData() {
 // ============================================
 
 function updateStats() {
-  const dateRange = parseInt(document.getElementById('dateRangeFilter').value);
+  const dateRange = document.getElementById('dateRangeFilter').value;
   const filteredOrders = filterByDateRange(allOrders, dateRange);
-  
-  // Filtrer uniquement les commandes confirmées pour les chiffres réels
+
+  // Commandes confirmées sur la période
   const confirmedOrders = filteredOrders.filter(o => o.status === 'confirmed');
 
-  // Calculer les KPI sur les commandes confirmées
+  // Revenus (CA) = total_amount des commandes confirmées
   const totalRevenue = confirmedOrders.reduce((sum, o) => sum + parseFloat(o.total_amount || 0), 0);
+
+  // Dépenses = somme des coûts des produits vendus
   const totalExpense = calculateExpenses(confirmedOrders);
+
+  // Bénéfice
   const totalProfit = totalRevenue - totalExpense;
+
+  // Marge bénéficiaire
   const profitMargin = totalRevenue > 0 ? ((totalProfit / totalRevenue) * 100).toFixed(2) : 0;
 
-  // Mettre à jour les KPI
+  // Mise à jour des KPI
   document.getElementById('totalRevenue').textContent = Utils.formatPrice(totalRevenue);
   document.getElementById('totalExpense').textContent = Utils.formatPrice(totalExpense);
   document.getElementById('totalProfit').textContent = Utils.formatPrice(totalProfit);
   document.getElementById('profitMargin').textContent = `${profitMargin}%`;
 
-  // Calculer les tendances
-  const prevOrders = filterByDateRange(allOrders, dateRange * 2).slice(0, Math.floor(confirmedOrders.length / 2));
-  const prevRevenue = prevOrders.reduce((sum, o) => sum + parseFloat(o.total_amount || 0), 0);
-  const revenueTrend = prevRevenue > 0 ? (((totalRevenue - prevRevenue) / prevRevenue) * 100).toFixed(1) : 0;
-  
-  document.getElementById('revenueTrend').textContent = `${revenueTrend > 0 ? '↑' : '↓'} ${Math.abs(revenueTrend)}%`;
+  // Calcul des tendances (comparaison avec période précédente de même durée)
+  const trend = calculateTrends(confirmedOrders, dateRange);
+  document.getElementById('revenueTrend').textContent = `${trend.revenue > 0 ? '↑' : '↓'} ${Math.abs(trend.revenue)}%`;
+  document.getElementById('expenseTrend').textContent = `${trend.expense > 0 ? '↑' : '↓'} ${Math.abs(trend.expense)}%`;
+  document.getElementById('profitTrend').textContent = `${trend.profit > 0 ? '↑' : '↓'} ${Math.abs(trend.profit)}%`;
 
-  // Mettre à jour le résumé du jour
+  // Résumé du jour
   updateTodaySummary();
 
-  // Mettre à jour les graphiques
+  // Graphiques
   updateRevenueChart(confirmedOrders);
   updateOrdersChart(filteredOrders);
-  updateProductsChart();
+  updateProductsChart(filteredOrders); // ← on passe les commandes filtrées
   updateStatusChart(filteredOrders);
   updateCategorySalesTable(confirmedOrders);
+}
+
+// ============================================
+// FILTER BY DATE RANGE
+// ============================================
+
+function filterByDateRange(orders, range) {
+  if (range === 'all') return orders;
+
+  const days = parseInt(range);
+  if (isNaN(days)) return orders;
+
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - days);
+
+  return orders.filter(order => {
+    const orderDate = new Date(order.created_at);
+    return orderDate >= startDate;
+  });
+}
+
+// ============================================
+// CALCULATE TRENDS (période précédente de même durée)
+// ============================================
+
+function calculateTrends(confirmedOrders, range) {
+  if (range === 'all' || confirmedOrders.length === 0) {
+    return { revenue: 0, expense: 0, profit: 0 };
+  }
+
+  const days = parseInt(range);
+  const now = new Date();
+
+  // Période actuelle : de now-days à now
+  const currentStart = new Date(now);
+  currentStart.setDate(currentStart.getDate() - days);
+
+  // Période précédente : de now-2*days à now-days
+  const prevStart = new Date(now);
+  prevStart.setDate(prevStart.getDate() - 2 * days);
+  const prevEnd = new Date(currentStart);
+
+  const currentOrders = confirmedOrders.filter(o => {
+    const d = new Date(o.created_at);
+    return d >= currentStart && d <= now;
+  });
+
+  const prevOrders = confirmedOrders.filter(o => {
+    const d = new Date(o.created_at);
+    return d >= prevStart && d < prevEnd;
+  });
+
+  const currentRevenue = currentOrders.reduce((s, o) => s + parseFloat(o.total_amount || 0), 0);
+  const prevRevenue = prevOrders.reduce((s, o) => s + parseFloat(o.total_amount || 0), 0);
+  const revenueTrend = prevRevenue ? ((currentRevenue - prevRevenue) / prevRevenue * 100).toFixed(1) : 0;
+
+  const currentExpense = calculateExpenses(currentOrders);
+  const prevExpense = calculateExpenses(prevOrders);
+  const expenseTrend = prevExpense ? ((currentExpense - prevExpense) / prevExpense * 100).toFixed(1) : 0;
+
+  const currentProfit = currentRevenue - currentExpense;
+  const prevProfit = prevRevenue - prevExpense;
+  const profitTrend = prevProfit ? ((currentProfit - prevProfit) / prevProfit * 100).toFixed(1) : 0;
+
+  return {
+    revenue: revenueTrend,
+    expense: expenseTrend,
+    profit: profitTrend
+  };
+}
+
+// ============================================
+// CALCULATE EXPENSES (utilise cost_price si disponible)
+// ============================================
+
+function calculateExpenses(orders) {
+  return orders.reduce((sum, order) => {
+    if (order.items && Array.isArray(order.items)) {
+      return sum + order.items.reduce((itemSum, item) => {
+        const product = allProducts.find(p => p.id === item.product_id);
+        if (!product) return itemSum;
+
+        // Utiliser cost_price s'il existe, sinon estimer à 70% du base_price
+        const unitCost = product.cost_price
+          ? parseFloat(product.cost_price)
+          : parseFloat(product.base_price) * 0.7;
+
+        return itemSum + unitCost * item.quantity;
+      }, 0);
+    }
+    return sum;
+  }, 0);
 }
 
 // ============================================
@@ -101,7 +200,7 @@ function updateStats() {
 
 function updateTodaySummary() {
   const today = new Date().toISOString().split('T')[0];
-  
+
   const todayOrders = allOrders.filter(o => {
     const orderDate = new Date(o.created_at).toISOString().split('T')[0];
     return orderDate === today;
@@ -117,42 +216,40 @@ function updateTodaySummary() {
 }
 
 // ============================================
-// OUT OF STOCK PRODUCTS - CORRIGÉ
+// OUT OF STOCK PRODUCTS
 // ============================================
 
 async function loadOutOfStockProducts() {
   try {
-    // ✅ CORRIGÉ: stock_min=0, stock_max=0 pour les produits en rupture
-    const response = await API.getAdminProducts({ 
-      stock_min: 0, 
-      stock_max: 0 
+    const response = await API.getAdminProducts({
+      stock_min: 0,
+      stock_max: 0
     });
-    
-    // ✅ CORRIGÉ: response.products
+
     const outOfStock = response?.products || [];
     const container = document.getElementById('outOfStockProducts');
     const countEl = document.getElementById('outOfStockCount');
-    
+
     if (countEl) countEl.textContent = outOfStock.length;
-    
+
     if (outOfStock.length === 0) {
       container.innerHTML = '<p style="padding: 20px; text-align: center; color: #666;">Aucun produit en rupture</p>';
       return;
     }
-    
+
     container.innerHTML = outOfStock.map(product => `
       <div class="out-of-stock-item">
-        <img src="${LINK}/${product.images?.[0]?.url || 'default.png'}" 
+        <img src="${product.images?.[0]?.url || 'default.png'}"
              alt="${product.name}"
-             onerror="this.src='${LINK}/default.png'">
+             onerror="this.src='https://res.cloudinary.com/dvnxsn73m/image/upload/v1771500491/image_placeholder_iuqezd.png'">
         <div class="item-info">
           <strong>${product.name}</strong>
           <small>Stock: ${product.stock}</small>
         </div>
-        <a href="products.html?edit=${product.id}" class="btn btn-sm btn-primary"><i class="fas fa-sync-alt"></i> </a>
+        <a href="products.html?edit=${product.id}" class="btn btn-sm btn-primary"><i class="fas fa-sync-alt"></i></a>
       </div>
     `).join('');
-    
+
   } catch (error) {
     console.error('Erreur chargement ruptures:', error);
     const container = document.getElementById('outOfStockProducts');
@@ -163,52 +260,18 @@ async function loadOutOfStockProducts() {
 }
 
 // ============================================
-// FILTER BY DATE RANGE
-// ============================================
-
-function filterByDateRange(orders, days) {
-  if (days === 0) return orders;
-
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() - days);
-
-  return orders.filter(order => {
-    const orderDate = new Date(order.created_at);
-    return orderDate >= startDate;
-  });
-}
-
-// ============================================
-// CALCULATE EXPENSES
-// ============================================
-
-function calculateExpenses(orders) {
-  return orders.reduce((sum, order) => {
-    if (order.items && Array.isArray(order.items)) {
-      return sum + order.items.reduce((itemSum, item) => {
-        const product = allProducts.find(p => p.id === item.product_id);
-        const itemCost = product ? parseFloat(product.base_price) * item.quantity : 0;
-        return itemSum + itemCost;
-      }, 0);
-    }
-    return sum;
-  }, 0);
-}
-
-// ============================================
-// REVENUE CHART - CORRIGÉ (dimensions)
+// REVENUE CHART
 // ============================================
 
 function updateRevenueChart(orders) {
   const canvas = document.getElementById('revenueChart');
   if (!canvas) return;
-  
-  // ✅ Forcer une taille fixe pour éviter l'explosion
+
   canvas.style.height = '300px';
   canvas.style.width = '100%';
-  
+
   const ctx = canvas.getContext('2d');
-  
+
   const dateRevenue = {};
   orders.forEach(order => {
     const date = new Date(order.created_at).toLocaleDateString('fr-FR');
@@ -238,7 +301,7 @@ function updateRevenueChart(orders) {
     },
     options: {
       responsive: true,
-      maintainAspectRatio: true, // ✅ Changé à true
+      maintainAspectRatio: true,
       plugins: {
         legend: { display: true, position: 'top' },
       },
@@ -257,16 +320,16 @@ function updateRevenueChart(orders) {
 }
 
 // ============================================
-// ORDERS CHART - CORRIGÉ
+// ORDERS CHART
 // ============================================
 
 function updateOrdersChart(orders) {
   const canvas = document.getElementById('ordersChart');
   if (!canvas) return;
-  
+
   canvas.style.height = '300px';
   canvas.style.width = '100%';
-  
+
   const ctx = canvas.getContext('2d');
 
   const dateOrders = {};
@@ -311,20 +374,20 @@ function updateOrdersChart(orders) {
 }
 
 // ============================================
-// PRODUCTS CHART - CORRIGÉ
+// PRODUCTS CHART (TOP 10) - utilise les commandes filtrées
 // ============================================
 
-function updateProductsChart() {
+function updateProductsChart(orders) {
   const canvas = document.getElementById('productsChart');
   if (!canvas) return;
-  
+
   canvas.style.height = '300px';
   canvas.style.width = '100%';
-  
+
   const ctx = canvas.getContext('2d');
 
   const productSales = {};
-  allOrders.forEach(order => {
+  orders.forEach(order => {
     if (order.items && Array.isArray(order.items)) {
       order.items.forEach(item => {
         const product = allProducts.find(p => p.id === item.product_id);
@@ -372,22 +435,22 @@ function updateProductsChart() {
 }
 
 // ============================================
-// STATUS CHART - CORRIGÉ
+// STATUS CHART
 // ============================================
 
 function updateStatusChart(orders) {
   const canvas = document.getElementById('statusChart');
   if (!canvas) return;
-  
+
   canvas.style.height = '300px';
   canvas.style.width = '100%';
-  
+
   const ctx = canvas.getContext('2d');
 
   const statusCounts = {};
   const statusColors = {
     pending: '#FEF3C7',
-    confirmed: '#DBEAFE', 
+    confirmed: '#DBEAFE',
     cancelled: '#FEE2E2',
   };
 
@@ -433,13 +496,13 @@ function updateStatusChart(orders) {
 }
 
 // ============================================
-// CATEGORY SALES TABLE - CORRIGÉ
+// CATEGORY SALES TABLE (avec bénéfice réel)
 // ============================================
 
 function updateCategorySalesTable(orders) {
   const tbody = document.getElementById('categorySalesTable');
   if (!tbody) return;
-  
+
   Utils.DOM.empty(tbody);
 
   const categorySales = {};
@@ -449,33 +512,34 @@ function updateCategorySalesTable(orders) {
     if (order.items && Array.isArray(order.items)) {
       order.items.forEach(item => {
         const product = allProducts.find(p => p.id === item.product_id);
-        
-        if (product) {
-          const cat = allCategories.find(c => c.id === product.category_id);
-          const category = cat?.name || `Catégorie ${product.category_id}`;
-          
-          if (!categorySales[category]) {
-            categorySales[category] = { items: 0, revenue: 0, expense: 0 };
-          }
-          
-          const itemRevenue = item.quantity * (parseFloat(item.price) || 0);
-          categorySales[category].items += item.quantity;
-          categorySales[category].revenue += itemRevenue;
-          totalRevenue += itemRevenue;
+        if (!product) return;
+
+        const cat = allCategories.find(c => c.id === product.category_id);
+        const category = cat?.name || `Catégorie ${product.category_id}`;
+
+        if (!categorySales[category]) {
+          categorySales[category] = { items: 0, revenue: 0, cost: 0 };
         }
+
+        const itemRevenue = item.quantity * (parseFloat(item.price) || 0);
+        const unitCost = product.cost_price
+          ? parseFloat(product.cost_price)
+          : parseFloat(product.base_price) * 0.7;
+        const itemCost = unitCost * item.quantity;
+
+        categorySales[category].items += item.quantity;
+        categorySales[category].revenue += itemRevenue;
+        categorySales[category].cost += itemCost;
+        totalRevenue += itemRevenue;
       });
     }
-  });
-
-  Object.keys(categorySales).forEach(category => {
-    categorySales[category].expense = categorySales[category].revenue * 0.3;
   });
 
   const sorted = Object.entries(categorySales).sort((a, b) => b[1].revenue - a[1].revenue);
 
   sorted.forEach(([category, stats]) => {
     const percentage = totalRevenue > 0 ? ((stats.revenue / totalRevenue) * 100).toFixed(1) : 0;
-    const profit = stats.revenue - stats.expense;
+    const profit = stats.revenue - stats.cost;
 
     const row = document.createElement('tr');
     row.innerHTML = `
@@ -492,9 +556,28 @@ function updateCategorySalesTable(orders) {
     tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Aucune vente</td></tr>';
   }
 }
-
 // ============================================
-// CALENDAR - CORRIGÉ
+// STOCK VALUE
+// ============================================
+function updateStockValues() {
+  let totalCost = 0;
+  let totalSelling = 0;
+
+  allProducts.forEach(product => {
+    const stock = product.stock || 0;
+    // Valeur au prix de vente
+    totalSelling += (parseFloat(product.base_price) || 0) * stock;
+    // Valeur au coût d'achat (si cost_price existe, sinon 0)
+    if (product.cost_price) {
+      totalCost += parseFloat(product.cost_price) * stock;
+    }
+  });
+
+  document.getElementById('stockCostValue').textContent = Utils.formatPrice(totalCost);
+  document.getElementById('stockSellingValue').textContent = Utils.formatPrice(totalSelling);
+}
+// ============================================
+// CALENDAR
 // ============================================
 
 function generateCalendar() {
@@ -511,7 +594,7 @@ function generateCalendar() {
 
   const tbody = document.getElementById('calendarBody');
   if (!tbody) return;
-  
+
   tbody.innerHTML = '';
 
   let currentDate = new Date(startDate);
@@ -534,7 +617,7 @@ function generateCalendar() {
       const cellClass = isCurrentMonth ? 'calendar-current' : 'calendar-other';
 
       cell.className = `calendar-cell ${cellClass}`;
-      
+
       if (dayOrders.length > 0) {
         cell.innerHTML = `
           <div class="calendar-day">${currentDate.getDate()}</div>

@@ -71,7 +71,7 @@ async function loadDashboardData() {
     // 3. CHARGER LES PRODUITS
     let allProducts = [];
     try {
-      const productsResponse = await API.getAdminProducts();
+      const productsResponse = await API.getAdminProducts({limit: 999});
       console.log('📦 Réponse produits brute:', productsResponse);
       
       // ✅ CORRIGÉ: Les produits sont dans response.products
@@ -101,7 +101,7 @@ async function loadDashboardData() {
     // 4. METTRE À JOUR L'AFFICHAGE
     updateStatsCards(stats, allOrders, allProducts);
     displayRecentOrders(allOrders.slice(0, 5));
-    displayTopProducts(allProducts.slice(0, 5));
+    displayTopProducts(allProducts);
     
     // ✅ Cacher loader
     showLoading(false);
@@ -224,6 +224,7 @@ function displayTopProducts(products) {
   }
 
   products.forEach(product => {
+    if (product.is_featured){
     const row = document.createElement('tr');
     const stockClass = product.stock > 10 ? 'text-success' : 
                        product.stock > 0 ? 'text-warning' : 'text-error';
@@ -241,7 +242,7 @@ function displayTopProducts(products) {
         </button>
       </td>
     `;
-    tbody.appendChild(row);
+    tbody.appendChild(row);}
   });
 }
 
@@ -253,9 +254,9 @@ function getStatusBadge(status) {
   const statuses = {
     pending: { label: 'En attente', class: 'status-pending' },
     confirmed: { label: 'Confirmée', class: 'status-confirmed' },
-    preparing: { label: 'En préparation', class: 'status-preparing' },
-    shipped: { label: 'Expédiée', class: 'status-shipped' },
-    delivered: { label: 'Livrée', class: 'status-delivered' },
+    // preparing: { label: 'En préparation', class: 'status-preparing' },
+    // shipped: { label: 'Expédiée', class: 'status-shipped' },
+    // delivered: { label: 'Livrée', class: 'status-delivered' },
     cancelled: { label: 'Annulée', class: 'status-cancelled' },
   };
 
