@@ -153,10 +153,34 @@ const API = {
   adminLogout: () => apiCall('/admin/logout', { method: 'POST' }),
 
   // Admin Products - ✅ CORRIGÉ pour FormData
-  getAdminProducts: (params = {}) => {
-    const queryString = new URLSearchParams(params).toString();
-    return apiCall(`/admin/products${queryString ? '?' + queryString : ''}`);
-  },
+  // Dans api.js, modifiez getAdminProducts :
+
+getAdminProducts: async (params = {}) => {
+  const queryString = new URLSearchParams(params).toString();
+  const url = `/admin/products${queryString ? '?' + queryString : ''}`;
+  
+  console.log('🔍 URL appelée:', url);
+  
+  try {
+    const response = await apiCall(url);
+    
+    // ✅ La réponse a maintenant une structure standardisée
+    if (response?.data?.products) {
+      return {
+        products: response.data.products,
+        total: response.data.total,
+        page: response.data.page,
+        limit: response.data.limit,
+        totalPages: response.data.totalPages
+      };
+    }
+    
+    return response;
+  } catch (error) {
+    console.error('❌ Erreur getAdminProducts:', error);
+    return { products: [], total: 0, page: 1, limit: 20, totalPages: 1 };
+  }
+},
 
   createProduct: async (productData) => {
   console.log('📦 Création produit:', productData);

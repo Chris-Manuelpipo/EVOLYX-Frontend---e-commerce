@@ -6,6 +6,9 @@
   <title>Gestion Variations - EVOLYX Admin</title>
   <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/admin.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <link rel="icon"  href="../assets/favicon.png">
 </head>
 <body>
   <div class="admin-container">
@@ -13,39 +16,40 @@
     <aside class="admin-sidebar">
       <div class="sidebar-header">
         <h2 style="color: #D4AF37; margin: 0;">EVOLYX</h2>
-        <p style="color: #999; font-size: 12px; margin: 0;">Admin Panel</p>
+        <p style="color: #999; font-size: 12px; margin: 0;">Panel Administrateur </p>
       </div>
 
       <nav class="sidebar-nav">
         <a href="dashboard.html" class="nav-item">
-          <span class="icon">📊</span>
+          <span class="icon"><i class="fa-regular fa-chart-bar"></i></i></span>
           <span>Dashboard</span>
         </a>
         <a href="products.html" class="nav-item">
-          <span class="icon">📦</span>
+          <span class="icon"><i class="fas fa-box"></i></span>
           <span>Produits</span>
         </a>
         <a href="categories.html" class="nav-item">
-          <span class="icon">🏷️</span>
+          <span class="icon"><i class="fas fa-tags"></i></span>
           <span>Catégories</span>
         </a>
         <a href="orders.html" class="nav-item">
-          <span class="icon">🛒</span>
+          <span class="icon"><i class="fas fa-shopping-cart"></i></span>
           <span>Commandes</span>
         </a>
         <a href="variations.html" class="nav-item active">
-          <span class="icon">🎨</span>
+          <span class="icon"><i class="fas fa-palette"></i></span>
           <span>Variations</span>
         </a>
-        <a href="stats.html" class="nav-item">
-            <span class="icon">📈 </span>
+        <a href="stats.html" class="nav-item a">
+            <span class="icon"><i class="fa-solid fa-chart-simple"></i></span>
             <span>Statistiques</span>
         </a>
+        
       </nav>
 
       <div class="sidebar-footer">
         <button class="btn btn-secondary btn-sm" onclick="logout()" style="width: 100%;">
-          Déconnexion
+          Déconnexion<i class="fas fa-sign-out-alt"></i>
         </button>
       </div>
     </aside>
@@ -57,7 +61,7 @@
         <div class="topbar-content">
           <h1>Gestion Variations</h1>
           <button class="btn btn-primary" onclick="openVariationModal()">
-            ➕ Nouvelle Variation
+            <i class="fas fa-plus-circle"></i>  Nouvelle Variation
           </button>
         </div>
       </div>
@@ -71,7 +75,7 @@
               <option value="">Tous les produits</option>
             </select>
           </div>
-          <button class="btn btn-secondary" onclick="loadVariations()">Actualiser</button>
+          <button class="btn btn-secondary" onclick="loadVariations()"><i class="fas fa-sync-alt"></i></button>
         </div>
 
         <!-- Variations Table -->
@@ -116,9 +120,44 @@
               </select>
             </div>
 
+            <!-- Dans le modal, remplacez le champ couleur par : -->
             <div class="form-group">
               <label>Couleur</label>
-              <input type="text" id="variationColor" placeholder="Ex: Or, Noir, Bleu" required />
+              <div class="color-input-wrapper">
+                <input type="text" id="variationColor" placeholder="Ex: Or, Noir, Bleu" 
+                      onclick="openColorPalette(this)" readonly required />
+                <span class="color-preview" id="colorPreview" style="background: #ccc;"></span>
+              </div>
+              <small style="color: #999;">Cliquez pour ouvrir la palette de couleurs</small>
+            </div>
+ 
+            <div id="colorPalette" class="color-palette" style="display: none;">
+              <div class="color-palette-header">
+                <span>Choisissez une couleur</span>
+                <button type="button" onclick="closeColorPalette()">✕</button>
+              </div>
+              <div class="color-palette-grid">
+                <div class="color-option" style="background: #D4AF37;" onclick="selectColor('Or', '#D4AF37')" title="Or"></div>
+                <div class="color-option" style="background: #C0C0C0;" onclick="selectColor('Argent', '#C0C0C0')" title="Argent"></div>
+                <div class="color-option" style="background: #B76E79;" onclick="selectColor('Or Rose', '#B76E79')" title="Or Rose"></div>
+                <div class="color-option" style="background: #000000;" onclick="selectColor('Noir', '#000000')" title="Noir"></div>
+                <div class="color-option" style="background: #FFFFFF; border: 1px solid #ddd;" onclick="selectColor('Blanc', '#FFFFFF')" title="Blanc"></div>
+                <div class="color-option" style="background: #FF0000;" onclick="selectColor('Rouge', '#FF0000')" title="Rouge"></div>
+                <div class="color-option" style="background: #0000FF;" onclick="selectColor('Bleu', '#0000FF')" title="Bleu"></div>
+                <div class="color-option" style="background: #00FF00;" onclick="selectColor('Vert', '#00FF00')" title="Vert"></div>
+                <div class="color-option" style="background: #FFFF00;" onclick="selectColor('Jaune', '#FFFF00')" title="Jaune"></div>
+                <div class="color-option" style="background: #FFC0CB;" onclick="selectColor('Rose', '#FFC0CB')" title="Rose"></div>
+                <div class="color-option" style="background: #800080;" onclick="selectColor('Violet', '#800080')" title="Violet"></div>
+                <div class="color-option" style="background: #FFA500;" onclick="selectColor('Orange', '#FFA500')" title="Orange"></div>
+                <div class="color-option" style="background: #A52A2A;" onclick="selectColor('Marron', '#A52A2A')" title="Marron"></div>
+                <div class="color-option" style="background: #808080;" onclick="selectColor('Gris', '#808080')" title="Gris"></div>
+                <div class="color-option" style="background: #00FFFF;" onclick="selectColor('Cyan', '#00FFFF')" title="Cyan"></div>
+                <div class="color-option" style="background: #FF00FF;" onclick="selectColor('Magenta', '#FF00FF')" title="Magenta"></div>
+              </div>
+              <div class="color-palette-footer">
+                <input type="text" id="customColorInput" placeholder="Ou entrez un code hex (ex: #FF5733)">
+                <button type="button" class="btn btn-sm btn-primary" onclick="applyCustomColor()">Appliquer</button>
+              </div>
             </div>
 
             <div class="form-group">

@@ -155,6 +155,10 @@ function clearCart() {
 // CHECKOUT & ORDER
 // ============================================
 
+// ============================================
+// CHECKOUT MODAL
+// ============================================
+
 function proceedToCheckout() {
   const cart = Utils.Storage.getCart();
   
@@ -163,18 +167,53 @@ function proceedToCheckout() {
     return;
   }
 
-  // Collect customer info
-  const customerName = prompt('Nom complet:');
-  if (!customerName) return;
+  // Calculer le total
+  const total = cart.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  document.getElementById('checkoutTotal').textContent = Utils.formatPrice(total);
+  
+  // Vider les champs précédents
+  document.getElementById('checkoutName').value = '';
+  document.getElementById('checkoutPhone').value = '';
+  document.getElementById('checkoutAddress').value = '';
+  
+  // Afficher le modal
+  document.getElementById('checkoutModal').style.display = 'flex';
+}
 
-  const customerPhone = prompt('Numéro WhatsApp (ex: 670000000):');
-  if (!customerPhone) return;
+function closeCheckoutModal() {
+  document.getElementById('checkoutModal').style.display = 'none';
+}
 
-  const customerAddress = prompt('Adresse de livraison:');
-  if (!customerAddress) return;
+async function submitCheckout(event) {
+  event.preventDefault();
+  
+  // Récupérer les valeurs
+  const name = document.getElementById('checkoutName').value.trim();
+  const countryCode = document.getElementById('countryCode').value;
+  const phoneNumber = document.getElementById('checkoutPhone').value.trim();
+  const address = document.getElementById('checkoutAddress').value.trim();
+  
+  // Validation
+  if (!name || !phoneNumber || !address) {
+    Utils.showToast('Veuillez remplir tous les champs', 'warning');
+    return;
+  }
+  
+  if (phoneNumber.length < 9) {
+    Utils.showToast('Numéro de téléphone invalide', 'warning');
+    return;
+  }
 
-  // Create order
-  createOrder(customerName, customerPhone, customerAddress);
+  // ✅ Formater le numéro avec l'indicatif
+  const fullPhone = `+${countryCode}${phoneNumber}`;
+  
+  console.log('📞 Numéro complet:', fullPhone);
+
+  // Fermer le modal
+  closeCheckoutModal();
+  
+  // Créer la commande
+  await createOrder(name, fullPhone, address);
 }
 
 async function createOrder(name, phone, address) {
@@ -286,11 +325,3 @@ function updateCartCount() {
   document.getElementById('cartCount').textContent = count;
 }
 
-// Update admin link
-window.addEventListener('load', () => {
-  const adminLink = document.getElementById('adminLink');
-  if (Utils.Storage.isAdminLoggedIn()) {
-    adminLink.href = 'admin/dashboard.html';
-    adminLink.textContent = 'Admin Panel';
-  }
-});

@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Load dashboard data
   loadDashboardData();
   setupNavigation();
+  updateUserGreeting();
 });
 
 // ============================================
@@ -22,81 +23,110 @@ document.addEventListener('DOMContentLoaded', () => {
 // ============================================
 
 function setupNavigation() {
-  // Set active nav item
   const currentPage = window.location.pathname.split('/').pop();
   document.querySelectorAll('.nav-item').forEach(item => {
     const href = item.getAttribute('href').split('/').pop();
-    if (href === currentPage) {
-      item.classList.add('active');
-    } else {
-      item.classList.remove('active');
-    }
+    item.classList.toggle('active', href === currentPage);
   });
 }
 
 // ============================================
-// LOAD DASHBOARD DATA
-// ============================================
-
-
-// ============================================
-// LOAD DASHBOARD DATA - CORRECTION EXTRACTION
+// LOAD DASHBOARD DATA - CORRIGÉ
 // ============================================
 
 async function loadDashboardData() {
   try {
     console.log('📊 Début chargement dashboard');
     
-    // 1. CHARGER LES PRODUITS
-    const productsResponse = await API.getAdminProducts();
-    console.log('📦 Réponse produits brute:', productsResponse);
+    // ✅ Afficher loader
+    showLoading(true);
     
-    // ✅ Extraire correctement les produits
-    let allProducts = [];
-    
-    // Si la réponse a une propriété data qui est un tableau
-    if (productsResponse?.data && Array.isArray(productsResponse.data)) {
-      allProducts = productsResponse.data;
-    }
-    // Si la réponse a une propriété data qui est un objet avec des produits
-    else if (productsResponse?.data && typeof productsResponse.data === 'object') {
-      // Peut-être que les produits sont dans data.products ?
-      allProducts = productsResponse.data.products || [];
-    }
-    // Si la réponse est directement un tableau
-    else if (Array.isArray(productsResponse)) {
-      allProducts = productsResponse;
-    }
-    
-    console.log('📦 Produits extraits:', allProducts.length);
-    if (allProducts.length > 0) {
-      console.log('📦 Premier produit:', allProducts[0]);
+    // 1. CHARGER LES STATS (prioritaire)
+    let stats = {};
+    try {
+      const statsResponse = await API.getDashboardStats();
+      stats = statsResponse?.data || {};
+      console.log('📊 Stats reçues:', stats);
+    } catch (statsError) {
+      console.warn('⚠️ Erreur stats, utilisation valeurs par défaut', statsError);
     }
 
     // 2. CHARGER LES COMMANDES
-    const ordersResponse = await API.getAdminOrders();
-    console.log('📦 Réponse commandes brute:', ordersResponse);
-    
     let allOrders = [];
-    if (ordersResponse?.data && Array.isArray(ordersResponse.data)) {
-      allOrders = ordersResponse.data;
-    } else if (Array.isArray(ordersResponse)) {
-      allOrders = ordersResponse;
+    try {
+      const ordersResponse = await API.getAdminOrders();
+      console.log('📦 Réponse commandes brute:', ordersResponse);
+      
+      // ✅ Extraction des commandes (response.data)
+      if (ordersResponse?.data && Array.isArray(ordersResponse.data)) {
+        allOrders = ordersResponse.data;
+      } else if (Array.isArray(ordersResponse)) {
+        allOrders = ordersResponse;
+      }
+      console.log('📦 Commandes extraites:', allOrders.length);
+    } catch (ordersError) {
+      console.warn('⚠️ Erreur commandes:', ordersError);
     }
-    console.log('📦 Commandes extraites:', allOrders.length);
 
-    // 3. CHARGER LES STATS
-    const statsResponse = await API.getDashboardStats();
-    const stats = statsResponse?.data || {};
-    console.log('📊 Stats:', stats);
+    // 3. CHARGER LES PRODUITS
+    let allProducts = [];
+    try {
+      const productsResponse = await API.getAdminProducts();
+      console.log('📦 Réponse produits brute:', productsResponse);
+      
+      // ✅ CORRIGÉ: Les produits sont dans response.products
+      if (productsResponse?.products && Array.isArray(productsResponse.products)) {
+        allProducts = productsResponse.products;
+        console.log('✅ Produits dans response.products');
+      } 
+      // Fallback pour ancien format
+      else if (productsResponse?.data && Array.isArray(productsResponse.data)) {
+        allProducts = productsResponse.data;
+        console.log('⚠️ Ancien format: produits dans response.data');
+      }
+      // Fallback si tableau direct
+      else if (Array.isArray(productsResponse)) {
+        allProducts = productsResponse;
+        console.log('⚠️ Format tableau direct');
+      }
+      
+      console.log('📦 Produits extraits:', allProducts.length);
+      if (allProducts.length > 0) {
+        console.log('📦 Premier produit:', allProducts[0]);
+      }
+    } catch (productsError) {
+      console.warn('⚠️ Erreur produits:', productsError);
+    }
 
     // 4. METTRE À JOUR L'AFFICHAGE
     updateStatsCards(stats, allOrders, allProducts);
     displayRecentOrders(allOrders.slice(0, 5));
-    displayTopProducts(allProducts);
+    displayTopProducts(allProducts.slice(0, 5));
+    
+    // ✅ Cacher loader
+    showLoading(false);
     
   } catch (error) {
-    console.error('❌ Erreur:', error);
+    console.error('❌ Erreur globale:', error);
+    Utils.showToast('Erreur lors du chargement du dashboard', 'error');
+    showLoading(false);
+  }
+}
+
+// ============================================
+// LOADER
+// ============================================
+
+function showLoading(show) {
+  const content = document.querySelector('.admin-content');
+  if (!content) return;
+
+  if (show) {
+    content.style.opacity = '0.5';
+    content.style.pointerEvents = 'none';
+  } else {
+    content.style.opacity = '1';
+    content.style.pointerEvents = 'auto';
   }
 }
 
@@ -111,7 +141,7 @@ function updateStatsCards(stats, orders, products) {
   // Total orders
   document.getElementById('totalOrders').textContent = orders.length;
 
-  // Monthly revenue
+  // Monthly revenue (stats du dashboard)
   const monthlyRevenue = stats.monthlyRevenue || 0;
   document.getElementById('monthlyRevenue').textContent = Utils.formatPrice(monthlyRevenue);
 
@@ -120,8 +150,12 @@ function updateStatsCards(stats, orders, products) {
   document.getElementById('pendingOrders').textContent = pendingCount;
 
   // User greeting
+  updateUserGreeting();
+}
+
+function updateUserGreeting() {
   const hour = new Date().getHours();
-  let greeting = 'Connecté';
+  let greeting = 'Bonjour';
   if (hour < 12) greeting = 'Bonjour';
   else if (hour < 18) greeting = 'Bon après-midi';
   else greeting = 'Bonsoir';
@@ -135,13 +169,15 @@ function updateStatsCards(stats, orders, products) {
 
 function displayRecentOrders(orders) {
   const tbody = document.getElementById('recentOrdersTable');
+  if (!tbody) return;
+  
   Utils.DOM.empty(tbody);
 
-  if (orders.length === 0) {
+  if (!orders || orders.length === 0) {
     tbody.innerHTML = `
       <tr>
         <td colspan="6" style="text-align: center; padding: 30px;">
-          Aucune commande
+          Aucune commande récente
         </td>
       </tr>
     `;
@@ -149,17 +185,16 @@ function displayRecentOrders(orders) {
   }
 
   orders.forEach(order => {
-    const statusBadge = getStatusBadge(order.status);
     const row = document.createElement('tr');
     row.innerHTML = `
       <td>#${order.id}</td>
-      <td>${order.customer_name}</td>
-      <td>${Utils.formatPrice(order.total_amount)}</td>
-      <td>${statusBadge}</td>
+      <td>${order.customer_name || 'N/A'}</td>
+      <td>${Utils.formatPrice(order.total_amount || 0)}</td>
+      <td>${getStatusBadge(order.status || 'pending')}</td>
       <td>${Utils.formatDate(order.created_at)}</td>
       <td>
-        <button class="btn btn-sm btn-primary" onclick="window.location.href='orders.html?id=${order.id}'">
-          Voir
+        <button class="btn btn-sm btn-primary" onclick="viewOrder(${order.id})">
+          <i class="fa-solid fa-eye"></i>
         </button>
       </td>
     `;
@@ -169,14 +204,14 @@ function displayRecentOrders(orders) {
 
 // ============================================
 // DISPLAY TOP PRODUCTS
-// ============================================ 
+// ============================================
 
 function displayTopProducts(products) {
   const tbody = document.getElementById('topProductsTable');
+  if (!tbody) return;
+  
   Utils.DOM.empty(tbody);
 
-  console.log('🎨 Affichage de', products.length, 'produits');
-  
   if (!products || products.length === 0) {
     tbody.innerHTML = `
       <tr>
@@ -189,33 +224,25 @@ function displayTopProducts(products) {
   }
 
   products.forEach(product => {
-    if (product.is_featured){
-    console.log('📦 Produit à afficher:', product);
-    
     const row = document.createElement('tr');
-    
-    // Sécuriser les données
-    const stock = product.stock || 0;
-    const stockClass = stock > 10 ? 'text-success' : 
-                       stock > 0 ? 'text-warning' : 'text-error';
+    const stockClass = product.stock > 10 ? 'text-success' : 
+                       product.stock > 0 ? 'text-warning' : 'text-error';
     
     row.innerHTML = `
-      <td>${product.name || 'Sans nom'}</td>
-      <td>${product.sales || product.sales_count || 0}</td>
+      <td>${product.name || 'N/A'}</td>
+      <td>${product.sales_count || 0}</td>
       <td>
-        <span class="${stockClass}">${stock}</span>
+        <span class="${stockClass}">${product.stock || 0}</span>
       </td>
       <td>${Utils.formatPrice(product.base_price || 0)}</td>
       <td>
         <button class="btn btn-sm btn-primary" onclick="editProduct(${product.id})">
-          Éditer
+          Éditer<i class="fas fa-edit"></i>
         </button>
       </td>
     `;
-    tbody.appendChild(row);}
+    tbody.appendChild(row);
   });
-  
-  console.log('✅', products.length, 'produits affichés');
 }
 
 // ============================================
@@ -237,16 +264,31 @@ function getStatusBadge(status) {
 }
 
 // ============================================
+// ACTIONS
+// ============================================
+
+function viewOrder(id) {
+  window.location.href = `orders.html?id=${id}`;
+}
+
+function editProduct(id) {
+  window.location.href = `products.html?edit=${id}`;
+}
+
+// ============================================
 // LOGOUT
 // ============================================
 
 function logout() {
   if (confirm('Êtes-vous sûr de vouloir vous déconnecter?')) {
-    Utils.Storage.remove('adminToken');
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    
     Utils.showToast('Déconnecté', 'info');
+    
     setTimeout(() => {
       window.location.href = '../login.html';
     }, 1000);
   }
 }
-

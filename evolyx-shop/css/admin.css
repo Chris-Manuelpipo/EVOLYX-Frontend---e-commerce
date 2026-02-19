@@ -4,6 +4,8 @@
  * ============================================
  */
 
+ 
+
 /* ============================================
    ADMIN LAYOUT
    ============================================ */
@@ -129,23 +131,24 @@
 .stat-card {
   background-color: var(--color-white);
   border-radius: var(--radius-lg);
-  padding: var(--space-6);
+  padding: var(--space-4);
   display: flex;
   align-items: center;
-  gap: var(--space-6);
-  box-shadow: var(--shadow-sm);
+  gap: var(--space-4);
+  box-shadow: var(--shadow-md);
   border: 1px solid var(--color-gray-medium);
+  border-left: 4px solid;
   transition: all var(--transition-fast);
 }
 
-.stat-card:hover {
-  box-shadow: var(--shadow-md);
-  border-color: var(--color-gold);
+.stat-card:hover { 
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
 }
 
 .stat-icon {
-  font-size: var(--size-3xl);
-  min-width: 60px;
+  font-size: var(--size-2xl);
+  min-width: 50px;
   text-align: center;
 }
 
@@ -154,19 +157,25 @@
 }
 
 .stat-label {
-  font-size: var(--size-sm);
+  font-size: var(--size-xs);
   color: var(--color-gray-dark);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: var(--space-2);
+  font-weight: 600;
 }
 
 .stat-value {
-  font-size: var(--size-2xl);
-  font-weight: 600;
+  font-size: var(--size-xl);
+  font-weight: 700;
   color: var(--color-black);
   margin: 0;
 }
+
+.stat-card:nth-child(1) { border-left-color: #3B82F6; }  /* Produits */
+.stat-card:nth-child(2) { border-left-color: #22C55E; }  /* Commandes */
+.stat-card:nth-child(3) { border-left-color: #D4AF37; }  /* Revenus */
+.stat-card:nth-child(4) { border-left-color: #EF4444; }  /* En attente */
 
 /* ============================================
    DASHBOARD SECTIONS
@@ -266,8 +275,7 @@
 .status-cancelled {
   background-color: #FEE2E2;
   color: #991B1B;
-}
-
+} 
 /* ============================================
    FORMS & MODALS
    ============================================ */
@@ -426,6 +434,13 @@
   width: 100%;
   border-collapse: collapse;
   margin-bottom: var(--space-6);
+  border: 1px solid var(--color-gray-medium);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.admin-table thead {
+  background: linear-gradient(to bottom, #f8f9fa, #e9ecef);
 }
 
 .admin-table th {
@@ -433,12 +448,14 @@
   padding: var(--space-4);
   text-align: left;
   font-weight: 600;
-  font-size: var(--size-sm);
+  font-size: var(--size-xs);
+  white-space: nowrap;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .admin-table td {
+  vertical-align: middle;
   padding: var(--space-4);
   border-bottom: 1px solid var(--color-gray-medium);
 }
@@ -461,19 +478,72 @@
   gap: var(--space-4);
   margin-bottom: var(--space-8);
   flex-wrap: wrap;
+  align-items: center;
+  background: white;
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
 }
 
-.admin-filters .form-group {
-  flex: 1;
-  min-width: 200px;
+.admin-filters .form-group {  
   margin-bottom: 0;
 }
 
-.admin-filters input,
-.admin-filters select {
-  height: auto;
+/* ✅ Select compact pour itemsPerPage */
+.admin-filters .form-group:first-child {
+  min-width: 80px;  /* ✅ Plus compact */
+  flex: 0 0 auto;
 }
 
+.admin-filters .form-group:nth-child(2) {
+  flex: 1;  /* ✅ La recherche prend plus de place */
+  min-width: 200px;
+}
+
+.admin-filters .form-group:nth-child(3) {
+  flex: 1;
+  min-width: 150px;
+}
+
+.admin-filters input, 
+.admin-filters select {
+  height: 40px;  /* ✅ Hauteur fixe */
+  padding: 8px;
+  border: 1px solid var(--color-gray-medium);
+  border-radius: var(--radius-md);
+  font-size: var(--size-sm);
+  transition: all var(--transition-fast);
+  background-color: white;
+}
+.admin-filters input:focus,
+.admin-filters select:focus {
+  border-color: var(--color-gold);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+}
+
+.admin-filters button {
+  height: 40px;  /* ✅ Même hauteur que les inputs */
+  padding: 8px;
+  white-space: nowrap;
+}
+
+/* ✅ Version mobile */
+@media (max-width: 768px) {
+  .admin-filters {
+    flex-direction: column;
+    align-items: stretch;
+    padding: var(--space-3);
+  }
+  
+  .admin-filters .form-group {
+    min-width: 100% !important;
+  }
+  
+  .admin-filters button {
+    width: 100%;
+  }
+}
 /* ============================================
    RESPONSIVE ADMIN
    ============================================ */
@@ -564,9 +634,9 @@
 .financial-card {
   background: white;
   border-radius: var(--radius-lg);
-  padding: var(--space-6);
+  padding: var(--space-4);
   display: flex;
-  gap: var(--space-6);
+  gap: var(--space-2);
   box-shadow: var(--shadow-md);
   border-left: 4px solid;
   transition: all var(--transition-fast);
@@ -594,7 +664,7 @@
 }
 
 .financial-icon {
-  font-size: var(--size-3xl);
+  font-size: var(--size-2xl);
   min-width: 70px;
   text-align: center;
 }
@@ -613,7 +683,7 @@
 }
 
 .financial-value {
-  font-size: var(--size-2xl);
+  font-size: var(--size-xl);
   font-weight: 700;
   color: var(--color-black);
   margin: var(--space-2) 0;
@@ -636,8 +706,16 @@
 .chart-card {
   background: white;
   border-radius: var(--radius-lg);
-  padding: var(--space-8);
+  padding: var(--space-6);  /* ✅ Réduire le padding */
   box-shadow: var(--shadow-md);
+  height: 400px;  /* ✅ Hauteur fixe */
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-card canvas { 
+  max-height: 250px;  /* ✅ Limiter la hauteur du canvas */
+  width: 100% !important;
 }
 
 .chart-header {
@@ -661,94 +739,328 @@
 }
 
 /* Calendar Styles */
-.calendar-section {
-  margin-bottom: var(--space-12);
+/* Dans admin.css */
+
+/* Today Summary Cards */
+.today-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin: 20px 0;
 }
 
-.calendar-header {
+.summary-card {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);  /* ✅ Utiliser les variables */
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--space-8);
-  padding-bottom: var(--space-6);
-  border-bottom: 2px solid var(--color-gray-medium);
+  gap: var(--space-8);
+  box-shadow: var(--shadow-md);  /* ✅ Utiliser la variable */
+  transition: transform var(--transition-fast);
+  border-left: 4px solid;
 }
 
-.calendar-header h2 {
-  margin: 0;
-  flex: 1;
-  text-align: center;
+.summary-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Ajouter des couleurs par type */
+.summary-card:nth-child(1) { border-left-color: #3B82F6; }  /* Commandes */
+.summary-card:nth-child(2) { border-left-color: #22C55E; }  /* CA */
+.summary-card:nth-child(3) { border-left-color: #D4AF37; }  /* En attente */
+
+.summary-icon {
+  font-size: 32px;
+}
+
+.summary-label {
+  font-size: var(--size-sm);
+  color: var(--color-gray-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--space-2);
+  font-weight: 600;
+}
+ 
+
+.summary-value { 
+  font-size: var(--size-xl);
+  font-weight: 700;
   color: var(--color-black);
+  margin: var(--space-2) 0;
 }
 
+/* Out of Stock Products */
+.out-of-stock-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 15px;
+  padding: 10px;
+}
+
+.out-of-stock-item {
+  border-left: 3px solid #EF4444;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 4px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.out-of-stock-item small {
+  color: #EF4444;
+  font-weight: 600;  /* ✅ Gras */
+  background: rgba(239, 68, 68, 0.1);  /* ✅ Fond léger rouge */
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  display: inline-block;
+  margin-top: 4px;
+}
+
+.out-of-stock-item:hover {
+  background: #f0f0f0;
+}
+
+.out-of-stock-item img {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.out-of-stock-item .item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.out-of-stock-item .item-info strong {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 4px;
+  word-wrap: break-word;  /* ✅ Coupe les mots longs */
+  overflow-wrap: break-word;
+  line-height: 1.3;
+}
+
+.out-of-stock-item .item-info small {
+  display: block;
+  color: #EF4444;
+  font-size: 12px;
+}
+
+/* Calendar - Version compacte */
 .calendar-table {
   width: 100%;
   border-collapse: collapse;
-}
-
-.calendar-table thead {
-  background-color: var(--color-gray-light);
+  table-layout: fixed;
 }
 
 .calendar-table th {
-  padding: var(--space-4);
+  padding: 8px;
   text-align: center;
-  font-weight: 600;
-  color: var(--color-black);
-  border: 1px solid var(--color-gray-medium);
-}
-
-.calendar-table td {
-  padding: 0;
-  border: 1px solid var(--color-gray-medium);
-  height: 120px;
-  position: relative;
+  background: #f5f5f5;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .calendar-cell {
-  width: 100%;
-  height: 100%;
-  padding: var(--space-3);
-  display: flex;
-  flex-direction: column;
+  min-height: 80px;  /* ✅ min-height au lieu de fixed height */
+  height: auto;
+  padding: 8px 5px;  
+  text-align: center;
+  vertical-align: top;
+  border: 1px solid #eee;
   cursor: pointer;
-  transition: all var(--transition-fast);
-  background-color: white;
+  transition: background 0.2s;
+  overflow: hidden;
 }
 
 .calendar-cell:hover {
-  background-color: var(--color-gray-light);
-  box-shadow: inset 0 0 10px rgba(212, 175, 55, 0.2);
+  background: #f9f9f9;
 }
 
 .calendar-cell.calendar-other {
-  background-color: #FAFAFA;
-  opacity: 0.5;
+  opacity: 0.4;
 }
 
 .calendar-day {
-  font-weight: 600;
-  font-size: var(--size-lg);
-  color: var(--color-black);
-  margin-bottom: var(--space-2);
+  font-weight: bold;
+  font-size: 14px;
+  margin-bottom: 3px;
 }
 
 .calendar-orders {
-  font-size: var(--size-xs);
-  background-color: #3B82F6;
-  color: white;
-  padding: 2px 6px;
-  border-radius: 3px;
-  display: inline-block;
-  margin-bottom: 4px;
-  font-weight: 600;
+  font-size: 11px;
+  color: #ff0000;
+  line-height: 1.3; 
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 4px;
+  white-space: normal;   
+  word-break: break-word;
 }
 
-.calendar-revenue {
-  font-size: var(--size-xs);
-  color: var(--color-gold);
-  font-weight: 600;
+/* Responsive */
+@media (max-width: 768px) {
+  out-of-stock-item {
+    flex-wrap: wrap;  /* ✅ Permet de passer à la ligne si nécessaire */
+  }
+  
+  .out-of-stock-item img {
+    width: 40px;  /* ✅ Plus petit sur mobile */
+    height: 40px;
+  }
+  
+  .out-of-stock-item .item-info strong {
+    font-size: 13px;
+  }
+  .admin-filters {
+    flex-direction: column;
+  }
+  
+  .admin-filters .form-group {
+    min-width: 100%;
+  }
+  
+  .action-buttons {
+    flex-direction: row;   
+    justify-content: flex-end;
+  }
+  
+  .action-buttons button {
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--size-xs);
+  }
+   
+  .dashboard-section {
+    overflow-x: auto;
+  }
+  
+  .dashboard-table {
+    min-width: 600px;
+  }
+   
+  .calendar-cell {
+    min-height: 60px;
+    font-size: 10px;
+  }
+  .today-summary-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .out-of-stock-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .calendar-table {
+    font-size: 11px;
+  }
+  
+  .calendar-cell {
+    height: 60px;
+    padding: 3px;
+  }
+  
+  .calendar-day {
+    font-size: 12px;
+  }
+  
+  .calendar-orders {
+    font-size: 10px;
+  }
+
+  admin-sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;  /* ✅ Change de fixed à relative */
+    flex-direction: row;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    overflow-x: auto;  /* ✅ Permet le scroll horizontal si nécessaire */
+    -webkit-overflow-scrolling: touch;  /* ✅ Scroll fluide sur iOS */
+  }
+
+  .sidebar-header {
+    min-width: 100px;  /* ✅ Réduit la largeur */
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+
+  .sidebar-header h2 {
+    font-size: var(--size-base);  /* ✅ Plus petit */
+  }
+
+  .sidebar-header p {
+    display: none;  /* ✅ Cache le sous-titre sur mobile */
+  }
+
+  .sidebar-nav {
+    flex-direction: row;
+    flex: 1;
+    gap: var(--space-2);
+  }
+
+  .nav-item {
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--size-xs);
+    white-space: nowrap;  /* ✅ Empêche le retour à la ligne */
+  }
+
+  .nav-item .icon {
+    font-size: var(--size-base);
+    min-width: 20px;
+  }
+
+  .sidebar-footer {
+    display: none;  /* ✅ Cache le bouton déconnexion de la sidebar sur mobile */
+  }
 }
+
+/* ✅ Ajouter le bouton déconnexion dans le topbar pour mobile */
+@media (max-width: 768px) {
+  .topbar-user .btn-secondary {
+    display: inline-block;  /* ✅ Visible dans le topbar */
+  }
+}
+
+
+/* ✅ S'assurer que le bouton déconnexion est toujours visible */
+
+.sidebar-footer {
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--color-gray-dark);
+}
+
+.sidebar-footer .btn {
+  background: #333;
+  color: white;
+  border: none;
+  transition: all var(--transition-fast);
+}
+
+.sidebar-footer .btn:hover {
+  background: var(--color-gold);
+  color: var(--color-black);
+}
+
+/* ✅ Bouton déconnexion dans le topbar (pour mobile) */
+.topbar-user .btn-secondary {
+  display: none;  /* ✅ Caché par défaut sur desktop */
+}
+
+/* ✅ Afficher dans le topbar sur mobile */
+@media (max-width: 768px) {
+  .topbar-user .btn-secondary {
+    display: inline-block;
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--size-xs);
+  }
+}
+
 
 /* Day Stats */
 #dayStats h3 {
@@ -767,7 +1079,7 @@
 
 /* Form Control Inline */
 .form-control-inline {
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-4);
   border: 1px solid var(--color-gray-medium);
   border-radius: var(--radius-md);
   font-size: var(--size-sm);
@@ -883,4 +1195,22 @@
   background: #f8f9fa;
   border-radius: 4px;
   font-weight: 500;
+}
+/* Dans admin.css */
+.btn-whatsapp {
+  background: #25D366;
+  color: white;
+  border: none;
+  transition: background 0.3s;
+}
+
+.btn-whatsapp:hover {
+  background: #128C7E;
+  color: white;
+}
+
+.btn-whatsapp:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  opacity: 0.5;
 }

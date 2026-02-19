@@ -44,18 +44,42 @@ function setupEventListeners() {
     currentPage = 1;
     filterProducts();
   });
-
-  // Admin link
-  const adminLink = document.getElementById('adminLink');
-  if (Utils.Storage.isAdminLoggedIn()) {
-    adminLink.href = 'admin/dashboard.html';
-    adminLink.textContent = 'Admin Panel';
-  } else {
-    adminLink.href = 'login.html';
-    adminLink.textContent = 'Admin';
-  }
+ 
 }
+// ============================================
+// ACCÈS ADMIN CACHÉ (double-clic sur le logo)
+// ============================================
 
+document.addEventListener('DOMContentLoaded', () => {
+  const adminAccess = document.getElementById('adminAccess');
+  
+  if (adminAccess) {
+    let clickCount = 0;
+    let clickTimer;
+    
+    adminAccess.addEventListener('click', (e) => {
+      clickCount++;
+      
+      if (clickCount === 1) {
+        clickTimer = setTimeout(() => {
+          clickCount = 0;
+        }, 1200);
+      } else if (clickCount === 5) {
+        clearTimeout(clickTimer);
+        clickCount = 0;
+        
+        // ✅ Vérifier si l'admin est déjà connecté
+        if (Utils.Storage.isAdminLoggedIn()) {
+          console.log('🔐 Admin déjà connecté, redirection vers dashboard');
+          window.location.href = 'admin/dashboard.html';
+        } else {
+          console.log('🔐 Admin non connecté, redirection vers login');
+          window.location.href = 'login.html';
+        }
+      }
+    });
+  } 
+});
 // ============================================
 // LOAD DATA
 // ============================================
@@ -137,31 +161,75 @@ function filterProducts() {
 
 /**
  * Load products with filters from backend
- */
+ */ 
 async function loadProductsWithFilters(search = '', categoryId = '') {
   try {
     Utils.showLoading(document.getElementById('productsGrid'), true);
+    console.log('🔍 Filtrage avec:', { search, categoryId, page: currentPage });
 
-    // Construit les paramètres
-    const params = {
-      page: currentPage,
-      limit: ITEMS_PER_PAGE,
-    };
-
-    if (search) params.search = search;
-    if (categoryId) params.category_id = categoryId;
-
-    // Appelle l'API avec les filtres
-    const response = await API.getProducts(params);
+    let response;
     
-    filteredProducts = response.data || [];
-    renderProducts();
-    renderPagination(response.total || 0);
+    // ✅ Si recherche uniquement
+    if (search && !categoryId) {
+      console.log('📡 Recherche API searchProducts avec:', search);
+      response = await API.searchProducts(search, { 
+        page: currentPage, 
+        limit: ITEMS_PER_PAGE 
+      });
+    }
+    // ✅ Si catégorie uniquement
+    else if (!search && categoryId) {
+      console.log('📡 API getProductsByCategory avec catégorie:', categoryId);
+      response = await API.getProductsByCategory(categoryId, { 
+        page: currentPage, 
+        limit: ITEMS_PER_PAGE 
+      });
+    }
+    // ✅ Si recherche + catégorie (les deux)
+    else if (search && categoryId) {
+      console.log('📡 Recherche + catégorie combinés');
+      // Option: On cherche d'abord, puis on filtre par catégorie
+      const searchResponse = await API.searchProducts(search, { 
+        page: 1, 
+        limit: 100 
+      });
+      const allResults = searchResponse.data || [];
+      filteredProducts = allResults.filter(p => p.category_id == categoryId);
+      
+      // Pagination manuelle
+      const start = (currentPage - 1) * ITEMS_PER_PAGE;
+      const end = start + ITEMS_PER_PAGE;
+      const paginatedResults = filteredProducts.slice(start, end);
+      
+      renderProducts(paginatedResults);
+      renderPagination(filteredProducts.length);
+      
+      Utils.showLoading(document.getElementById('productsGrid'), false);
+      return;
+    }
+    // ✅ Si aucun filtre (chargement normal)
+    else {
+      console.log('📡 Chargement normal');
+      response = await API.getProducts({ 
+        page: currentPage, 
+        limit: ITEMS_PER_PAGE 
+      });
+    }
+
+    // ✅ Traitement de la réponse
+    if (response) {
+      console.log('✅ Réponse reçue:', response);
+      filteredProducts = response.data || [];
+      renderProducts(filteredProducts);
+      renderPagination(response.total || filteredProducts.length);
+    }
 
     Utils.showLoading(document.getElementById('productsGrid'), false);
+    
   } catch (error) {
-    console.error('Failed to filter products:', error);
+    console.error('❌ Failed to filter products:', error);
     Utils.showToast('Erreur lors du filtrage', 'error');
+    Utils.showLoading(document.getElementById('productsGrid'), false);
   }
 }
 
@@ -273,3 +341,5 @@ function updateCartCount() {
 
 // Update cart count when page regains focus
 window.addEventListener('focus', updateCartCount);
+
+ 

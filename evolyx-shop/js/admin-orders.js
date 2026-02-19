@@ -1,77 +1,166 @@
-/**
- * @fileoverview Admin Orders Management
- * View and update order status
- * @author EVOLYX Team
- */
-
+// ============================================
+// VARIABLES GLOBALES
+// ============================================
 let allOrders = [];
 let selectedOrderId = null;
+let filteredOrders = [];
 
+// ============================================
+// INITIALIZATION
+// ============================================
 document.addEventListener('DOMContentLoaded', () => {
   Auth.requireAuth();
   loadOrders();
+  
+  // Écouteurs pour les filtres
   document.getElementById('statusFilter').addEventListener('change', filterOrders);
+  document.getElementById('dateFrom').addEventListener('change', filterOrders);
+  document.getElementById('dateTo').addEventListener('change', filterOrders);
 });
 
+// ============================================
+// LOAD ORDERS
+// ============================================
 async function loadOrders() {
   try {
     const response = await API.getAdminOrders();
-    allOrders = response.data || [];
-    renderOrders(allOrders);
+    allOrders = response.data || response.orders || [];
+    filteredOrders = [...allOrders];
+    renderOrders(filteredOrders);
+    updateFilterStats();
   } catch (error) {
     console.error('Failed to load orders:', error);
     Utils.showToast('Erreur lors du chargement des commandes', 'error');
   }
 }
 
+// ============================================
+// FILTER ORDERS
+// ============================================
 function filterOrders() {
   const status = document.getElementById('statusFilter').value;
-  const filtered = status ? allOrders.filter(o => o.status === status) : allOrders;
-  renderOrders(filtered);
+  const dateFrom = document.getElementById('dateFrom').value;
+  const dateTo = document.getElementById('dateTo').value;
+
+  filteredOrders = allOrders.filter(order => {
+    // Filtre par statut
+    if (status && order.status !== status) return false;
+
+    // Filtre par date
+    if (dateFrom || dateTo) {
+      const orderDate = new Date(order.created_at);
+      
+      if (dateFrom) {
+        const fromDate = new Date(dateFrom);
+        fromDate.setHours(0, 0, 0, 0);
+        if (orderDate < fromDate) return false;
+      }
+      
+      if (dateTo) {
+        const toDate = new Date(dateTo);
+        toDate.setHours(23, 59, 59, 999);
+        if (orderDate > toDate) return false;
+      }
+    }
+
+    return true;
+  });
+
+  renderOrders(filteredOrders);
+  updateFilterStats();
 }
 
+// ============================================
+// RESET FILTERS
+// ============================================
+function resetFilters() {
+  document.getElementById('statusFilter').value = '';
+  document.getElementById('dateFrom').value = '';
+  document.getElementById('dateTo').value = '';
+  
+  filteredOrders = [...allOrders];
+  renderOrders(filteredOrders);
+  updateFilterStats();
+  Utils.showToast('Filtres réinitialisés', 'info');
+}
+
+// ============================================
+// UPDATE FILTER STATS
+// ============================================
+function updateFilterStats() {
+  const statsElement = document.getElementById('filterStats');
+  if (!statsElement) return;
+  
+  const total = allOrders.length;
+  const filtered = filteredOrders.length;
+  
+  if (total !== filtered) {
+    statsElement.textContent = `${filtered} commandes sur ${total}`;
+  } else {
+    statsElement.textContent = `${total} commandes`;
+  }
+}
+
+// ============================================
+// RENDER ORDERS
+// ============================================
 function renderOrders(orders) {
   const tbody = document.getElementById('ordersTableBody');
   Utils.DOM.empty(tbody);
 
   if (orders.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px;">Aucune commande</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 30px;">Aucune commande</td></tr>';
     return;
   }
 
   orders.forEach(order => {
     const statusBadge = getStatusBadge(order.status);
     const row = document.createElement('tr');
+    
+    // Nettoyer le numéro de téléphone
+    const cleanPhone = order.customer_phone?.replace(/\s+/g, '').replace(/[^0-9+]/g, '') || '';
+    
     row.innerHTML = `
       <td>#${order.id}</td>
-      <td>${order.customer_name}</td>
-      <td>${order.customer_phone}</td>
-      <td>${Utils.formatPrice(order.total_amount)}</td>
+      <td>${order.customer_name || 'N/A'}</td>
+      <td>${order.customer_phone || 'N/A'}</td>
+      <td>${Utils.formatPrice(order.total_amount || 0)}</td>
       <td>${statusBadge}</td>
       <td>${Utils.formatDate(order.created_at)}</td>
       <td>
-        <button class="btn btn-sm btn-primary" onclick="viewOrder(${order.id})">
-          👁️ Voir
-        </button>
+        <div style="display: flex; gap: 5px;">
+          <button class="btn btn-sm btn-primary" onclick="viewOrder(${order.id})" title="Voir détails">
+            <i class="fas fa-eye"></i>
+          </button>
+          <button class="btn btn-sm" style="background: #25D366; color: white;" 
+                  onclick="contactCustomer('${cleanPhone}', '${order.customer_name || 'Client'}', ${order.id})"
+                  title="Contacter sur WhatsApp"
+                  ${!cleanPhone ? 'disabled' : ''}>
+            <i class="fab fa-whatsapp"></i>
+          </button>
+        </div>
       </td>
     `;
     tbody.appendChild(row);
   });
 }
 
+// ============================================
+// GET STATUS BADGE
+// ============================================
 function getStatusBadge(status) {
   const statuses = {
     pending: { label: 'En attente', class: 'status-pending' },
-    confirmed: { label: 'Confirmée', class: 'status-confirmed' },
-    preparing: { label: 'En préparation', class: 'status-preparing' },
-    shipped: { label: 'Expédiée', class: 'status-shipped' },
-    delivered: { label: 'Livrée', class: 'status-delivered' },
+    confirmed: { label: 'Confirmée', class: 'status-confirmed' }, 
     cancelled: { label: 'Annulée', class: 'status-cancelled' },
   };
   const info = statuses[status] || statuses.pending;
   return `<span class="status-badge ${info.class}">${info.label}</span>`;
 }
 
+// ============================================
+// VIEW ORDER DETAILS
+// ============================================
 async function viewOrder(orderId) {
   try {
     const response = await API.getAdminOrder(orderId);
@@ -120,6 +209,13 @@ async function viewOrder(orderId) {
         Total: ${Utils.formatPrice(order.total_amount)}
       </div>
 
+      <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: flex-end;">
+        <button class="btn btn-sm" style="background: #25D366; color: white;" 
+                onclick="contactCustomer('${order.customer_phone}', '${order.customer_name}', ${order.id})">
+          📱 Contacter client
+        </button>
+      </div>
+
       ${order.notes ? `
         <div style="margin-top: 15px; padding: 10px; background: #F9F9F9; border-left: 3px solid #D4AF37;">
           <strong>Notes:</strong> ${order.notes}
@@ -135,6 +231,9 @@ async function viewOrder(orderId) {
   }
 }
 
+// ============================================
+// UPDATE ORDER STATUS
+// ============================================
 async function updateOrderStatus() {
   if (!selectedOrderId) return;
 
@@ -151,11 +250,60 @@ async function updateOrderStatus() {
   }
 }
 
+// ============================================
+// CONTACT CUSTOMER ON WHATSAPP
+// ============================================
+function contactCustomer(phone, customerName, orderId) {
+  if (!phone) {
+    Utils.showToast('Numéro de téléphone non disponible', 'warning');
+    return;
+  }
+
+  if (!confirm(`Ouvrir WhatsApp pour contacter ${customerName} ?`)) {
+    return;
+  }
+
+  // Nettoyer et formater le numéro
+  let cleanPhone = phone.replace(/\s+/g, '').replace(/[^0-9+]/g, '');
+  
+  if (!cleanPhone.startsWith('+')) {
+    // Numéros camerounais
+    if (cleanPhone.startsWith('237')) {
+      cleanPhone = '+' + cleanPhone;
+    } else if (cleanPhone.length === 9) {
+      // Format local: 6XXXXXXXX
+      cleanPhone = '+237' + cleanPhone;
+    } else if (cleanPhone.length === 8) {
+      // Format avec 6 au début? Ex: 70000000
+      cleanPhone = '+2376' + cleanPhone;
+    } else {
+      // Par défaut, on garde tel quel
+      cleanPhone = '+' + cleanPhone;
+    }
+  }
+
+
+  const message = encodeURIComponent(
+    `Bonjour ${customerName} 👋\n\n` +
+    `Je vous contacte concernant votre commande #${orderId} sur EVOLYX.\n` +
+    `Puis-je vous aider ?`
+  );
+
+  window.open(`https://wa.me/${cleanPhone}?text=${message}`, '_blank');
+  Utils.showToast(`WhatsApp ouvert pour ${customerName}`, 'success');
+}
+
+// ============================================
+// CLOSE MODAL
+// ============================================
 function closeOrderModal() {
   document.getElementById('orderModal').classList.remove('active');
   selectedOrderId = null;
 }
 
+// ============================================
+// LOGOUT
+// ============================================
 function logout() {
   if (confirm('Êtes-vous sûr de vouloir vous déconnecter?')) {
     Utils.Storage.remove('adminToken');

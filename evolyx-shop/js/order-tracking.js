@@ -5,12 +5,12 @@
  */
 
 const ORDER_STATUSES = {
-  pending: { label: 'En attente', color: '#F59E0B', icon: '⏳' },
-  confirmed: { label: 'Confirmée', color: '#3B82F6', icon: '✓' },
-  preparing: { label: 'En préparation', color: '#8B5CF6', icon: '📦' },
-  shipped: { label: 'Expédiée', color: '#06B6D4', icon: '🚚' },
-  delivered: { label: 'Livrée', color: '#22C55E', icon: '🎉' },
-  cancelled: { label: 'Annulée', color: '#EF4444', icon: '❌' },
+  pending: { label: 'En attente', color: '#F59E0B', icon: '<i class="fas fa-hourglass-half"></i>' },
+  confirmed: { label: 'Confirmée', color: '#22C55E', icon: '<i class="fas fa-check-circle"></i>' },
+  // preparing: { label: 'En préparation', color: '#8B5CF6', icon: '📦' },
+  // shipped: { label: 'Expédiée', color: '#06B6D4', icon: '🚚' },
+  // delivered: { label: 'Livrée', color: '#22C55E', icon: '🎉' },
+  cancelled: { label: 'Annulée', color: '#EF4444', icon: '<i class="fas fa-times-circle"></i>' },
 };
 
 // ============================================
@@ -143,7 +143,7 @@ function renderOrderStatus(order) {
 // TIMELINE RENDERING
 // ============================================
 
-const STATUS_SEQUENCE = ['pending', 'confirmed', 'preparing', 'shipped', 'delivered'];
+const STATUS_SEQUENCE = ['pending', 'confirmed', 'cancelled' ];
 
 function getStatusIndex(status) {
   return STATUS_SEQUENCE.indexOf(status);
@@ -199,9 +199,9 @@ function getStatusDescription(status) {
   const descriptions = {
     pending: 'Votre commande a été créée et attend confirmation',
     confirmed: 'Votre commande a été confirmée',
-    preparing: 'Votre commande est en cours de préparation',
-    shipped: 'Votre commande a été expédiée',
-    delivered: 'Votre commande a été livrée',
+    // preparing: 'Votre commande est en cours de préparation',
+    // shipped: 'Votre commande a été expédiée',
+    // delivered: 'Votre commande a été livrée',
     cancelled: 'Votre commande a été annulée',
   };
   return descriptions[status] || '';

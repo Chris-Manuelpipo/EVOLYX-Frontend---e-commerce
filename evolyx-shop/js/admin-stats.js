@@ -6,9 +6,9 @@
 
 let allOrders = [];
 let allProducts = [];
+let allCategories = [];
 let chartsInstances = {};
 let currentMonth = new Date();
-let calendarData = {};
 
 // ============================================
 // INITIALIZATION
@@ -17,7 +17,6 @@ let calendarData = {};
 document.addEventListener('DOMContentLoaded', () => {
   Auth.requireAuth();
   loadStatsData();
-  generateCalendar();
 });
 
 // ============================================
@@ -30,12 +29,25 @@ async function loadStatsData() {
     const ordersResponse = await API.getAdminOrders();
     allOrders = ordersResponse.data || [];
 
-    // Load products
+    // ✅ CORRIGÉ: Les produits sont dans response.products
     const productsResponse = await API.getAdminProducts();
-    allProducts = productsResponse.data || [];
+    allProducts = productsResponse?.products || [];
+    
+    // Load categories
+    const categoriesResponse = await API.getCategories();
+    allCategories = categoriesResponse.data || [];
+    
+    console.log('📦 Commandes:', allOrders.length);
+    console.log('📦 Produits:', allProducts.length);
+    console.log('🏷️ Catégories:', allCategories.length);
 
+    // Load out of stock products
+    loadOutOfStockProducts();
+    
+    // Initial update
     updateStats();
     generateCalendar();
+    
   } catch (error) {
     console.error('Failed to load stats:', error);
     Utils.showToast('Erreur lors du chargement des statistiques', 'error');
@@ -49,35 +61,105 @@ async function loadStatsData() {
 function updateStats() {
   const dateRange = parseInt(document.getElementById('dateRangeFilter').value);
   const filteredOrders = filterByDateRange(allOrders, dateRange);
+  
+  // Filtrer uniquement les commandes confirmées pour les chiffres réels
+  const confirmedOrders = filteredOrders.filter(o => o.status === 'confirmed');
 
-  // Calculate KPIs
-  const totalRevenue = filteredOrders.reduce((sum, o) => sum + parseFloat(o.total_amount || 0), 0);
-  const totalExpense = calculateExpenses(filteredOrders);
+  // Calculer les KPI sur les commandes confirmées
+  const totalRevenue = confirmedOrders.reduce((sum, o) => sum + parseFloat(o.total_amount || 0), 0);
+  const totalExpense = calculateExpenses(confirmedOrders);
   const totalProfit = totalRevenue - totalExpense;
   const profitMargin = totalRevenue > 0 ? ((totalProfit / totalRevenue) * 100).toFixed(2) : 0;
 
-  // Update KPI cards
+  // Mettre à jour les KPI
   document.getElementById('totalRevenue').textContent = Utils.formatPrice(totalRevenue);
   document.getElementById('totalExpense').textContent = Utils.formatPrice(totalExpense);
   document.getElementById('totalProfit').textContent = Utils.formatPrice(totalProfit);
   document.getElementById('profitMargin').textContent = `${profitMargin}%`;
 
-  // Update trends
-  const prevOrders = filterByDateRange(allOrders, dateRange * 2).slice(
-    0,
-    Math.floor(filteredOrders.length / 2)
-  );
+  // Calculer les tendances
+  const prevOrders = filterByDateRange(allOrders, dateRange * 2).slice(0, Math.floor(confirmedOrders.length / 2));
   const prevRevenue = prevOrders.reduce((sum, o) => sum + parseFloat(o.total_amount || 0), 0);
   const revenueTrend = prevRevenue > 0 ? (((totalRevenue - prevRevenue) / prevRevenue) * 100).toFixed(1) : 0;
-
+  
   document.getElementById('revenueTrend').textContent = `${revenueTrend > 0 ? '↑' : '↓'} ${Math.abs(revenueTrend)}%`;
 
-  // Update charts
-  updateRevenueChart(filteredOrders);
+  // Mettre à jour le résumé du jour
+  updateTodaySummary();
+
+  // Mettre à jour les graphiques
+  updateRevenueChart(confirmedOrders);
   updateOrdersChart(filteredOrders);
   updateProductsChart();
   updateStatusChart(filteredOrders);
-  updateCategorySalesTable(filteredOrders);
+  updateCategorySalesTable(confirmedOrders);
+}
+
+// ============================================
+// TODAY SUMMARY
+// ============================================
+
+function updateTodaySummary() {
+  const today = new Date().toISOString().split('T')[0];
+  
+  const todayOrders = allOrders.filter(o => {
+    const orderDate = new Date(o.created_at).toISOString().split('T')[0];
+    return orderDate === today;
+  });
+
+  const todayConfirmed = todayOrders.filter(o => o.status === 'confirmed');
+  const todayRevenue = todayConfirmed.reduce((sum, o) => sum + parseFloat(o.total_amount || 0), 0);
+  const todayPending = todayOrders.filter(o => o.status === 'pending').length;
+
+  document.getElementById('todayOrdersCount').textContent = todayOrders.length;
+  document.getElementById('todayRevenue').textContent = Utils.formatPrice(todayRevenue);
+  document.getElementById('todayPending').textContent = todayPending;
+}
+
+// ============================================
+// OUT OF STOCK PRODUCTS - CORRIGÉ
+// ============================================
+
+async function loadOutOfStockProducts() {
+  try {
+    // ✅ CORRIGÉ: stock_min=0, stock_max=0 pour les produits en rupture
+    const response = await API.getAdminProducts({ 
+      stock_min: 0, 
+      stock_max: 0 
+    });
+    
+    // ✅ CORRIGÉ: response.products
+    const outOfStock = response?.products || [];
+    const container = document.getElementById('outOfStockProducts');
+    const countEl = document.getElementById('outOfStockCount');
+    
+    if (countEl) countEl.textContent = outOfStock.length;
+    
+    if (outOfStock.length === 0) {
+      container.innerHTML = '<p style="padding: 20px; text-align: center; color: #666;">Aucun produit en rupture</p>';
+      return;
+    }
+    
+    container.innerHTML = outOfStock.map(product => `
+      <div class="out-of-stock-item">
+        <img src="${LINK}/${product.images?.[0]?.url || 'default.png'}" 
+             alt="${product.name}"
+             onerror="this.src='${LINK}/default.png'">
+        <div class="item-info">
+          <strong>${product.name}</strong>
+          <small>Stock: ${product.stock}</small>
+        </div>
+        <a href="products.html?edit=${product.id}" class="btn btn-sm btn-primary"><i class="fas fa-sync-alt"></i> </a>
+      </div>
+    `).join('');
+    
+  } catch (error) {
+    console.error('Erreur chargement ruptures:', error);
+    const container = document.getElementById('outOfStockProducts');
+    if (container) {
+      container.innerHTML = '<p style="padding: 20px; text-align: center; color: red;">Erreur de chargement</p>';
+    }
+  }
 }
 
 // ============================================
@@ -85,7 +167,7 @@ function updateStats() {
 // ============================================
 
 function filterByDateRange(orders, days) {
-  if (days === 0) return orders; // All times
+  if (days === 0) return orders;
 
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - days);
@@ -101,19 +183,32 @@ function filterByDateRange(orders, days) {
 // ============================================
 
 function calculateExpenses(orders) {
-  // Example: 30% of revenue as expenses (adjust based on your business)
-  const totalRevenue = orders.reduce((sum, o) => sum + parseFloat(o.total_amount || 0), 0);
-  return totalRevenue * 0.30; // 30% expense ratio
+  return orders.reduce((sum, order) => {
+    if (order.items && Array.isArray(order.items)) {
+      return sum + order.items.reduce((itemSum, item) => {
+        const product = allProducts.find(p => p.id === item.product_id);
+        const itemCost = product ? parseFloat(product.base_price) * item.quantity : 0;
+        return itemSum + itemCost;
+      }, 0);
+    }
+    return sum;
+  }, 0);
 }
 
 // ============================================
-// REVENUE CHART
+// REVENUE CHART - CORRIGÉ (dimensions)
 // ============================================
 
 function updateRevenueChart(orders) {
-  const ctx = document.getElementById('revenueChart');
+  const canvas = document.getElementById('revenueChart');
+  if (!canvas) return;
   
-  // Group by date
+  // ✅ Forcer une taille fixe pour éviter l'explosion
+  canvas.style.height = '300px';
+  canvas.style.width = '100%';
+  
+  const ctx = canvas.getContext('2d');
+  
   const dateRevenue = {};
   orders.forEach(order => {
     const date = new Date(order.created_at).toLocaleDateString('fr-FR');
@@ -143,9 +238,9 @@ function updateRevenueChart(orders) {
     },
     options: {
       responsive: true,
+      maintainAspectRatio: true, // ✅ Changé à true
       plugins: {
-        legend: { display: true },
-        title: { display: false },
+        legend: { display: true, position: 'top' },
       },
       scales: {
         y: {
@@ -162,13 +257,18 @@ function updateRevenueChart(orders) {
 }
 
 // ============================================
-// ORDERS CHART
+// ORDERS CHART - CORRIGÉ
 // ============================================
 
 function updateOrdersChart(orders) {
-  const ctx = document.getElementById('ordersChart');
+  const canvas = document.getElementById('ordersChart');
+  if (!canvas) return;
+  
+  canvas.style.height = '300px';
+  canvas.style.width = '100%';
+  
+  const ctx = canvas.getContext('2d');
 
-  // Group by date
   const dateOrders = {};
   orders.forEach(order => {
     const date = new Date(order.created_at).toLocaleDateString('fr-FR');
@@ -196,15 +296,14 @@ function updateOrdersChart(orders) {
     },
     options: {
       responsive: true,
+      maintainAspectRatio: true,
       plugins: {
-        legend: { display: true },
+        legend: { display: true, position: 'top' },
       },
       scales: {
         y: {
           beginAtZero: true,
-          ticks: {
-            stepSize: 1,
-          },
+          ticks: { stepSize: 1 },
         },
       },
     },
@@ -212,24 +311,29 @@ function updateOrdersChart(orders) {
 }
 
 // ============================================
-// PRODUCTS CHART (TOP 10)
+// PRODUCTS CHART - CORRIGÉ
 // ============================================
 
 function updateProductsChart() {
-  const ctx = document.getElementById('productsChart');
+  const canvas = document.getElementById('productsChart');
+  if (!canvas) return;
+  
+  canvas.style.height = '300px';
+  canvas.style.width = '100%';
+  
+  const ctx = canvas.getContext('2d');
 
-  // Count product sales
   const productSales = {};
   allOrders.forEach(order => {
     if (order.items && Array.isArray(order.items)) {
       order.items.forEach(item => {
-        const productName = item.product_name || 'Inconnu';
+        const product = allProducts.find(p => p.id === item.product_id);
+        const productName = product?.name || `Produit #${item.product_id}`;
         productSales[productName] = (productSales[productName] || 0) + item.quantity;
       });
     }
   });
 
-  // Sort and get top 10
   const sorted = Object.entries(productSales)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 10);
@@ -242,7 +346,7 @@ function updateProductsChart() {
   }
 
   chartsInstances.productsChart = new Chart(ctx, {
-    type: 'barH', // Horizontal bar
+    type: 'bar',
     data: {
       labels: labels,
       datasets: [{
@@ -256,33 +360,34 @@ function updateProductsChart() {
     options: {
       indexAxis: 'y',
       responsive: true,
+      maintainAspectRatio: true,
       plugins: {
-        legend: { display: true },
+        legend: { display: true, position: 'top' },
       },
       scales: {
-        x: {
-          beginAtZero: true,
-        },
+        x: { beginAtZero: true },
       },
     },
   });
 }
 
 // ============================================
-// STATUS CHART (PIE)
+// STATUS CHART - CORRIGÉ
 // ============================================
 
 function updateStatusChart(orders) {
-  const ctx = document.getElementById('statusChart');
+  const canvas = document.getElementById('statusChart');
+  if (!canvas) return;
+  
+  canvas.style.height = '300px';
+  canvas.style.width = '100%';
+  
+  const ctx = canvas.getContext('2d');
 
-  // Count by status
   const statusCounts = {};
   const statusColors = {
     pending: '#FEF3C7',
-    confirmed: '#DBEAFE',
-    preparing: '#EDE9FE',
-    shipped: '#CFFAFE',
-    delivered: '#DCFCE7',
+    confirmed: '#DBEAFE', 
     cancelled: '#FEE2E2',
   };
 
@@ -306,9 +411,6 @@ function updateStatusChart(orders) {
         const names = {
           pending: 'En attente',
           confirmed: 'Confirmée',
-          preparing: 'En préparation',
-          shipped: 'Expédiée',
-          delivered: 'Livrée',
           cancelled: 'Annulée',
         };
         return names[s] || s;
@@ -322,21 +424,22 @@ function updateStatusChart(orders) {
     },
     options: {
       responsive: true,
+      maintainAspectRatio: true,
       plugins: {
-        legend: {
-          position: 'bottom',
-        },
+        legend: { position: 'bottom' },
       },
     },
   });
 }
 
 // ============================================
-// CATEGORY SALES TABLE
+// CATEGORY SALES TABLE - CORRIGÉ
 // ============================================
 
 function updateCategorySalesTable(orders) {
   const tbody = document.getElementById('categorySalesTable');
+  if (!tbody) return;
+  
   Utils.DOM.empty(tbody);
 
   const categorySales = {};
@@ -346,26 +449,31 @@ function updateCategorySalesTable(orders) {
     if (order.items && Array.isArray(order.items)) {
       order.items.forEach(item => {
         const product = allProducts.find(p => p.id === item.product_id);
+        
         if (product) {
-          const category = product.category || 'Autres';
+          const cat = allCategories.find(c => c.id === product.category_id);
+          const category = cat?.name || `Catégorie ${product.category_id}`;
+          
           if (!categorySales[category]) {
             categorySales[category] = { items: 0, revenue: 0, expense: 0 };
           }
+          
+          const itemRevenue = item.quantity * (parseFloat(item.price) || 0);
           categorySales[category].items += item.quantity;
-          categorySales[category].revenue += item.quantity * (item.price || 0);
-          totalRevenue += item.quantity * (item.price || 0);
+          categorySales[category].revenue += itemRevenue;
+          totalRevenue += itemRevenue;
         }
       });
     }
   });
 
-  // Calculate expenses per category (30%)
   Object.keys(categorySales).forEach(category => {
-    categorySales[category].expense = categorySales[category].revenue * 0.30;
+    categorySales[category].expense = categorySales[category].revenue * 0.3;
   });
 
-  // Render table
-  Object.entries(categorySales).forEach(([category, stats]) => {
+  const sorted = Object.entries(categorySales).sort((a, b) => b[1].revenue - a[1].revenue);
+
+  sorted.forEach(([category, stats]) => {
     const percentage = totalRevenue > 0 ? ((stats.revenue / totalRevenue) * 100).toFixed(1) : 0;
     const profit = stats.revenue - stats.expense;
 
@@ -379,28 +487,31 @@ function updateCategorySalesTable(orders) {
     `;
     tbody.appendChild(row);
   });
+
+  if (sorted.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Aucune vente</td></tr>';
+  }
 }
 
 // ============================================
-// CALENDAR
+// CALENDAR - CORRIGÉ
 // ============================================
 
 function generateCalendar() {
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth();
 
-  // Update header
   const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
     'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
   document.getElementById('currentMonth').textContent = `${monthNames[month]} ${year}`;
 
-  // Get first day and last day
   const firstDay = new Date(year, month, 1);
-  const lastDay = new Date(year, month + 1, 0);
   const startDate = new Date(firstDay);
   startDate.setDate(startDate.getDate() - firstDay.getDay() + 1);
 
   const tbody = document.getElementById('calendarBody');
+  if (!tbody) return;
+  
   tbody.innerHTML = '';
 
   let currentDate = new Date(startDate);
@@ -412,7 +523,6 @@ function generateCalendar() {
       const cell = document.createElement('td');
       const dateStr = currentDate.toLocaleDateString('fr-FR');
 
-      // Get order count for this date
       const dayOrders = allOrders.filter(o => {
         const oDate = new Date(o.created_at).toLocaleDateString('fr-FR');
         return oDate === dateStr;
@@ -424,13 +534,15 @@ function generateCalendar() {
       const cellClass = isCurrentMonth ? 'calendar-current' : 'calendar-other';
 
       cell.className = `calendar-cell ${cellClass}`;
-      cell.innerHTML = `
-        <div class="calendar-day">${currentDate.getDate()}</div>
-        ${dayOrders.length > 0 ? `
-          <div class="calendar-orders">${dayOrders.length} cmd</div>
-          <div class="calendar-revenue">${Utils.formatPrice(dayRevenue)}</div>
-        ` : ''}
-      `;
+      
+      if (dayOrders.length > 0) {
+        cell.innerHTML = `
+          <div class="calendar-day">${currentDate.getDate()}</div>
+          <div class="calendar-orders">${dayOrders.length} · ${Utils.formatPrice(dayRevenue)}</div>
+        `;
+      } else {
+        cell.innerHTML = `<div class="calendar-day">${currentDate.getDate()}</div>`;
+      }
 
       cell.onclick = () => showDayStats(dateStr, dayOrders);
       row.appendChild(cell);
@@ -465,7 +577,7 @@ function nextMonth() {
 }
 
 // ============================================
-// UTILITIES
+// LOGOUT
 // ============================================
 
 function logout() {

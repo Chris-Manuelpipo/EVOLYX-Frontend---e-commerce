@@ -159,8 +159,8 @@ function renderProducts(products) {
     const row = document.createElement('tr');
     const categoryName = categories.find(c => c.id === product.category_id)?.name || '-';
     const statusBadge = product.is_active 
-      ? '<span style="color: green;">✓ Actif</span>' 
-      : '<span style="color: red;">✕ Inactif</span>';
+      ? '<span style="color: green;"><i class="fas fa-toggle-on" ></i> Actif</span>' 
+      : '<span style="color: red;"><i class="fas fa-toggle-off" style="color: #999;"></i>Inactif</span>';
     
     // ✅ Construire l'URL de l'image
     let imageUrl = `${LINK}/default.png`;
@@ -192,10 +192,10 @@ function renderProducts(products) {
       <td>
         <div class="action-buttons">
           <button class="btn btn-sm btn-primary" onclick="editProduct(${product.id})">
-            ✎ Éditer
+            <i class="fas fa-edit"></i>
           </button>
           <button class="btn btn-sm" style="background: #EF4444; color: white;" onclick="deleteProduct(${product.id})">
-            ✕ Supprimer
+            <i class="fas fa-trash-alt"></i>
           </button>
         </div>
       </td>
