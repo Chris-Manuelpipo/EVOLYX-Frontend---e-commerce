@@ -3,9 +3,12 @@
  * Centralized API communication with error handling
  * @author EVOLYX Team
  */
+// en production
+const API_BASE_URL = 'https://evolyx-api.onrender.com/api';
 
-const API_BASE_URL = 'http://localhost:5000/api';
-const LINK = 'http://localhost:5000/uploads/products';
+//en local :
+//const API_BASE_URL = 'http://localhost:5000/api';
+//const LINK = 'http://localhost:5000/uploads/products';
 
 /**
  * API Response Handler
