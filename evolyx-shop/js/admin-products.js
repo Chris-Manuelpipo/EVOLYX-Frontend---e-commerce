@@ -290,7 +290,7 @@ async function saveProduct(event) {
     name: document.getElementById('productName').value,
     category_id: parseInt(document.getElementById('productCategory').value),
     base_price: parseFloat(document.getElementById('productPrice').value),
-    cost_price: parseFloat(document.getElementById('productCostPrice').value) || null, 
+    cost_price: parseFloat(document.getElementById('productCostPrice').value) || 0, 
     stock: parseInt(document.getElementById('productStock').value) || 0,
     description: document.getElementById('productDescription').value,
     is_featured: document.getElementById('productFeatured').checked,

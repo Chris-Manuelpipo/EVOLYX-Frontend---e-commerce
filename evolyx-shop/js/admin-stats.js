@@ -564,6 +564,7 @@ function updateStockValues() {
   let totalSelling = 0;
 
   allProducts.forEach(product => {
+     console.log('Produit:', product.name, 'cost_price:', product.cost_price, 'type:', typeof product.cost_price);
     const stock = product.stock || 0;
     // Valeur au prix de vente
     totalSelling += (parseFloat(product.base_price) || 0) * stock;
@@ -572,7 +573,7 @@ function updateStockValues() {
       totalCost += parseFloat(product.cost_price) * stock;
     }
   });
-
+  console.log(totalCost)
   document.getElementById('stockCostValue').textContent = Utils.formatPrice(totalCost);
   document.getElementById('stockSellingValue').textContent = Utils.formatPrice(totalSelling);
 }
