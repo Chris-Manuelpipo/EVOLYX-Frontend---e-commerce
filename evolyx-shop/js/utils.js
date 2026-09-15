@@ -1,18 +1,7 @@
 /**
- * @fileoverview Utility Functions
- * Formatting, localStorage, DOM helpers
- * @author EVOLYX Team
+ * Utilitaires EVOLYX Shop : formatage, storage, DOM, validation.
  */
 
-// ============================================
-// FORMATTING UTILITIES
-// ============================================
-
-/**
- * Format price to FCFA currency
- * @param {number|string} price - Price amount
- * @returns {string} Formatted price (e.g., "25 000 FCFA")
- */
 function formatPrice(price) {
   const num = parseFloat(price) || 0;
   return new Intl.NumberFormat('fr-FR', {
@@ -21,12 +10,8 @@ function formatPrice(price) {
   }).format(num);
 }
 
-/**
- * Format date to readable format
- * @param {string|Date} date - Date to format
- * @returns {string} Formatted date (e.g., "17 février 2026")
- */
 function formatDate(date) {
+  if (!date) return 'n.d.';
   return new Intl.DateTimeFormat('fr-FR', {
     year: 'numeric',
     month: 'long',
@@ -34,35 +19,249 @@ function formatDate(date) {
   }).format(new Date(date));
 }
 
-/**
- * Format time to readable format
- * @param {string|Date} date - Date to format
- * @returns {string} Formatted time (e.g., "10:35")
- */
 function formatTime(date) {
+  if (!date) return 'n.d.';
   return new Intl.DateTimeFormat('fr-FR', {
     hour: '2-digit',
     minute: '2-digit',
   }).format(new Date(date));
 }
 
-/**
- * Truncate text with ellipsis
- * @param {string} text - Text to truncate
- * @param {number} length - Max length
- * @returns {string} Truncated text
- */
 function truncateText(text, length = 100) {
   if (!text) return '';
-  return text.length > length ? text.substring(0, length) + '...' : text;
+  const str = String(text);
+  return str.length > length ? str.substring(0, length) + '…' : str;
 }
 
-// ======================= 
-// LOCALSTORAGE UTILITIES  
-// ======================= 
+function escapeHtml(value) {
+  if (value == null) return '';
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function debounce(fn, wait = 300) {
+  let timer;
+  return function debounced(...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), wait);
+  };
+}
+
+function categoryName(category, fallback = 'Non catégorisé') {
+  if (!category) return fallback;
+  if (typeof category === 'string') return category;
+  if (typeof category === 'object') {
+    return category.name || category.title || category.label || fallback;
+  }
+  return String(category);
+}
+
+function formatOrderItemLabel(item) {
+  if (!item) return 'Produit';
+  const name = item.product_name || item.name || 'Produit';
+  const extras = [item.color, item.size, item.variation_color, item.variation_size].filter(Boolean);
+  return extras.length ? `${name} (${extras.join(' / ')})` : String(name);
+}
+
+function getCartCount(cart) {
+  const source = cart || Storage.getCart();
+  if (!source || !Array.isArray(source.items)) return 0;
+  return source.items.reduce((sum, item) => sum + (parseInt(item.quantity, 10) || 0), 0);
+}
+
+function updateCartBadge(selector = '#cartCount') {
+  const el = document.querySelector(selector);
+  if (el) el.textContent = String(getCartCount());
+}
+
+function updateWishlistBadge(selector = '#wishlistCount') {
+  const el = document.querySelector(selector);
+  if (!el) return;
+  const count = Storage.getWishlistIds().length;
+  el.textContent = String(count);
+  el.hidden = count === 0;
+}
+
+function placeholderImage() {
+  return (window.EVOLYX_CONFIG && window.EVOLYX_CONFIG.PLACEHOLDER_IMAGE) || '';
+}
+
+function coerceImageUrl(value, depth = 0) {
+  if (value == null || depth > 3) return '';
+  if (typeof value === 'string') {
+    const url = value.trim();
+    if (!url || url === '[object Object]') return '';
+    return url;
+  }
+  if (typeof value === 'object') {
+    if (Array.isArray(value)) return coerceImageUrl(value[0], depth + 1);
+    return coerceImageUrl(
+      value.url || value.image_url || value.image || value.src || value.path,
+      depth + 1
+    );
+  }
+  return '';
+}
+
+function parseImagesList(images) {
+  if (!images) return [];
+  if (typeof images === 'string') {
+    try {
+      images = JSON.parse(images);
+    } catch (error) {
+      return [];
+    }
+  }
+  return Array.isArray(images) ? images : [];
+}
+
+function isMainImage(img) {
+  if (!img || typeof img !== 'object') return false;
+  return img.is_main === true || img.is_main === 'true' || img.is_main === 1;
+}
+
+function productImageUrl(productOrItem) {
+  const fallback = placeholderImage();
+  if (!productOrItem) return fallback;
+
+  const fromFields =
+    coerceImageUrl(productOrItem.image) ||
+    coerceImageUrl(productOrItem.image_url) ||
+    coerceImageUrl(productOrItem.thumbnail);
+
+  const images = parseImagesList(productOrItem.images);
+  let fromGallery = '';
+  if (images.length) {
+    const main = images.find(isMainImage) || images[0];
+    fromGallery = coerceImageUrl(main);
+  }
+
+  if (fromFields && fromFields !== fallback) return fromFields;
+  if (fromGallery && fromGallery !== fallback) return fromGallery;
+  return fromFields || fromGallery || fallback;
+}
+
+function unwrapList(response) {
+  if (!response) return [];
+  if (Array.isArray(response)) return response;
+  if (Array.isArray(response.data)) return response.data;
+  if (Array.isArray(response.products)) return response.products;
+  if (response.data && Array.isArray(response.data.products)) return response.data.products;
+  if (Array.isArray(response.items)) return response.items;
+  if (response.data && Array.isArray(response.data.items)) return response.data.items;
+  if (Array.isArray(response.reviews)) return response.reviews;
+  if (response.data && Array.isArray(response.data.reviews)) return response.data.reviews;
+  if (Array.isArray(response.promos)) return response.promos;
+  if (response.data && Array.isArray(response.data.promos)) return response.data.promos;
+  if (Array.isArray(response.returns)) return response.returns;
+  if (response.data && Array.isArray(response.data.returns)) return response.data.returns;
+  return [];
+}
+
+function unwrapData(response) {
+  if (!response) return null;
+  if (response.data !== undefined) return response.data;
+  return response;
+}
+
+function isUuid(value) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    String(value || '')
+  );
+}
+
+function isApiUnavailable(error) {
+  return Boolean(error && error.status === 501);
+}
+
+const ORDER_STATUSES = {
+  pending: {
+    key: 'pending',
+    label: 'En attente',
+    className: 'status-pending',
+    color: 'var(--warning)',
+    icon: 'fa-hourglass-half',
+    description: 'Commande créée, en attente de confirmation WhatsApp',
+  },
+  confirmed: {
+    key: 'confirmed',
+    label: 'Confirmée',
+    className: 'status-confirmed',
+    color: 'var(--info)',
+    icon: 'fa-check-circle',
+    description: 'Commande confirmée, préparation à venir',
+  },
+  preparing: {
+    key: 'preparing',
+    label: 'En préparation',
+    className: 'status-preparing',
+    color: 'var(--on-variant)',
+    icon: 'fa-box',
+    description: 'Les articles sont préparés pour l’expédition',
+  },
+  shipped: {
+    key: 'shipped',
+    label: 'Expédiée',
+    className: 'status-shipped',
+    color: 'var(--info)',
+    icon: 'fa-truck',
+    description: 'Colis en cours de livraison',
+  },
+  delivered: {
+    key: 'delivered',
+    label: 'Livrée',
+    className: 'status-delivered',
+    color: 'var(--success)',
+    icon: 'fa-box-open',
+    description: 'Commande remise au client',
+  },
+  cancelled: {
+    key: 'cancelled',
+    label: 'Annulée',
+    className: 'status-cancelled',
+    color: 'var(--danger)',
+    icon: 'fa-times-circle',
+    description: 'Cette commande a été annulée',
+  },
+};
+
+const STATUS_SEQUENCE = ['pending', 'confirmed', 'preparing', 'shipped', 'delivered'];
+
+const STATUS_TRANSITIONS = {
+  pending: ['confirmed', 'cancelled'],
+  confirmed: ['preparing', 'cancelled'],
+  preparing: ['shipped', 'cancelled'],
+  shipped: ['delivered'],
+  delivered: [],
+  cancelled: [],
+};
+
+function statusInfo(status) {
+  return ORDER_STATUSES[status] || ORDER_STATUSES.pending;
+}
+
+function allowedTransitions(status) {
+  const next = STATUS_TRANSITIONS[status] || [];
+  return [status, ...next.filter((key) => key !== status)];
+}
+
+function statusBadge(status) {
+  const extra = {
+    requested: { label: 'Demandé', className: 'status-pending' },
+    approved: { label: 'Approuvé', className: 'status-delivered' },
+    rejected: { label: 'Refusé', className: 'status-cancelled' },
+    received: { label: 'Reçu', className: 'status-confirmed' },
+    refunded: { label: 'Remboursé', className: 'status-delivered' },
+  };
+  const info = ORDER_STATUSES[status] || extra[status] || { label: status || '—', className: 'status-pending' };
+  return `<span class="status-badge ${info.className}">${info.label}</span>`;
+}
 
 const Storage = {
-  // Méthodes génériques (avec JSON)
   get(key) {
     try {
       const item = localStorage.getItem(key);
@@ -89,7 +288,6 @@ const Storage = {
     localStorage.clear();
   },
 
-  // Cart (utilise JSON)
   getCart() {
     return this.get('evolyx_cart') || { token: null, items: [], total: 0 };
   },
@@ -98,22 +296,18 @@ const Storage = {
     this.set('evolyx_cart', cart);
   },
 
-  // ✅ AUTH - SANS JSON (stockage direct)
   getAdminToken() {
-    return localStorage.getItem('adminToken');  // ← direct
+    return localStorage.getItem('adminToken');
   },
 
   setAdminToken(token) {
-    localStorage.setItem('adminToken', token);  // ← direct
-    console.log('✅ Token stocké (direct):', token ? token.substring(0, 20) + '...' : 'null');
+    localStorage.setItem('adminToken', token);
   },
 
   isAdminLoggedIn() {
-    const token = localStorage.getItem('adminToken');
-    return !!token;
+    return !!localStorage.getItem('adminToken');
   },
 
-  // Order tracking (utilise JSON)
   getLastOrderId() {
     return this.get('lastOrderId');
   },
@@ -121,45 +315,56 @@ const Storage = {
   setLastOrderId(orderId) {
     this.set('lastOrderId', orderId);
   },
-};
-// ============================================
-// DOM UTILITIES
-// ============================================
 
-/**
- * DOM Helper Functions
- */
+  getWishlistToken() {
+    return localStorage.getItem('evolyx_wishlist_token');
+  },
+
+  setWishlistToken(token) {
+    if (token) localStorage.setItem('evolyx_wishlist_token', token);
+  },
+
+  getWishlistIds() {
+    const ids = this.get('evolyx_wishlist_ids');
+    return Array.isArray(ids) ? ids.map(String) : [];
+  },
+
+  setWishlistIds(ids) {
+    this.set('evolyx_wishlist_ids', Array.from(new Set((ids || []).map(String))));
+  },
+
+  getWishlistItemMap() {
+    const map = this.get('evolyx_wishlist_item_map');
+    return map && typeof map === 'object' ? map : {};
+  },
+
+  setWishlistItemMap(map) {
+    this.set('evolyx_wishlist_item_map', map && typeof map === 'object' ? map : {});
+  },
+
+  getOrderSnapshot(orderId) {
+    if (!orderId) return null;
+    return this.get(`order_snapshot_${orderId}`) || null;
+  },
+
+  setOrderSnapshot(orderId, snapshot) {
+    if (!orderId) return;
+    this.set(`order_snapshot_${orderId}`, snapshot);
+  },
+};
+
 const DOM = {
-  /**
-   * Query single element
-   * @param {string} selector - CSS selector
-   * @param {Element} parent - Parent element (optional)
-   * @returns {Element|null}
-   */
   $(selector, parent = document) {
     return parent.querySelector(selector);
   },
 
-  /**
-   * Query multiple elements
-   * @param {string} selector - CSS selector
-   * @param {Element} parent - Parent element (optional)
-   * @returns {NodeList}
-   */
   $$(selector, parent = document) {
     return parent.querySelectorAll(selector);
   },
 
-  /**
-   * Create element
-   * @param {string} tag - HTML tag
-   * @param {Object} attrs - Attributes
-   * @param {string} html - Inner HTML (optional)
-   * @returns {Element}
-   */
   create(tag, attrs = {}, html = '') {
     const el = document.createElement(tag);
-    
+
     Object.entries(attrs).forEach(([key, value]) => {
       if (key === 'class') {
         el.className = value;
@@ -176,172 +381,119 @@ const DOM = {
     return el;
   },
 
-  /**
-   * Show/hide element
-   * @param {Element} el - Element
-   * @param {boolean} show - Show or hide
-   */
   toggle(el, show) {
     el.style.display = show ? '' : 'none';
   },
 
-  /**
-   * Add class
-   * @param {Element} el - Element
-   * @param {string} className - Class name
-   */
   addClass(el, className) {
     el.classList.add(className);
   },
 
-  /**
-   * Remove class
-   * @param {Element} el - Element
-   * @param {string} className - Class name
-   */
   removeClass(el, className) {
     el.classList.remove(className);
   },
 
-  /**
-   * Toggle class
-   * @param {Element} el - Element
-   * @param {string} className - Class name
-   */
   toggleClass(el, className) {
     el.classList.toggle(className);
   },
 
-  /**
-   * Remove element
-   * @param {Element} el - Element
-   */
   remove(el) {
     el?.remove();
   },
 
-  /**
-   * Clear element children
-   * @param {Element} el - Element
-   */
   empty(el) {
-    el.innerHTML = '';
+    if (el) el.innerHTML = '';
   },
 };
 
-// ============================================
-// VALIDATION UTILITIES
-// ============================================
-
-/**
- * Validation Helper
- */
 const Validate = {
-  /**
-   * Validate email
-   * @param {string} email - Email to validate
-   * @returns {boolean}
-   */
   email(email) {
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return regex.test(email);
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   },
 
-  /**
-   * Validate phone
-   * @param {string} phone - Phone to validate
-   * @returns {boolean}
-   */
   phone(phone) {
-    const regex = /^\+?[0-9]{9,15}$/;
-    return regex.test(phone);
+    const cleaned = String(phone || '').replace(/[\s.-]/g, '');
+    return /^\+?[0-9]{9,15}$/.test(cleaned);
   },
 
-  /**
-   * Validate required field
-   * @param {string} value - Value to validate
-   * @returns {boolean}
-   */
   required(value) {
-    return value && value.trim().length > 0;
+    return value && String(value).trim().length > 0;
   },
 
-  /**
-   * Validate minimum length
-   * @param {string} value - Value to validate
-   * @param {number} min - Minimum length
-   * @returns {boolean}
-   */
   minLength(value, min) {
     return value && value.length >= min;
   },
 
-  /**
-   * Validate maximum length
-   * @param {string} value - Value to validate
-   * @param {number} max - Maximum length
-   * @returns {boolean}
-   */
   maxLength(value, max) {
     return !value || value.length <= max;
   },
 };
 
-// ============================================
-// UI UTILITIES
-// ============================================
-
-/**
- * Show toast notification
- * @param {string} message - Message to show
- * @param {string} type - Type: 'success', 'error', 'info', 'warning'
- * @param {number} duration - Duration in ms
- */
-function showToast(message, type = 'info', duration = 3000) {
-  // Remove existing toast
+function showToast(message, type = 'info', duration = 3000, action = null) {
   const existing = document.querySelector('.toast');
   if (existing) existing.remove();
 
-  const toast = DOM.create('div', {
-    class: `toast toast-${type}`,
-  }, message);
+  const toast = DOM.create('div', { class: `toast toast-${type}`, role: 'status' });
+  const text = document.createElement('span');
+  text.textContent = message;
+  toast.appendChild(text);
+
+  if (action && action.href && action.label) {
+    const link = document.createElement('a');
+    link.href = action.href;
+    link.className = 'toast-action';
+    link.textContent = action.label;
+    toast.appendChild(link);
+  }
 
   document.body.appendChild(toast);
 
-  // Auto remove
   setTimeout(() => {
     toast.classList.add('hide');
     setTimeout(() => toast.remove(), 300);
   }, duration);
 }
 
-/**
- * Show loading spinner
- * @param {Element} container - Container element
- * @param {boolean} show - Show or hide
- */
 function showLoading(container, show = true) {
+  if (!container) return;
   const spinner = container.querySelector('.loading-spinner');
-  
+
   if (show && !spinner) {
-    const el = DOM.create('div', {
-      class: 'loading-spinner',
-    }, '<span></span><span></span><span></span>');
+    const el = DOM.create(
+      'div',
+      { class: 'loading-spinner', 'aria-hidden': 'true' },
+      '<span></span><span></span><span></span>'
+    );
     container.appendChild(el);
   } else if (!show && spinner) {
     spinner.remove();
   }
 }
 
-// ============================================
-// EXPORT
-// ============================================
-
 window.Utils = {
   formatPrice,
   formatDate,
   formatTime,
   truncateText,
+  escapeHtml,
+  debounce,
+  categoryName,
+  formatOrderItemLabel,
+  getCartCount,
+  updateCartBadge,
+  updateWishlistBadge,
+  productImageUrl,
+  productImage: productImageUrl,
+  unwrapList,
+  unwrapData,
+  isUuid,
+  isApiUnavailable,
+  ORDER_STATUSES,
+  STATUS_SEQUENCE,
+  STATUS_TRANSITIONS,
+  statusInfo,
+  allowedTransitions,
+  statusBadge,
   Storage,
   DOM,
   Validate,

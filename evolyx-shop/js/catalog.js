@@ -1,345 +1,291 @@
 /**
- * @fileoverview Catalog Page Logic
- * Load and display products with filtering and pagination
- * @author EVOLYX Team
+ * Catalogue : query unifiée (q, category_id, min_price, max_price, sort, in_stock, page).
+ * URL partageable via querystring.
  */
 
 const ITEMS_PER_PAGE = 12;
 let currentPage = 1;
-let allProducts = [];
 let filteredProducts = [];
 let categories = [];
 
-// ============================================
-// INITIALIZATION
-// ============================================
+const FILTER_KEYS = ['q', 'category_id', 'min_price', 'max_price', 'sort', 'in_stock', 'page'];
 
 document.addEventListener('DOMContentLoaded', () => {
+  applyUrlToForm();
   loadCategories();
-  loadProducts();
+  loadFeaturedProducts();
+  loadProductsWithFilters();
   setupEventListeners();
-  updateCartCount();
+  if (window.Utils) {
+    Utils.updateCartBadge();
+    Utils.updateWishlistBadge();
+  }
 });
-
-// ============================================
-// EVENT LISTENERS
-// ============================================
 
 function setupEventListeners() {
-  // Search
-  document.getElementById('searchInput').addEventListener('input', (e) => {
-    filterProducts();
-  });
+  const searchInput = document.getElementById('searchInput');
+  const categoryFilter = document.getElementById('categoryFilter');
+  const resetFilter = document.getElementById('resetFilter');
+  const sortFilter = document.getElementById('sortFilter');
+  const minPrice = document.getElementById('minPrice');
+  const maxPrice = document.getElementById('maxPrice');
+  const inStock = document.getElementById('inStockFilter');
 
-  // Category filter
-  document.getElementById('categoryFilter').addEventListener('change', (e) => {
-    currentPage = 1;
-    filterProducts();
-  });
+  if (searchInput) {
+    searchInput.addEventListener(
+      'input',
+      Utils.debounce(() => {
+        currentPage = 1;
+        loadProductsWithFilters();
+      }, 300)
+    );
+  }
 
-  // Reset filter
-  document.getElementById('resetFilter').addEventListener('click', () => {
-    document.getElementById('searchInput').value = '';
-    document.getElementById('categoryFilter').value = '';
-    currentPage = 1;
-    filterProducts();
-  });
- 
-}
-// ============================================
-// ACCÈS ADMIN CACHÉ (double-clic sur le logo)
-// ============================================
-
-document.addEventListener('DOMContentLoaded', () => {
-  const adminAccess = document.getElementById('adminAccess');
-  
-  if (adminAccess) {
-    let clickCount = 0;
-    let clickTimer;
-    
-    adminAccess.addEventListener('click', (e) => {
-      clickCount++;
-      
-      if (clickCount === 1) {
-        clickTimer = setTimeout(() => {
-          clickCount = 0;
-        }, 1200);
-      } else if (clickCount === 5) {
-        clearTimeout(clickTimer);
-        clickCount = 0;
-        
-        // ✅ Vérifier si l'admin est déjà connecté
-        if (Utils.Storage.isAdminLoggedIn()) {
-          console.log('🔐 Admin déjà connecté, redirection vers dashboard');
-          window.location.href = 'admin/dashboard.html';
-        } else {
-          console.log('🔐 Admin non connecté, redirection vers login');
-          window.location.href = 'login.html';
-        }
-      }
+  [categoryFilter, sortFilter, minPrice, maxPrice, inStock].forEach((el) => {
+    if (!el) return;
+    el.addEventListener('change', () => {
+      currentPage = 1;
+      loadProductsWithFilters();
     });
-  } 
-});
-// ============================================
-// LOAD DATA
-// ============================================
+  });
 
-/**
- * Load categories from API
- */
+  if (resetFilter) {
+    resetFilter.addEventListener('click', () => {
+      if (searchInput) searchInput.value = '';
+      if (categoryFilter) categoryFilter.value = '';
+      if (sortFilter) sortFilter.value = '';
+      if (minPrice) minPrice.value = '';
+      if (maxPrice) maxPrice.value = '';
+      if (inStock) inStock.checked = false;
+      currentPage = 1;
+      loadProductsWithFilters();
+    });
+  }
+}
+
+function readFiltersFromForm() {
+  return {
+    q: (document.getElementById('searchInput')?.value || '').trim(),
+    category_id: document.getElementById('categoryFilter')?.value || '',
+    min_price: document.getElementById('minPrice')?.value || '',
+    max_price: document.getElementById('maxPrice')?.value || '',
+    sort: document.getElementById('sortFilter')?.value || '',
+    in_stock: document.getElementById('inStockFilter')?.checked ? 'true' : '',
+    page: currentPage,
+    limit: ITEMS_PER_PAGE,
+  };
+}
+
+function applyUrlToForm() {
+  const params = new URLSearchParams(location.search);
+  const searchInput = document.getElementById('searchInput');
+  const categoryFilter = document.getElementById('categoryFilter');
+  const sortFilter = document.getElementById('sortFilter');
+  const minPrice = document.getElementById('minPrice');
+  const maxPrice = document.getElementById('maxPrice');
+  const inStock = document.getElementById('inStockFilter');
+  if (searchInput) searchInput.value = params.get('q') || '';
+  if (categoryFilter && params.get('category_id')) categoryFilter.value = params.get('category_id');
+  if (sortFilter) sortFilter.value = params.get('sort') || '';
+  if (minPrice) minPrice.value = params.get('min_price') || '';
+  if (maxPrice) maxPrice.value = params.get('max_price') || '';
+  if (inStock) inStock.checked = params.get('in_stock') === 'true' || params.get('in_stock') === '1';
+  const page = parseInt(params.get('page'), 10);
+  currentPage = page > 0 ? page : 1;
+}
+
+function writeFiltersToUrl(filters) {
+  const url = new URL(location.href);
+  FILTER_KEYS.forEach((key) => url.searchParams.delete(key));
+  Object.entries(filters).forEach(([key, value]) => {
+    if (key === 'limit') return;
+    if (value === undefined || value === null || value === '') return;
+    if (key === 'page' && String(value) === '1') return;
+    url.searchParams.set(key, String(value));
+  });
+  const next = url.pathname + url.search + (url.hash || location.hash);
+  history.replaceState(null, '', next);
+}
+
 async function loadCategories() {
+  const select = document.getElementById('categoryFilter');
+  if (!select) return;
   try {
     const response = await API.getCategories();
-    categories = response.data || [];
-    
-    // Populate category select
-    const select = document.getElementById('categoryFilter');
-    categories.forEach(cat => {
+    categories = Utils.unwrapList(response);
+    const selected = new URLSearchParams(location.search).get('category_id') || select.value;
+    categories.forEach((cat) => {
       const option = document.createElement('option');
       option.value = cat.id;
       option.textContent = cat.name;
+      if (String(cat.id) === String(selected)) option.selected = true;
       select.appendChild(option);
     });
   } catch (error) {
     console.error('Failed to load categories:', error);
-    Utils.showToast('Erreur lors du chargement des catégories', 'error');
+    Utils.showToast('Impossible de charger les catégories', 'error');
   }
 }
 
-/**
- * Load products from API with pagination
- */
-async function loadProducts() {
+async function loadFeaturedProducts() {
+  const section = document.getElementById('featuredSection');
+  const grid = document.getElementById('featuredGrid');
+  if (!section || !grid) return;
+
   try {
-    Utils.showLoading(document.getElementById('productsGrid'), true);
-    
-    // Charge les produits paginés du backend
-    const response = await API.getProducts({
-      page: currentPage,
-      limit: ITEMS_PER_PAGE,
-    });
-
-    // Le backend renvoie déjà les produits paginés
-    const products = response.data || [];
-    
-    // Pour la recherche/filtrage: charger tous les produits une seule fois
-    if (currentPage === 1 && !window.allProductsLoaded) {
-      allProducts = products;
-      window.allProductsLoaded = true;
-    }
-    
-    filteredProducts = products;
-    
-    renderProducts();
-    renderPagination(response.total || 0);
-    
-    Utils.showLoading(document.getElementById('productsGrid'), false);
-  } catch (error) {
-    console.error('Failed to load products:', error);
-    Utils.showToast('Erreur lors du chargement des produits', 'error');
-  }
-}
-
-// ============================================
-// FILTERING
-// ============================================
-
-/**
- * Filter products based on search and category
- * Appelle le backend avec les paramètres de filtrage
- */
-function filterProducts() {
-  const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-  const selectedCategory = document.getElementById('categoryFilter').value;
-
-  // Réinitialise la pagination
-  currentPage = 1;
-
-  // Appelle le backend avec les paramètres
-  loadProductsWithFilters(searchTerm, selectedCategory);
-}
-
-/**
- * Load products with filters from backend
- */ 
-async function loadProductsWithFilters(search = '', categoryId = '') {
-  try {
-    Utils.showLoading(document.getElementById('productsGrid'), true);
-    console.log('🔍 Filtrage avec:', { search, categoryId, page: currentPage });
-
-    let response;
-    
-    // ✅ Si recherche uniquement
-    if (search && !categoryId) {
-      console.log('📡 Recherche API searchProducts avec:', search);
-      response = await API.searchProducts(search, { 
-        page: currentPage, 
-        limit: ITEMS_PER_PAGE 
-      });
-    }
-    // ✅ Si catégorie uniquement
-    else if (!search && categoryId) {
-      console.log('📡 API getProductsByCategory avec catégorie:', categoryId);
-      response = await API.getProductsByCategory(categoryId, { 
-        page: currentPage, 
-        limit: ITEMS_PER_PAGE 
-      });
-    }
-    // ✅ Si recherche + catégorie (les deux)
-    else if (search && categoryId) {
-      console.log('📡 Recherche + catégorie combinés');
-      // Option: On cherche d'abord, puis on filtre par catégorie
-      const searchResponse = await API.searchProducts(search, { 
-        page: 1, 
-        limit: 100 
-      });
-      const allResults = searchResponse.data || [];
-      filteredProducts = allResults.filter(p => p.category_id == categoryId);
-      
-      // Pagination manuelle
-      const start = (currentPage - 1) * ITEMS_PER_PAGE;
-      const end = start + ITEMS_PER_PAGE;
-      const paginatedResults = filteredProducts.slice(start, end);
-      
-      renderProducts(paginatedResults);
-      renderPagination(filteredProducts.length);
-      
-      Utils.showLoading(document.getElementById('productsGrid'), false);
+    const response = await API.getFeaturedProducts();
+    const featured = Utils.unwrapList(response);
+    if (!featured.length) {
+      section.hidden = true;
       return;
     }
-    // ✅ Si aucun filtre (chargement normal)
-    else {
-      console.log('📡 Chargement normal');
-      response = await API.getProducts({ 
-        page: currentPage, 
-        limit: ITEMS_PER_PAGE 
-      });
-    }
-
-    // ✅ Traitement de la réponse
-    if (response) {
-      console.log('✅ Réponse reçue:', response);
-      filteredProducts = response.data || [];
-      renderProducts(filteredProducts);
-      renderPagination(response.total || filteredProducts.length);
-    }
-
-    Utils.showLoading(document.getElementById('productsGrid'), false);
-    
+    grid.innerHTML = '';
+    featured.forEach((product) => grid.appendChild(createProductCard(product)));
+    if (window.Wishlist) Wishlist.bind(grid);
+    section.hidden = false;
   } catch (error) {
-    console.error('❌ Failed to filter products:', error);
-    Utils.showToast('Erreur lors du filtrage', 'error');
-    Utils.showLoading(document.getElementById('productsGrid'), false);
+    console.warn('Vedettes indisponibles:', error);
+    section.hidden = true;
   }
 }
 
-// ============================================
-// RENDER FUNCTIONS
-// ============================================
-
-/**
- * Render products grid - Les produits sont déjà paginés par le backend
- */
-function renderProducts() {
+async function loadProductsWithFilters() {
   const grid = document.getElementById('productsGrid');
+  if (!grid) return;
+
+  const filters = readFiltersFromForm();
+  writeFiltersToUrl(filters);
+
+  try {
+    showCatalogSkeleton(grid);
+    const response = await API.getProducts(filters);
+    filteredProducts = Utils.unwrapList(response);
+    const total = response.total || response.data?.total || filteredProducts.length;
+    renderProducts(filteredProducts);
+    renderPagination(total);
+  } catch (error) {
+    console.error('Failed to filter products:', error);
+    showCatalogError(error);
+    Utils.showToast('Erreur lors du chargement du catalogue', 'error');
+  }
+}
+
+function loadProducts() {
+  return loadProductsWithFilters();
+}
+
+function renderProducts(products = filteredProducts) {
+  const grid = document.getElementById('productsGrid');
+  if (!grid) return;
   Utils.DOM.empty(grid);
 
-  if (!filteredProducts || filteredProducts.length === 0) {
+  const list = Array.isArray(products) ? products : filteredProducts;
+
+  if (!list || list.length === 0) {
     grid.innerHTML = `
-      <div class="no-products" style="grid-column: 1/-1; text-align: center; padding: 60px 20px;">
-        <p style="font-size: 18px; color: #666;">Aucun produit trouvé</p>
+      <div class="catalog-state" style="grid-column: 1/-1;">
+        <p>Aucun produit ne correspond. Changez le mot-clé ou réinitialisez les filtres.</p>
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('resetFilter').click()">
+          Réinitialiser les filtres
+        </button>
       </div>
     `;
     return;
   }
 
-  // Afficher directement les produits (déjà paginés par le backend)
-  filteredProducts.forEach(product => {
-    const productCard = createProductCard(product);
-    grid.appendChild(productCard);
-  });
+  list.forEach((product) => grid.appendChild(createProductCard(product)));
+  if (window.Wishlist) Wishlist.bind(grid);
 }
 
-/**
- * Create product card element
- * @param {Object} product - Product data
- * @returns {Element} Product card element
- */
-function createProductCard(product) {
-  const card = Utils.DOM.create('div', {
-    class: 'product-card card',
-  });
-
-  const image = product.images && product.images.length > 0 
-    ? `${product.images[0].url}`
-    : `https://res.cloudinary.com/dvnxsn73m/image/upload/v1771500491/image_placeholder_iuqezd.png`;
-
-  const categoryName = categories.find(c => c.id === product.category_id)?.name || 'Catégorie';
-
-  card.innerHTML = `
-    <div class="product-image">
-      <img src="${image}" alt="${product.name}" onerror="this.src='https://res.cloudinary.com/dvnxsn73m/image/upload/v1771500491/image_placeholder_iuqezd.png'">
-      ${product.is_featured ? '<span class="badge badge-featured">Vedette</span>' : ''}
-    </div>
-    <div class="product-info">
-      <p class="product-category text-gray text-sm">${categoryName}</p>
-      <h3 class="product-name">${Utils.truncateText(product.name, 40)}</h3>
-      <p class="product-description text-gray text-sm">${Utils.truncateText(product.description, 60)}</p>
-      <div class="product-footer">
-        <span class="product-price text-gold font-bold">${Utils.formatPrice(product.base_price)}</span>
-        <a href="product.html?id=${product.id}" class="btn btn-sm btn-primary">Détails</a>
-      </div>
+function showCatalogError(error) {
+  const grid = document.getElementById('productsGrid');
+  if (!grid) return;
+  const unavailable = Utils.isApiUnavailable(error);
+  grid.innerHTML = `
+    <div class="catalog-state catalog-state-error" style="grid-column: 1/-1;">
+      <p>${
+        unavailable
+          ? 'Cette ressource catalogue n’est pas proposée par le serveur.'
+          : 'Le catalogue n’a pas pu se charger. Vérifiez la connexion, puis réessayez.'
+      }</p>
+      <button type="button" class="btn btn-primary" onclick="loadProductsWithFilters()">Réessayer</button>
     </div>
   `;
+}
 
+function createProductCard(product) {
+  const card = Utils.DOM.create('article', { class: 'product-card card' });
+  const image = Utils.productImageUrl(product);
+  const placeholder = window.EVOLYX_CONFIG.PLACEHOLDER_IMAGE;
+  const cat =
+    Utils.categoryName(product.category, '') ||
+    categories.find((c) => String(c.id) === String(product.category_id))?.name ||
+    'Catégorie';
+  const heart = window.Wishlist ? Wishlist.heartButton(product.id) : '';
+
+  card.innerHTML = `
+    ${heart}
+    <a href="product.html?id=${product.id}" class="product-card-link">
+      <div class="product-image">
+        <img src="${Utils.escapeHtml(image)}" alt="${Utils.escapeHtml(product.name)}"
+             loading="lazy" onerror="this.src='${placeholder}'">
+        ${product.is_featured ? '<span class="badge badge-featured">Vedette</span>' : ''}
+      </div>
+      <div class="product-info">
+        <p class="product-category text-sm">${Utils.escapeHtml(cat)}</p>
+        <h3 class="product-name">${Utils.escapeHtml(Utils.truncateText(product.name, 40))}</h3>
+        <p class="product-description text-sm">${Utils.escapeHtml(Utils.truncateText(product.description, 80))}</p>
+        <div class="product-footer">
+          <span class="product-price">${Utils.formatPrice(product.base_price)}</span>
+          <span class="btn btn-sm btn-primary">Détails</span>
+        </div>
+      </div>
+    </a>
+  `;
   return card;
 }
 
-/**
- * Render pagination - Utilise le total du backend
- */
 function renderPagination(totalProducts = 0) {
   const totalPages = Math.ceil(totalProducts / ITEMS_PER_PAGE);
   const paginationContainer = document.getElementById('pagination');
+  if (!paginationContainer) return;
   Utils.DOM.empty(paginationContainer);
-
   if (totalPages <= 1) return;
 
-  const paginationHTML = `
+  paginationContainer.innerHTML = `
     <div class="pagination-controls">
-      ${currentPage > 1 ? `<button class="btn btn-secondary btn-sm" onclick="goToPage(${currentPage - 1})">Précédent</button>` : ''}
+      ${currentPage > 1 ? `<button type="button" class="btn btn-secondary btn-sm" onclick="goToPage(${currentPage - 1})">Précédent</button>` : ''}
       <span class="pagination-info">Page ${currentPage} sur ${totalPages}</span>
-      ${currentPage < totalPages ? `<button class="btn btn-secondary btn-sm" onclick="goToPage(${currentPage + 1})">Suivant</button>` : ''}
+      ${currentPage < totalPages ? `<button type="button" class="btn btn-secondary btn-sm" onclick="goToPage(${currentPage + 1})">Suivant</button>` : ''}
     </div>
   `;
-
-  paginationContainer.innerHTML = paginationHTML;
 }
 
-/**
- * Go to specific page
- * @param {number} page - Page number
- */
+function showCatalogSkeleton(grid) {
+  grid.innerHTML = Array.from({ length: 8 }, () => `
+    <article class="product-card card is-skeleton" aria-hidden="true">
+      <span class="skel skel-img"></span>
+      <span class="skel skel-line w-60"></span>
+      <span class="skel skel-line w-80"></span>
+    </article>
+  `).join('');
+}
+
 function goToPage(page) {
   currentPage = page;
-  loadProducts();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  loadProductsWithFilters();
+  const catalog = document.getElementById('catalog');
+  if (catalog) catalog.scrollIntoView({ behavior: 'smooth' });
 }
 
-// ============================================
-// CART UTILITIES
-// ============================================
-
-/**
- * Update cart count badge
- */
 function updateCartCount() {
-  const cart = Utils.Storage.getCart();
-  const count = cart.items ? cart.items.length : 0;
-  document.getElementById('cartCount').textContent = count;
+  if (window.Utils) {
+    Utils.updateCartBadge();
+    Utils.updateWishlistBadge();
+  }
 }
 
-// Update cart count when page regains focus
-window.addEventListener('focus', updateCartCount);
-
- 
+window.goToPage = goToPage;
+window.loadProductsWithFilters = loadProductsWithFilters;
+window.updateCartCount = updateCartCount;
+window.createProductCard = createProductCard;

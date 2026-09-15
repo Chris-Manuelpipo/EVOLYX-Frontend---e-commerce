@@ -1,232 +1,242 @@
 /**
- * @fileoverview API Client - Fetch Wrapper
- * Centralized API communication with error handling
- * @author EVOLYX Team
+ * Client API EVOLYX Shop.
+ * FormData si images (multer) ; JSON sinon.
+ * Consomme uniquement les routes existantes (promos, avis, wishlist, retours, facture).
  */
-// en production
-const API_BASE_URL = 'https://evolyx-api.onrender.com/api';
+const API_BASE_URL =
+  (window.EVOLYX_CONFIG && window.EVOLYX_CONFIG.API_BASE_URL) ||
+  'https://evolyx-api.onrender.com/api';
 
-//en local :
-//const API_BASE_URL = 'http://localhost:5000/api';
-//const LINK = 'http://localhost:5000/uploads/products';
-
-/**
- * API Response Handler
- * @param {Response} response - Fetch response
- * @returns {Promise<Object>} Parsed response
- * @throws {Error} If response not ok
- */
-
- 
 async function handleResponse(response) {
-  // ✅ Gérer les réponses vides (204 No Content)
   if (response.status === 204) {
     return { success: true };
   }
-  
-  // ✅ Tenter de parser le JSON
+
+  const contentType = response.headers.get('content-type') || '';
+  if (contentType.includes('application/pdf') || contentType.includes('octet-stream')) {
+    if (!response.ok) {
+      const err = new Error(`HTTP ${response.status}`);
+      err.status = response.status;
+      throw err;
+    }
+    return response.blob();
+  }
+
   let data;
   try {
     data = await response.json();
   } catch (e) {
-    console.warn('⚠️ Réponse non-JSON:', e);
     data = {};
   }
-  
-  // ✅ Si la réponse n'est pas OK
+
   if (!response.ok) {
-    console.error('🔴 HTTP Error:', response.status, data);
-    throw new Error(data.message || data.error || `HTTP ${response.status}`);
+    const err = new Error(data.message || data.error || `HTTP ${response.status}`);
+    err.status = response.status;
+    err.payload = data;
+    throw err;
   }
-  
-  // ✅ S'assurer que data est un objet
+
   return data || { success: true };
 }
-/**
- * Generic fetch wrapper
- * @param {string} endpoint - API endpoint
- * @param {Object} options - Fetch options
- * @returns {Promise<Object>} API response
- */
+
+function toFormData(fields, files = []) {
+  const formData = new FormData();
+  Object.entries(fields || {}).forEach(([key, value]) => {
+    if (value === undefined || value === null) return;
+    if (typeof value === 'boolean') {
+      formData.append(key, value ? 'true' : 'false');
+    } else {
+      formData.append(key, String(value));
+    }
+  });
+  (files || []).forEach((file) => {
+    formData.append('images', file);
+  });
+  return formData;
+}
+
+function toQuery(params = {}) {
+  const usp = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === '') return;
+    if (typeof value === 'boolean') {
+      usp.set(key, value ? 'true' : 'false');
+    } else {
+      usp.set(key, String(value));
+    }
+  });
+  const qs = usp.toString();
+  return qs ? `?${qs}` : '';
+}
+
 async function apiCall(endpoint, options = {}) {
-  const headers = {
-    'Content-Type': 'application/json',
-    ...options.headers,
-  };
+  const headers = { ...options.headers };
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
+
+  if (!isFormData && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json';
+  }
 
   const token = localStorage.getItem('adminToken');
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+    headers.Authorization = `Bearer ${token}`;
   }
 
-  try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      ...options,
-      headers,
-    }); 
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    ...options,
+    headers,
+  });
 
-    return await handleResponse(response);
-  } catch (error) {
-    console.error(`❌ API Error [${endpoint}]:`, error.message);
-    throw error;
-  }
+  return handleResponse(response);
 }
 
-// ============================================
-// API OBJECT
-// ============================================
+function sendProduct(method, endpoint, productData, files = []) {
+  const hasFiles = Array.isArray(files) && files.length > 0;
+  return apiCall(endpoint, {
+    method,
+    body: hasFiles ? toFormData(productData, files) : JSON.stringify(productData),
+  });
+}
 
 const API = {
-  // ============================================
-  // PUBLIC API
-  // ============================================
-
-  // Categories
+  getLegal: () => apiCall('/legal'),
   getCategories: () => apiCall('/categories'),
   getCategory: (id) => apiCall(`/categories/${id}`),
 
-  // Products
-  getProducts: (params = {}) => {
-    const queryString = new URLSearchParams(params).toString();
-    return apiCall(`/products${queryString ? '?' + queryString : ''}`);
-  },
+  getProducts: (params = {}) => apiCall(`/products${toQuery(params)}`),
   getProduct: (id) => apiCall(`/products/${id}`),
-  getProductsByCategory: (categoryId, params = {}) => {
-    const queryString = new URLSearchParams(params).toString();
-    return apiCall(`/products/category/${categoryId}${queryString ? '?' + queryString : ''}`);
-  },
-  searchProducts: (query, params = {}) => {
-    const queryString = new URLSearchParams({ q: query, ...params }).toString();
-    return apiCall(`/products/search?${queryString}`);
-  },
+  getProductsByCategory: (categoryId, params = {}) =>
+    apiCall(`/products/category/${categoryId}${toQuery(params)}`),
+  searchProducts: (query, params = {}) =>
+    apiCall(`/products${toQuery({ q: query, ...params })}`),
   getFeaturedProducts: () => apiCall('/products/featured'),
-
-  // Variations - ✅ CORRIGÉ
-  getVariations: (params = {}) => {
-    const queryString = new URLSearchParams(params).toString();
-    return apiCall(`/variations${queryString ? '?' + queryString : ''}`);
+  getRelatedProducts: (id) => apiCall(`/products/${id}/related`),
+  getReviews: (id) => apiCall(`/products/${id}/reviews`),
+  postReview: (id, data) => {
+    const name = data.name || data.author_name;
+    return apiCall(`/products/${id}/reviews`, {
+      method: 'POST',
+      body: JSON.stringify({
+        name,
+        author_name: name,
+        rating: data.rating,
+        comment: data.comment || data.body,
+      }),
+    });
   },
+
+  getVariations: (params = {}) => apiCall(`/variations${toQuery(params)}`),
   getVariation: (id) => apiCall(`/variations/${id}`),
-  checkVariationStock: (id, quantity) => apiCall(`/variations/${id}/check-stock?quantity=${quantity}`),
-  
-  // ✅ Méthodes spécifiques pour couleurs et tailles
-  getProductColors: (productId) => {
-    return apiCall(`/variations/product/${productId}/colors`);
-  },
-  getProductSizes: (productId) => {
-    return apiCall(`/variations/product/${productId}/sizes`);
-  },
-  getVariationStock: (variationId, quantity) => {
-    return apiCall(`/variations/${variationId}/check-stock?quantity=${quantity}`);
-  },
+  checkVariationStock: (id, quantity) =>
+    apiCall(`/variations/${id}/check-stock?quantity=${quantity}`),
+  getProductColors: (productId) => apiCall(`/variations/product/${productId}/colors`),
+  getProductSizes: (productId) => apiCall(`/variations/product/${productId}/sizes`),
+  getVariationStock: (variationId, quantity) =>
+    apiCall(`/variations/${variationId}/check-stock?quantity=${quantity}`),
 
-  // Cart
   createCart: () => apiCall('/cart', { method: 'POST' }),
   getCart: (token) => apiCall(`/cart/${token}`),
-  addToCart: (cartToken, data) => apiCall(`/cart/${cartToken}/items`, {
-    method: 'POST',
-    body: JSON.stringify(data),
-  }),
-  updateCartItem: (cartToken, itemId, quantity) => apiCall(`/cart/${cartToken}/items/${itemId}`, {
-    method: 'PUT',
-    body: JSON.stringify({ quantity }),
-  }),
-  removeFromCart: (cartToken, itemId) => apiCall(`/cart/${cartToken}/items/${itemId}`, {
-    method: 'DELETE',
-  }),
+  addToCart: (cartToken, data) =>
+    apiCall(`/cart/${cartToken}/items`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateCartItem: (cartToken, itemId, quantity) =>
+    apiCall(`/cart/${cartToken}/items/${itemId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ quantity }),
+    }),
+  removeFromCart: (cartToken, itemId) =>
+    apiCall(`/cart/${cartToken}/items/${itemId}`, { method: 'DELETE' }),
   clearCart: (cartToken) => apiCall(`/cart/${cartToken}`, { method: 'DELETE' }),
+  mergeCart: (cartToken, items) =>
+    apiCall(`/cart/${cartToken}/merge`, {
+      method: 'POST',
+      body: JSON.stringify({ items }),
+    }),
 
-  // Orders
-  createOrder: (data) => apiCall('/orders', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  }),
+  validatePromo: (code, cartTotal) =>
+    apiCall(`/promos/validate${toQuery({ code, cart_total: cartTotal })}`),
+
+  createWishlist: (token) =>
+    apiCall('/wishlist', {
+      method: 'POST',
+      body: JSON.stringify(token ? { token } : {}),
+    }),
+  getWishlist: (token) => apiCall(`/wishlist/${token}`),
+  addToWishlist: (token, productId) =>
+    apiCall(`/wishlist/${token}/items`, {
+      method: 'POST',
+      body: JSON.stringify({ product_id: Number(productId) }),
+    }),
+  removeFromWishlist: (token, itemId) =>
+    apiCall(`/wishlist/${token}/items/${itemId}`, { method: 'DELETE' }),
+
+  createOrder: (data) =>
+    apiCall('/orders', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
   getOrder: (id) => apiCall(`/orders/${id}`),
   trackOrder: (id) => apiCall(`/orders/${id}/track`),
-
-  // ============================================
-  // ADMIN API
-  // ============================================
-
-  // Admin Auth
-  adminLogin: (email, password) => apiCall('/admin/login', {
-    method: 'POST',
-    body: JSON.stringify({ email, password }),
-  }),
-  adminLogout: () => apiCall('/admin/logout', { method: 'POST' }),
-
-  // Admin Products - ✅ CORRIGÉ pour FormData
-  // Dans api.js, modifiez getAdminProducts :
-
-getAdminProducts: async (params = {}) => {
-  const queryString = new URLSearchParams(params).toString();
-  const url = `/admin/products${queryString ? '?' + queryString : ''}`;
-  
-  console.log('🔍 URL appelée:', url);
-  
-  try {
-    const response = await apiCall(url);
-    
-    // ✅ La réponse a maintenant une structure standardisée
-    if (response?.data?.products) {
-      return {
-        products: response.data.products,
-        total: response.data.total,
-        page: response.data.page,
-        limit: response.data.limit,
-        totalPages: response.data.totalPages
-      };
-    }
-    
-    return response;
-  } catch (error) {
-    console.error('❌ Erreur getAdminProducts:', error);
-    return { products: [], total: 0, page: 1, limit: 20, totalPages: 1 };
-  }
-},
-
-  createProduct: async (productData) => {
-  console.log('📦 Création produit:', productData);
-  
-  try {
-    const response = await apiCall('/admin/products', {
+  requestReturn: (id, data) =>
+    apiCall(`/orders/${id}/returns`, {
       method: 'POST',
-      body: JSON.stringify(productData),
-    });
-    
-    console.log('✅ Réponse création:', response);
-    
-    // ✅ Retourner directement la réponse
-    return response;
-    
-  } catch (error) {
-    console.error('❌ Erreur création produit:', error);
-    throw error;
-  }
-},
+      body: JSON.stringify(data),
+    }),
+  fetchInvoice: (id) => apiCall(`/admin/orders/${id}/invoice`),
 
-  updateProduct: async (id, productData) => {
-  console.log('📦 Mise à jour produit', id, ':', productData);
-  
-  const response = await apiCall(`/admin/products/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(productData),
-  });
-  
-  return response;
-},
+  adminLogin: (email, password) =>
+    apiCall('/admin/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    }),
+  adminLogout: async () => {
+    try {
+      return await apiCall('/admin/logout', { method: 'POST' });
+    } catch (error) {
+      return { success: true, local: true };
+    }
+  },
+  createAdmin: (data) =>
+    apiCall('/admin/admins', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  getAdminProducts: async (params = {}) => {
+    try {
+      const response = await apiCall(`/admin/products${toQuery(params)}`);
+      if (response?.data?.products) {
+        return {
+          products: response.data.products,
+          total: response.data.total,
+          page: response.data.page,
+          limit: response.data.limit,
+          totalPages: response.data.totalPages,
+        };
+      }
+      return response;
+    } catch (error) {
+      console.error('Erreur getAdminProducts:', error);
+      return { products: [], total: 0, page: 1, limit: 20, totalPages: 1 };
+    }
+  },
+
+  createProduct: (productData, files = []) =>
+    sendProduct('POST', '/admin/products', productData, files),
+
+  updateProduct: (id, productData, files = []) =>
+    sendProduct('PUT', `/admin/products/${id}`, productData, files),
 
   deleteProduct: (id) => apiCall(`/admin/products/${id}`, { method: 'DELETE' }),
+
   uploadProductImage: (id, file) => {
     const formData = new FormData();
     formData.append('image', file);
-    
     const headers = {};
     const token = localStorage.getItem('adminToken');
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
+    if (token) headers.Authorization = `Bearer ${token}`;
     return fetch(`${API_BASE_URL}/admin/products/${id}/images`, {
       method: 'POST',
       body: formData,
@@ -234,54 +244,69 @@ getAdminProducts: async (params = {}) => {
     }).then(handleResponse);
   },
 
-  // Admin Categories
   getAdminCategories: () => apiCall('/admin/categories'),
-  createCategory: (data) => apiCall('/admin/categories', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  }),
-  updateCategory: (id, data) => apiCall(`/admin/categories/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  }),
+  createCategory: (data) =>
+    apiCall('/admin/categories', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateCategory: (id, data) =>
+    apiCall(`/admin/categories/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
   deleteCategory: (id) => apiCall(`/admin/categories/${id}`, { method: 'DELETE' }),
 
-  // Admin Variations
-  getAdminVariations: (params = {}) => {
-    const queryString = new URLSearchParams(params).toString();
-    return apiCall(`/admin/variations${queryString ? '?' + queryString : ''}`);
-  },
-  createVariation: (data) => apiCall('/admin/variations', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  }),
-  updateVariation: (id, data) => apiCall(`/admin/variations/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  }),
-  updateVariationStock: (id, stock) => apiCall(`/admin/variations/${id}/stock`, {
-    method: 'PATCH',
-    body: JSON.stringify({ stock }),
-  }),
+  getAdminVariations: (params = {}) => apiCall(`/admin/variations${toQuery(params)}`),
+  createVariation: (data) =>
+    apiCall('/admin/variations', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateVariation: (id, data) =>
+    apiCall(`/admin/variations/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  updateVariationStock: (id, stock) =>
+    apiCall(`/admin/variations/${id}/stock`, {
+      method: 'PATCH',
+      body: JSON.stringify({ stock }),
+    }),
   deleteVariation: (id) => apiCall(`/admin/variations/${id}`, { method: 'DELETE' }),
 
-  // Admin Orders
-  getAdminOrders: (params = {}) => {
-    const queryString = new URLSearchParams(params).toString();
-    return apiCall(`/admin/orders${queryString ? '?' + queryString : ''}`);
-  },
+  getAdminOrders: (params = {}) => apiCall(`/admin/orders${toQuery(params)}`),
   getAdminOrder: (id) => apiCall(`/admin/orders/${id}`),
-  updateOrderStatus: (id, status) => apiCall(`/admin/orders/${id}/status`, {
-    method: 'PUT',
-    body: JSON.stringify({ status }),
-  }),
+  updateOrderStatus: (id, status) =>
+    apiCall(`/admin/orders/${id}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
+    }),
 
-  // Admin Dashboard
-  getDashboardStats: (params = {}) => {
-    const queryString = new URLSearchParams(params).toString();
-    return apiCall(`/admin/stats${queryString ? '?' + queryString : ''}`);
-  },
+  getAdminPromos: () => apiCall('/admin/promos'),
+  getAdminPromo: (id) => apiCall(`/admin/promos/${id}`),
+  createPromo: (data) =>
+    apiCall('/admin/promos', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updatePromo: (id, data) =>
+    apiCall(`/admin/promos/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  deletePromo: (id) => apiCall(`/admin/promos/${id}`, { method: 'DELETE' }),
+
+  getAdminReturns: (params = {}) => apiCall(`/admin/returns${toQuery(params)}`),
+  getAdminReturn: (id) => apiCall(`/admin/returns/${id}`),
+  updateReturnStatus: (id, status) =>
+    apiCall(`/admin/returns/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    }),
+
+  getDashboardStats: (params = {}) => apiCall(`/admin/stats${toQuery(params)}`),
 };
 
-// Export for use
 window.API = API;
+window.API_BASE_URL = API_BASE_URL;
