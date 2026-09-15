@@ -320,13 +320,7 @@ async function deleteVariation(variationId) {
 // ============================================
 
 function logout() {
-  if (confirm('Êtes-vous sûr de vouloir vous déconnecter?')) {
-    Utils.Storage.remove('adminToken');
-    Utils.showToast('Déconnecté', 'info');
-    setTimeout(() => {
-      window.location.href = '../login.html';
-    }, 1000);
-  }
+  Auth.logout();
 }
 
 

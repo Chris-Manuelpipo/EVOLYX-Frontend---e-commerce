@@ -10,6 +10,45 @@ let allCategories = [];
 let chartsInstances = {};
 let currentMonth = new Date();
 
+function token(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+function chartTheme() {
+  return {
+    gold: token('--gold'),
+    goldSoft: token('--gold-soft'),
+    onSurface: token('--on-surface'),
+    onMuted: token('--on-muted'),
+    outline: token('--outline'),
+    surface: token('--surface'),
+    warning: token('--warning'),
+    info: token('--info'),
+    success: token('--success'),
+    danger: token('--danger'),
+    warningSurface: token('--warning-surface'),
+    infoSurface: token('--info-surface'),
+    successSurface: token('--success-surface'),
+    dangerSurface: token('--danger-surface'),
+    variant: token('--on-variant'),
+  };
+}
+
+function chartTextOptions() {
+  const t = chartTheme();
+  return {
+    plugins: {
+      legend: {
+        labels: { color: t.onSurface },
+      },
+    },
+    scales: {
+      x: { ticks: { color: t.onMuted }, grid: { color: t.outline } },
+      y: { ticks: { color: t.onMuted }, grid: { color: t.outline } },
+    },
+  };
+}
+
 // ============================================
 // INITIALIZATION
 // ============================================
@@ -17,6 +56,9 @@ let currentMonth = new Date();
 document.addEventListener('DOMContentLoaded', () => {
   Auth.requireAuth();
   loadStatsData();
+  window.addEventListener('evolyx-theme-change', () => {
+    if (typeof updateStats === 'function') updateStats();
+  });
 });
 
 // ============================================
@@ -61,11 +103,15 @@ async function loadStatsData() {
 // ============================================
 
 function updateStats() {
-  const dateRange = document.getElementById('dateRangeFilter').value;
+  const dateRangeEl = document.getElementById('dateRangeFilter');
+  if (!dateRangeEl) return;
+
+  try {
+  const dateRange = dateRangeEl.value;
   const filteredOrders = filterByDateRange(allOrders, dateRange);
 
-  // Commandes confirmées sur la période
-  const confirmedOrders = filteredOrders.filter(o => o.status === 'confirmed');
+  const PAID_STATUSES = ['confirmed', 'preparing', 'shipped', 'delivered'];
+  const confirmedOrders = filteredOrders.filter((o) => PAID_STATUSES.includes(o.status));
 
   // Revenus (CA) = total_amount des commandes confirmées
   const totalRevenue = confirmedOrders.reduce((sum, o) => sum + parseFloat(o.total_amount || 0), 0);
@@ -78,18 +124,20 @@ function updateStats() {
 
   // Marge bénéficiaire
   const profitMargin = totalRevenue > 0 ? ((totalProfit / totalRevenue) * 100).toFixed(2) : 0;
-
-  // Mise à jour des KPI
-  document.getElementById('totalRevenue').textContent = Utils.formatPrice(totalRevenue);
-  document.getElementById('totalExpense').textContent = Utils.formatPrice(totalExpense);
-  document.getElementById('totalProfit').textContent = Utils.formatPrice(totalProfit);
-  document.getElementById('profitMargin').textContent = `${profitMargin}%`;
-
-  // Calcul des tendances (comparaison avec période précédente de même durée)
   const trend = calculateTrends(confirmedOrders, dateRange);
-  document.getElementById('revenueTrend').textContent = `${trend.revenue > 0 ? '↑' : '↓'} ${Math.abs(trend.revenue)}%`;
-  document.getElementById('expenseTrend').textContent = `${trend.expense > 0 ? '↑' : '↓'} ${Math.abs(trend.expense)}%`;
-  document.getElementById('profitTrend').textContent = `${trend.profit > 0 ? '↑' : '↓'} ${Math.abs(trend.profit)}%`;
+
+  const setText = (id, value) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  };
+
+  setText('totalRevenue', Utils.formatPrice(totalRevenue));
+  setText('totalExpense', Utils.formatPrice(totalExpense));
+  setText('totalProfit', Utils.formatPrice(totalProfit));
+  setText('profitMargin', `${profitMargin}%`);
+  setText('revenueTrend', `${trend.revenue > 0 ? '↑' : '↓'} ${Math.abs(trend.revenue)}%`);
+  setText('expenseTrend', `${trend.expense > 0 ? '↑' : '↓'} ${Math.abs(trend.expense)}%`);
+  setText('profitTrend', `${trend.profit > 0 ? '↑' : '↓'} ${Math.abs(trend.profit)}%`);
 
   // Résumé du jour
   updateTodaySummary();
@@ -100,6 +148,9 @@ function updateStats() {
   updateProductsChart(filteredOrders); // ← on passe les commandes filtrées
   updateStatusChart(filteredOrders);
   updateCategorySalesTable(confirmedOrders);
+  } catch (error) {
+    console.error('updateStats:', error);
+  }
 }
 
 // ============================================
@@ -206,13 +257,19 @@ function updateTodaySummary() {
     return orderDate === today;
   });
 
-  const todayConfirmed = todayOrders.filter(o => o.status === 'confirmed');
-  const todayRevenue = todayConfirmed.reduce((sum, o) => sum + parseFloat(o.total_amount || 0), 0);
+  const todayPaid = todayOrders.filter((o) =>
+    ['confirmed', 'preparing', 'shipped', 'delivered'].includes(o.status)
+  );
+  const todayRevenue = todayPaid.reduce((sum, o) => sum + parseFloat(o.total_amount || 0), 0);
   const todayPending = todayOrders.filter(o => o.status === 'pending').length;
 
-  document.getElementById('todayOrdersCount').textContent = todayOrders.length;
-  document.getElementById('todayRevenue').textContent = Utils.formatPrice(todayRevenue);
-  document.getElementById('todayPending').textContent = todayPending;
+  const setText = (id, value) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  };
+  setText('todayOrdersCount', todayOrders.length);
+  setText('todayRevenue', Utils.formatPrice(todayRevenue));
+  setText('todayPending', todayPending);
 }
 
 // ============================================
@@ -233,7 +290,7 @@ async function loadOutOfStockProducts() {
     if (countEl) countEl.textContent = outOfStock.length;
 
     if (outOfStock.length === 0) {
-      container.innerHTML = '<p style="padding: 20px; text-align: center; color: #666;">Aucun produit en rupture</p>';
+      container.innerHTML = '<p class="admin-empty">Aucun produit en rupture.</p>';
       return;
     }
 
@@ -254,7 +311,7 @@ async function loadOutOfStockProducts() {
     console.error('Erreur chargement ruptures:', error);
     const container = document.getElementById('outOfStockProducts');
     if (container) {
-      container.innerHTML = '<p style="padding: 20px; text-align: center; color: red;">Erreur de chargement</p>';
+      container.innerHTML = '<p class="admin-empty text-error">Impossible de charger les ruptures.</p>';
     }
   }
 }
@@ -266,9 +323,6 @@ async function loadOutOfStockProducts() {
 function updateRevenueChart(orders) {
   const canvas = document.getElementById('revenueChart');
   if (!canvas) return;
-
-  canvas.style.height = '300px';
-  canvas.style.width = '100%';
 
   const ctx = canvas.getContext('2d');
 
@@ -285,6 +339,7 @@ function updateRevenueChart(orders) {
     chartsInstances.revenueChart.destroy();
   }
 
+  const t = chartTheme();
   chartsInstances.revenueChart = new Chart(ctx, {
     type: 'line',
     data: {
@@ -292,8 +347,8 @@ function updateRevenueChart(orders) {
       datasets: [{
         label: 'Chiffre d\'affaires (FCFA)',
         data: data,
-        borderColor: '#D4AF37',
-        backgroundColor: 'rgba(212, 175, 55, 0.1)',
+        borderColor: t.gold,
+        backgroundColor: t.goldSoft,
         borderWidth: 2,
         fill: true,
         tension: 0.4,
@@ -301,18 +356,22 @@ function updateRevenueChart(orders) {
     },
     options: {
       responsive: true,
-      maintainAspectRatio: true,
-      plugins: {
-        legend: { display: true, position: 'top' },
-      },
+      maintainAspectRatio: false,
+      plugins: chartTextOptions().plugins,
       scales: {
         y: {
           beginAtZero: true,
           ticks: {
+            color: t.onMuted,
             callback: function(value) {
               return value.toLocaleString('fr-FR') + ' FCFA';
             },
           },
+          grid: { color: t.outline },
+        },
+        x: {
+          ticks: { color: t.onMuted },
+          grid: { color: t.outline },
         },
       },
     },
@@ -326,9 +385,6 @@ function updateRevenueChart(orders) {
 function updateOrdersChart(orders) {
   const canvas = document.getElementById('ordersChart');
   if (!canvas) return;
-
-  canvas.style.height = '300px';
-  canvas.style.width = '100%';
 
   const ctx = canvas.getContext('2d');
 
@@ -345,6 +401,7 @@ function updateOrdersChart(orders) {
     chartsInstances.ordersChart.destroy();
   }
 
+  const t = chartTheme();
   chartsInstances.ordersChart = new Chart(ctx, {
     type: 'bar',
     data: {
@@ -352,21 +409,24 @@ function updateOrdersChart(orders) {
       datasets: [{
         label: 'Nombre de commandes',
         data: data,
-        backgroundColor: '#3B82F6',
-        borderColor: '#1E40AF',
+        backgroundColor: t.info,
+        borderColor: t.info,
         borderWidth: 1,
       }],
     },
     options: {
       responsive: true,
-      maintainAspectRatio: true,
-      plugins: {
-        legend: { display: true, position: 'top' },
-      },
+      maintainAspectRatio: false,
+      plugins: chartTextOptions().plugins,
       scales: {
         y: {
           beginAtZero: true,
-          ticks: { stepSize: 1 },
+          ticks: { stepSize: 1, color: t.onMuted },
+          grid: { color: t.outline },
+        },
+        x: {
+          ticks: { color: t.onMuted },
+          grid: { color: t.outline },
         },
       },
     },
@@ -380,9 +440,6 @@ function updateOrdersChart(orders) {
 function updateProductsChart(orders) {
   const canvas = document.getElementById('productsChart');
   if (!canvas) return;
-
-  canvas.style.height = '300px';
-  canvas.style.width = '100%';
 
   const ctx = canvas.getContext('2d');
 
@@ -408,6 +465,7 @@ function updateProductsChart(orders) {
     chartsInstances.productsChart.destroy();
   }
 
+  const t = chartTheme();
   chartsInstances.productsChart = new Chart(ctx, {
     type: 'bar',
     data: {
@@ -415,20 +473,26 @@ function updateProductsChart(orders) {
       datasets: [{
         label: 'Quantités vendues',
         data: data,
-        backgroundColor: '#8B5CF6',
-        borderColor: '#5B21B6',
+        backgroundColor: t.gold,
+        borderColor: t.gold,
         borderWidth: 1,
       }],
     },
     options: {
       indexAxis: 'y',
       responsive: true,
-      maintainAspectRatio: true,
-      plugins: {
-        legend: { display: true, position: 'top' },
-      },
+      maintainAspectRatio: false,
+      plugins: chartTextOptions().plugins,
       scales: {
-        x: { beginAtZero: true },
+        x: {
+          beginAtZero: true,
+          ticks: { color: t.onMuted },
+          grid: { color: t.outline },
+        },
+        y: {
+          ticks: { color: t.onMuted },
+          grid: { color: t.outline },
+        },
       },
     },
   });
@@ -442,16 +506,17 @@ function updateStatusChart(orders) {
   const canvas = document.getElementById('statusChart');
   if (!canvas) return;
 
-  canvas.style.height = '300px';
-  canvas.style.width = '100%';
-
   const ctx = canvas.getContext('2d');
 
   const statusCounts = {};
+  const t = chartTheme();
   const statusColors = {
-    pending: '#FEF3C7',
-    confirmed: '#DBEAFE',
-    cancelled: '#FEE2E2',
+    pending: t.warning,
+    confirmed: t.info,
+    preparing: t.variant,
+    shipped: t.info,
+    delivered: t.success,
+    cancelled: t.danger,
   };
 
   orders.forEach(order => {
@@ -461,7 +526,7 @@ function updateStatusChart(orders) {
 
   const labels = Object.keys(statusCounts);
   const data = Object.values(statusCounts);
-  const colors = labels.map(status => statusColors[status] || '#CCCCCC');
+  const colors = labels.map(status => statusColors[status] || t.variant);
 
   if (chartsInstances.statusChart) {
     chartsInstances.statusChart.destroy();
@@ -474,6 +539,9 @@ function updateStatusChart(orders) {
         const names = {
           pending: 'En attente',
           confirmed: 'Confirmée',
+          preparing: 'En préparation',
+          shipped: 'Expédiée',
+          delivered: 'Livrée',
           cancelled: 'Annulée',
         };
         return names[s] || s;
@@ -481,15 +549,15 @@ function updateStatusChart(orders) {
       datasets: [{
         data: data,
         backgroundColor: colors,
-        borderColor: '#FFFFFF',
+        borderColor: t.surface,
         borderWidth: 2,
       }],
     },
     options: {
       responsive: true,
-      maintainAspectRatio: true,
+      maintainAspectRatio: false,
       plugins: {
-        legend: { position: 'bottom' },
+        legend: { position: 'bottom', labels: { color: t.onSurface } },
       },
     },
   });
@@ -553,7 +621,7 @@ function updateCategorySalesTable(orders) {
   });
 
   if (sorted.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Aucune vente</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" class="admin-empty">Aucune vente sur cette période.</td></tr>';
   }
 }
 // ============================================
@@ -574,8 +642,10 @@ function updateStockValues() {
     }
   });
   console.log(totalCost)
-  document.getElementById('stockCostValue').textContent = Utils.formatPrice(totalCost);
-  document.getElementById('stockSellingValue').textContent = Utils.formatPrice(totalSelling);
+  const costEl = document.getElementById('stockCostValue');
+  const sellEl = document.getElementById('stockSellingValue');
+  if (costEl) costEl.textContent = Utils.formatPrice(totalCost);
+  if (sellEl) sellEl.textContent = Utils.formatPrice(totalSelling);
 }
 // ============================================
 // CALENDAR
@@ -665,11 +735,5 @@ function nextMonth() {
 // ============================================
 
 function logout() {
-  if (confirm('Êtes-vous sûr de vouloir vous déconnecter?')) {
-    Utils.Storage.remove('adminToken');
-    Utils.showToast('Déconnecté', 'info');
-    setTimeout(() => {
-      window.location.href = '../login.html';
-    }, 1000);
-  }
+  Auth.logout();
 }

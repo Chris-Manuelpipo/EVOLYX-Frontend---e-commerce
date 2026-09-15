@@ -15,8 +15,7 @@
   </script>
   <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f6f3ea">
   <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1a1814">
-
-  <title>Créer un administrateur : EVOLYX</title>
+  <title>Retours - EVOLYX Admin</title>
   <meta name="robots" content="noindex">
   <link rel="icon" href="../assets/favicon.ico">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -32,42 +31,36 @@
     <main class="admin-main">
       <div class="admin-topbar">
         <div class="topbar-content">
-          <h1>Administrateurs</h1>
+          <h1>Retours</h1>
         </div>
       </div>
       <div class="admin-content">
-        <div id="superadminGate" hidden></div>
-        <div id="superadminFormWrap" class="card" hidden>
-          <h2>Créer un compte admin</h2>
-          <p class="text-gray">Réservé au rôle super_admin. L’API attend POST /admin/admins.</p>
-          <form id="adminCreateForm">
-            <div class="form-group">
-              <label for="adminEmail">E-mail</label>
-              <input type="email" id="adminEmail" name="email" required autocomplete="off">
-            </div>
-            <div class="form-group">
-              <label for="adminPassword">Mot de passe</label>
-              <input type="password" id="adminPassword" name="password" minlength="8" required>
-            </div>
-            <div class="form-group">
-              <label for="adminRole">Rôle</label>
-              <select id="adminRole" name="role">
-                <option value="admin">admin</option>
-                <option value="super_admin">super_admin</option>
-              </select>
-            </div>
-            <button type="submit" class="btn btn-primary">Créer</button>
-          </form>
+        <div id="returnsNotice"></div>
+        <div class="dashboard-section card">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Commande</th>
+                <th>Motif</th>
+                <th>Statut</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="returnsTableBody"></tbody>
+          </table>
         </div>
       </div>
     </main>
   </div>
+
   <script src="../js/config.js"></script>
   <script src="../js/utils.js"></script>
   <script src="../js/api.js"></script>
   <script src="../js/auth.js"></script>
   <script src="../js/theme.js"></script>
   <script src="../js/admin-layout.js"></script>
-  <script src="../js/admin-admins.js"></script>
+  <script src="../js/admin-returns.js"></script>
 </body>
 </html>

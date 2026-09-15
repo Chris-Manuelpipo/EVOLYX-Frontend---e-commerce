@@ -8,6 +8,7 @@ let allProducts = [];
 let categories = [];
 let selectedProductId = null;
 let selectedImages = [];
+let deletedVariationIds = [];
 // ============================================
 // PAGINATION VARIABLES
 // ============================================
@@ -167,9 +168,9 @@ function renderProducts(products) {
     
     if (product.images && product.images.length > 0) {
       const mainImage = product.images.find(img => img.is_main) || product.images[0];
-      imageUrl = ` ${mainImage.url}`;
+      imageUrl = String(mainImage.url || '').trim();
     } else if (product.image) {
-      imageUrl = ` ${product.image}`;
+      imageUrl = String(product.image).trim();
     }
     
     // ✅ Image avec gestion d'erreur
@@ -210,6 +211,7 @@ function renderProducts(products) {
 function openProductModal() {
   selectedProductId = null;
   selectedImages = [];
+  deletedVariationIds = [];
   document.getElementById('modalTitle').textContent = 'Nouveau Produit';
   document.getElementById('productForm').reset();
   document.getElementById('imagePreview').innerHTML = '';
@@ -221,6 +223,7 @@ function closeProductModal() {
   document.getElementById('productModal').classList.remove('active');
   selectedProductId = null;
   selectedImages = [];
+  deletedVariationIds = [];
 }
 
 // ============================================
@@ -238,6 +241,7 @@ async function editProduct(productId) {
     const variations = variationsResponse.data || [];
 
     selectedProductId = productId;
+    deletedVariationIds = [];
     document.getElementById('modalTitle').textContent = 'Éditer Produit';
 
     // Remplir le formulaire
@@ -308,6 +312,7 @@ async function saveProduct(event) {
     
     if (color || size) {
       variations.push({
+        id: row.dataset.variationId || null,
         color: color || null,
         size: size || null,
         stock: stock
@@ -318,34 +323,49 @@ async function saveProduct(event) {
   try {
     Utils.showLoading(document.getElementById('productForm'), true);
 
+    const files = selectedImages.slice();
     let product;
     if (selectedProductId) {
-      // Update
-      const response = await API.updateProduct(selectedProductId, productData);
-      product = response.data;
+      const response = await API.updateProduct(selectedProductId, productData, files);
+      product = response.data || response;
       Utils.showToast('Produit mis à jour', 'success');
     } else {
-      // Create
-      const response = await API.createProduct(productData);
-      product = response.data;
+      const response = await API.createProduct(productData, files);
+      product = response.data || response;
       Utils.showToast('Produit créé', 'success');
     }
 
-    // ✅ Créer les variations si le produit a été créé/modifié
-    if (variations.length > 0 && product?.id) {
-      for (const variation of variations) {
-        await API.createVariation({
-          product_id: product.id,
-          ...variation
-        });
+    const productId = product?.id || selectedProductId;
+
+    for (const id of deletedVariationIds) {
+      try {
+        await API.deleteVariation(id);
+      } catch (err) {
+        console.warn('Suppression variation:', err);
       }
-      console.log(`✅ ${variations.length} variations créées`);
+    }
+    deletedVariationIds = [];
+
+    if (productId) {
+      for (const variation of variations) {
+        const payload = {
+          product_id: productId,
+          color: variation.color,
+          size: variation.size,
+          stock: variation.stock,
+        };
+        if (variation.id) {
+          await API.updateVariation(variation.id, payload);
+        } else {
+          await API.createVariation(payload);
+        }
+      }
     }
 
-    // Upload images
-    if (selectedImages.length > 0) {
-      for (const file of selectedImages) {
-        await API.uploadProductImage(product.id, file);
+    const alreadyUploaded = Array.isArray(product?.images) && product.images.length > 0;
+    if (files.length > 0 && productId && !alreadyUploaded) {
+      for (const file of files) {
+        await API.uploadProductImage(productId, file);
       }
     }
 
@@ -428,13 +448,7 @@ function resetFilters() {
 }
 
 function logout() {
-  if (confirm('Êtes-vous sûr de vouloir vous déconnecter?')) {
-    Utils.Storage.remove('adminToken');
-    Utils.showToast('Déconnecté', 'info');
-    setTimeout(() => {
-      window.location.href = '../login.html';
-    }, 1000);
-  }
+  Auth.logout();
 }
 
 
@@ -451,8 +465,9 @@ function addVariationField(variation = null) {
   
   const div = document.createElement('div');
   div.className = 'variation-row';
-  div.style.cssText = 'display: flex; gap: 10px; margin-bottom: 10px; align-items: center; background: #f5f5f5; padding: 10px; border-radius: 4px;';
+  div.style.cssText = 'display: flex; gap: 10px; margin-bottom: 10px; align-items: center; background: var(--surface-container); padding: 10px; border-radius: 8px;';
   div.dataset.index = index;
+  if (variation?.id) div.dataset.variationId = variation.id;
   
   div.innerHTML = `
     <div style="position: relative; flex: 2;">
@@ -476,16 +491,19 @@ function addVariationField(variation = null) {
       min="0" 
       class="variation-stock-input"
       style="width: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-    <button type="button" onclick="removeVariationField(this)" style="background: none; border: none; color: #EF4444; font-size: 18px; cursor: pointer;">🗑️</button>
+    <button type="button" onclick="removeVariationField(this)" aria-label="Supprimer la variation" style="background: none; border: none; color: var(--danger); font-size: 18px; cursor: pointer;"><i class="fas fa-trash-alt"></i></button>
   `;
   
   container.appendChild(div);
 }
 
 function removeVariationField(btn) {
-  if (confirm('Supprimer cette variation ?')) {
-    btn.parentElement.remove();
+  if (!confirm('Supprimer cette variation ?')) return;
+  const row = btn.closest('.variation-row');
+  if (row?.dataset.variationId) {
+    deletedVariationIds.push(row.dataset.variationId);
   }
+  row.remove();
 }
 
 function openColorPalette(input) {
@@ -532,24 +550,24 @@ function updatePaginationInfo() {
   const start = ((currentPage - 1) * itemsPerPage) + 1;
   const end = Math.min(currentPage * itemsPerPage, filteredProducts.length);
   const total = filteredProducts.length;
-  
-  document.getElementById('totalProductsCount').textContent = total;
-  document.getElementById('currentPageDisplay').textContent = `Page ${currentPage}`;
-  
-  if (total > 0) {
-    document.getElementById('paginationInfo').innerHTML = 
-      `Affichage ${start}-${end} de <span id="totalProductsCount">${total}</span> produits`;
-  } else {
-    document.getElementById('paginationInfo').innerHTML = 'Aucun produit';
+  const infoEl = document.getElementById('paginationInfo');
+  const pageEl = document.getElementById('currentPageDisplay');
+
+  if (infoEl) {
+    infoEl.textContent = total > 0
+      ? `Affichage ${start}-${end} de ${total} produits`
+      : 'Aucun produit';
   }
-  
+  if (pageEl) pageEl.textContent = `Page ${currentPage}`;
+
   updatePaginationButtons();
 }
 
 function updatePaginationButtons() {
   const prevBtn = document.getElementById('prevPageBtn');
   const nextBtn = document.getElementById('nextPageBtn');
-  
+  if (!prevBtn || !nextBtn) return;
+
   prevBtn.disabled = currentPage === 1;
   nextBtn.disabled = currentPage * itemsPerPage >= filteredProducts.length;
 }

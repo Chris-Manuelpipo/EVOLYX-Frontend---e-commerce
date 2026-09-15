@@ -135,32 +135,29 @@ function showLoading(show) {
 // ============================================
 
 function updateStatsCards(stats, orders, products) {
-  // Total products
-  document.getElementById('totalProducts').textContent = products.length;
+  stats = stats || {};
+  orders = Array.isArray(orders) ? orders : [];
+  products = Array.isArray(products) ? products : [];
 
-  // Total orders
-  document.getElementById('totalOrders').textContent = orders.length;
+  const setText = (id, value) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  };
 
-  // Monthly revenue (stats du dashboard)
-  const monthlyRevenue = stats.monthlyRevenue || 0;
-  document.getElementById('monthlyRevenue').textContent = Utils.formatPrice(monthlyRevenue);
-
-  // Pending orders
-  const pendingCount = orders.filter(o => o.status === 'pending').length;
-  document.getElementById('pendingOrders').textContent = pendingCount;
-
-  // User greeting
+  setText('totalProducts', products.length);
+  setText('totalOrders', orders.length);
+  setText('monthlyRevenue', Utils.formatPrice(stats.monthlyRevenue || stats.revenue || 0));
+  setText('pendingOrders', orders.filter((o) => o.status === 'pending').length);
   updateUserGreeting();
 }
 
 function updateUserGreeting() {
   const hour = new Date().getHours();
   let greeting = 'Bonjour';
-  if (hour < 12) greeting = 'Bonjour';
-  else if (hour < 18) greeting = 'Bon après-midi';
-  else greeting = 'Bonsoir';
-  
-  document.getElementById('userGreeting').textContent = `${greeting}, Admin`;
+  if (hour >= 18) greeting = 'Bonsoir';
+  else if (hour >= 12) greeting = 'Bon après-midi';
+  const el = document.getElementById('userGreeting');
+  if (el) el.textContent = `${greeting}, Admin`;
 }
 
 // ============================================
@@ -212,7 +209,10 @@ function displayTopProducts(products) {
   
   Utils.DOM.empty(tbody);
 
-  if (!products || products.length === 0) {
+  const featured = (products || []).filter((p) => p.is_featured);
+  const list = featured.length ? featured : (products || []).slice(0, 5);
+
+  if (!list.length) {
     tbody.innerHTML = `
       <tr>
         <td colspan="5" style="text-align: center; padding: 30px;">
@@ -223,12 +223,11 @@ function displayTopProducts(products) {
     return;
   }
 
-  products.forEach(product => {
-    if (product.is_featured){
+  list.forEach(product => {
     const row = document.createElement('tr');
-    const stockClass = product.stock > 10 ? 'text-success' : 
+    const stockClass = product.stock > 10 ? 'text-success' :
                        product.stock > 0 ? 'text-warning' : 'text-error';
-    
+
     row.innerHTML = `
       <td>${product.name || 'N/A'}</td>
       <td>${product.sales_count || 0}</td>
@@ -238,11 +237,11 @@ function displayTopProducts(products) {
       <td>${Utils.formatPrice(product.base_price || 0)}</td>
       <td>
         <button class="btn btn-sm btn-primary" onclick="editProduct(${product.id})">
-          Éditer<i class="fas fa-edit"></i>
+          Éditer <i class="fas fa-edit"></i>
         </button>
       </td>
     `;
-    tbody.appendChild(row);}
+    tbody.appendChild(row);
   });
 }
 
@@ -251,17 +250,7 @@ function displayTopProducts(products) {
 // ============================================
 
 function getStatusBadge(status) {
-  const statuses = {
-    pending: { label: 'En attente', class: 'status-pending' },
-    confirmed: { label: 'Confirmée', class: 'status-confirmed' },
-    // preparing: { label: 'En préparation', class: 'status-preparing' },
-    // shipped: { label: 'Expédiée', class: 'status-shipped' },
-    // delivered: { label: 'Livrée', class: 'status-delivered' },
-    cancelled: { label: 'Annulée', class: 'status-cancelled' },
-  };
-
-  const info = statuses[status] || statuses.pending;
-  return `<span class="status-badge ${info.class}">${info.label}</span>`;
+  return Utils.statusBadge(status);
 }
 
 // ============================================
@@ -281,15 +270,5 @@ function editProduct(id) {
 // ============================================
 
 function logout() {
-  if (confirm('Êtes-vous sûr de vouloir vous déconnecter?')) {
-    localStorage.removeItem('adminToken');
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    
-    Utils.showToast('Déconnecté', 'info');
-    
-    setTimeout(() => {
-      window.location.href = '../login.html';
-    }, 1000);
-  }
+  Auth.logout();
 }

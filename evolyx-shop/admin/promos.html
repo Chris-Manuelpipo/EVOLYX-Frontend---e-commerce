@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem('evolyx-theme');
+        if (stored === 'light' || stored === 'dark') {
+          document.documentElement.setAttribute('data-theme', stored);
+        }
+      } catch (e) { /* stockage indisponible */ }
+    })();
+  </script>
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f6f3ea">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1a1814">
+  <title>Promos - EVOLYX Admin</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="../assets/favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <div class="admin-container">
+    <aside class="admin-sidebar" id="admin-sidebar"></aside>
+    <main class="admin-main">
+      <div class="admin-topbar">
+        <div class="topbar-content">
+          <h1>Codes promo</h1>
+          <button class="btn btn-primary" type="button" onclick="openPromoModal()">
+            <i class="fas fa-plus-circle"></i> Nouveau code
+          </button>
+        </div>
+      </div>
+      <div class="admin-content">
+        <div id="promosNotice"></div>
+        <div class="dashboard-section card">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Type</th>
+                <th>Valeur</th>
+                <th>Min. commande</th>
+                <th>Période</th>
+                <th>Usages</th>
+                <th>Actif</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="promosTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="admin-modal" id="promoModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="promoModalTitle">Nouveau code</h2>
+        <button class="modal-close" type="button" onclick="closePromoModal()">✕</button>
+      </div>
+      <form id="promoForm" onsubmit="savePromo(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="promoCodeField">Code</label>
+            <input type="text" id="promoCodeField" required maxlength="32" placeholder="EVOLYX10">
+          </div>
+          <div class="form-group">
+            <label for="promoType">Type</label>
+            <select id="promoType">
+              <option value="percent">Pourcentage</option>
+              <option value="fixed">Montant (FCFA)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="promoValue">Valeur</label>
+            <input type="number" id="promoValue" required min="0" step="1">
+          </div>
+          <div class="form-group">
+            <label for="promoMin">Minimum de commande (FCFA)</label>
+            <input type="number" id="promoMin" min="0" step="100" value="0">
+          </div>
+          <div class="form-group">
+            <label for="promoStart">Début</label>
+            <input type="datetime-local" id="promoStart">
+          </div>
+          <div class="form-group">
+            <label for="promoEnd">Fin</label>
+            <input type="datetime-local" id="promoEnd">
+          </div>
+          <div class="form-group">
+            <label for="promoMaxUses">Utilisations max</label>
+            <input type="number" id="promoMaxUses" min="0" placeholder="Illimité">
+          </div>
+          <div class="form-group form-check">
+            <label for="promoActive"><input type="checkbox" id="promoActive" checked> Actif</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closePromoModal()">Annuler</button>
+          <button type="submit" class="btn btn-primary">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/theme.js"></script>
+  <script src="../js/admin-layout.js"></script>
+  <script src="../js/admin-promos.js"></script>
+</body>
+</html>

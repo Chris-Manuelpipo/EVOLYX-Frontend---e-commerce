@@ -24,10 +24,12 @@ document.addEventListener('DOMContentLoaded', () => {
 async function loadOrders() {
   try {
     const response = await API.getAdminOrders();
-    allOrders = response.data || response.orders || [];
+    allOrders = Utils.unwrapList(response);
     filteredOrders = [...allOrders];
     renderOrders(filteredOrders);
     updateFilterStats();
+    const openId = new URLSearchParams(location.search).get('id');
+    if (openId) viewOrder(openId);
   } catch (error) {
     console.error('Failed to load orders:', error);
     Utils.showToast('Erreur lors du chargement des commandes', 'error');
@@ -132,6 +134,13 @@ function renderOrders(orders) {
           <button class="btn btn-sm btn-primary" onclick="viewOrder(${order.id})" title="Voir détails">
             <i class="fas fa-eye"></i>
           </button>
+          ${
+            order.status === 'delivered'
+              ? `<button class="btn btn-sm btn-secondary" onclick="openAdminInvoice(${order.id})" title="Facture PDF">
+            <i class="fas fa-file-invoice"></i>
+          </button>`
+              : ''
+          }
           <button class="btn btn-sm" style="background: #25D366; color: white;" 
                   onclick="contactCustomer('${cleanPhone}', '${order.customer_name || 'Client'}', ${order.id})"
                   title="Contacter sur WhatsApp"
@@ -149,13 +158,19 @@ function renderOrders(orders) {
 // GET STATUS BADGE
 // ============================================
 function getStatusBadge(status) {
-  const statuses = {
-    pending: { label: 'En attente', class: 'status-pending' },
-    confirmed: { label: 'Confirmée', class: 'status-confirmed' }, 
-    cancelled: { label: 'Annulée', class: 'status-cancelled' },
-  };
-  const info = statuses[status] || statuses.pending;
-  return `<span class="status-badge ${info.class}">${info.label}</span>`;
+  return Utils.statusBadge(status);
+}
+
+function fillStatusSelect(current) {
+  const select = document.getElementById('orderStatusSelect');
+  if (!select) return;
+  const options = Utils.allowedTransitions(current);
+  select.innerHTML = options
+    .map((key) => {
+      const info = Utils.statusInfo(key);
+      return `<option value="${key}"${key === current ? ' selected' : ''}>${info.label}</option>`;
+    })
+    .join('');
 }
 
 // ============================================
@@ -168,12 +183,12 @@ async function viewOrder(orderId) {
 
     selectedOrderId = orderId;
     document.getElementById('orderModalTitle').textContent = `Commande #${order.id}`;
-    document.getElementById('orderStatusSelect').value = order.status;
+    fillStatusSelect(order.status);
 
     const itemsList = order.items && Array.isArray(order.items)
       ? order.items.map(item => `
           <tr>
-            <td>${item.product_name}</td>
+            <td>${Utils.escapeHtml(Utils.formatOrderItemLabel(item))}</td>
             <td>${item.quantity}x</td>
             <td>${Utils.formatPrice(item.price)}</td>
             <td>${Utils.formatPrice(item.price * item.quantity)}</td>
@@ -209,10 +224,17 @@ async function viewOrder(orderId) {
         Total: ${Utils.formatPrice(order.total_amount)}
       </div>
 
-      <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: flex-end;">
-        <button class="btn btn-sm" style="background: #25D366; color: white;" 
+      <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;">
+        ${
+          order.status === 'delivered'
+            ? `<button class="btn btn-sm btn-secondary" type="button" onclick="openAdminInvoice(${order.id})">
+          Facture PDF
+        </button>`
+            : ''
+        }
+        <button class="btn btn-sm" style="background: #25D366; color: white;"
                 onclick="contactCustomer('${order.customer_phone}', '${order.customer_name}', ${order.id})">
-          📱 Contacter client
+          Contacter client
         </button>
       </div>
 
@@ -296,6 +318,24 @@ function contactCustomer(phone, customerName, orderId) {
 // ============================================
 // CLOSE MODAL
 // ============================================
+async function openAdminInvoice(orderId) {
+  try {
+    const blob = await API.fetchInvoice(orderId);
+    if (!(blob instanceof Blob)) throw new Error('Facture indisponible');
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank', 'noopener');
+  } catch (error) {
+    Utils.showToast(
+      error.status === 401
+        ? 'Reconnectez-vous pour ouvrir la facture'
+        : error.status === 403
+          ? 'Facture disponible uniquement après livraison'
+          : error.message || 'Facture indisponible',
+      'error'
+    );
+  }
+}
+
 function closeOrderModal() {
   document.getElementById('orderModal').classList.remove('active');
   selectedOrderId = null;
@@ -305,11 +345,13 @@ function closeOrderModal() {
 // LOGOUT
 // ============================================
 function logout() {
-  if (confirm('Êtes-vous sûr de vouloir vous déconnecter?')) {
-    Utils.Storage.remove('adminToken');
-    Utils.showToast('Déconnecté', 'info');
-    setTimeout(() => {
-      window.location.href = '../login.html';
-    }, 1000);
-  }
+  Auth.logout();
 }
+
+window.viewOrder = viewOrder;
+window.updateOrderStatus = updateOrderStatus;
+window.resetFilters = resetFilters;
+window.contactCustomer = contactCustomer;
+window.closeOrderModal = closeOrderModal;
+window.openAdminInvoice = openAdminInvoice;
+window.logout = logout;
