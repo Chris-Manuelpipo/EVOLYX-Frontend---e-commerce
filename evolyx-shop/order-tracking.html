@@ -3,115 +3,64 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Suivi Commande - EVOLYX</title>
-  <link rel="stylesheet" href="css/style.css">
-  <!-- ✅ Favicon -->
-  <link rel="icon" type="image/png" href="assets/favicon.png"> 
-  <!-- ✅ Font Awesome pour les icônes -->
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem('evolyx-theme');
+        if (stored === 'light' || stored === 'dark') {
+          document.documentElement.setAttribute('data-theme', stored);
+        }
+      } catch (e) { /* stockage indisponible */ }
+    })();
+  </script>
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f6f3ea">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1a1814">
+  <title>Suivi de commande : EVOLYX Shop</title>
+  <meta name="description" content="Suivez l’état de votre commande EVOLYX : en attente, confirmée, préparée, expédiée ou livrée.">
+  <meta property="og:title" content="Suivi de commande : EVOLYX Shop">
+  <meta property="og:description" content="Retrouvez votre commande EVOLYX avec son numéro.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://shop.evolyx.cm/order-tracking.html">
+  <meta property="og:image" content="https://shop.evolyx.cm/assets/og-image.png">
+  <meta property="og:site_name" content="EVOLYX Shop">
+  <link rel="canonical" href="https://shop.evolyx.cm/order-tracking.html">
+  <link rel="icon" href="assets/favicon.ico">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <!-- HEADER -->
-  <header class="header">
+  <a class="skip-link" href="#orderId">Aller au suivi</a>
+  <div id="site-header"></div>
+
+  <main class="page-main">
     <div class="container">
-      <div class="header-content">
-        <div class="logo" id="adminAccess">
-          <a href="index.html">
-            <img src="assets/evoly.png" alt="EVOLYX" class="logo-img">
-          </a>
-        </div>
-        <nav class="nav">
-          <a href="index.html" class="nav-link">Accueil</a>
-          <a href="index.html#catalog" class="nav-link">Catalogue</a> 
-        </nav>
-        <div class="header-actions">
-          <a href="cart.html" class="cart-link">
-            <span><i class="fas fa-shopping-cart"></i> </span>
-            <span class="cart-count" id="cartCount">0</span>
-          </a>
-        </div>
-      </div>
-    </div>
-  </header>
-
-  <!-- TRACKING SECTION -->
-  <div class="container">
-    <div class="tracking-wrapper" style="padding: 60px 0;">
-      <h1>Suivi de Commande</h1>
-
-      <div class="tracking-form card" style="max-width: 500px; margin: 40px auto;">
+      <h1>Suivi de commande</h1>
+      <div class="tracking-form card">
         <form onsubmit="searchOrder(event)">
           <div class="form-group">
-            <label for="orderId">Numéro de commande:</label>
-            <input 
-              type="text" 
-              id="orderId" 
-              placeholder="Ex: #18"
-              required
-            >
-            <small class="text-gray" style="display: block; margin-top: 10px;">
-              Entrez le numéro de commande que vous avez reçu par email
-            </small>
+            <label for="orderId">Numéro de commande</label>
+            <input type="text" id="orderId" name="orderId" placeholder="Ex. 18" required>
+            <small class="text-gray">Le numéro affiché après validation de la commande.</small>
           </div>
-
-          <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">
-            Rechercher
-          </button>
+          <button type="submit" class="btn btn-primary btn-lg" style="width:100%;">Rechercher</button>
         </form>
       </div>
-
-      <div class="tracking-result" id="trackingResult">
-        <!-- Loaded dynamically -->
-      </div>
+      <div id="trackingResult"></div>
     </div>
-  </div>
+  </main>
 
-  <!-- FOOTER -->
-  <footer class="footer">
-    <div class="container">
-      <div class="footer-content">
-        <div class="footer-section">
-          <h4><i class="fas fa-store-alt"></i> À Propos</h4>
-          <p>EVOLYX est votre destination premium pour des produits de qualité exceptionnelle.</p>
-          <div class="social-links">
-            <a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a>
-            <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
-            <a href="#" class="social-link"><i class="fab fa-whatsapp"></i></a>
-            <a href="#" class="social-link"><i class="fab fa-tiktok"></i></a>
-          </div>
-        </div>
+  <div id="site-footer"></div>
 
-        <div class="footer-section">
-          <h4><i class="fas fa-link"></i> Liens Rapides</h4>
-          <ul>
-            <li><a href="index.html"><i class="fas fa-chevron-right"></i> Accueil</a></li>
-            <li><a href="index.html#catalog"><i class="fas fa-chevron-right"></i> Catalogue</a></li>
-            <li><a href="order-tracking.html"><i class="fas fa-chevron-right"></i> Suivi Commande</a></li>
-            <li><a href="#"><i class="fas fa-chevron-right"></i> Contact</a></li>
-          </ul>
-        </div>
-
-        <div class="footer-section">
-          <h4><i class="fas fa-phone-alt"></i> Contact</h4>
-          <ul class="contact-info">
-            <li><i class="fas fa-envelope"></i> <a href="mailto:evolyxcmr@gmail.com">evolyxcmr@gmail.com</a></li>
-            <li><i class="fab fa-whatsapp"></i> <a href="https://wa.me/237654804907">+237 654 804 907</a></li>
-            <li><i class="fas fa-map-marker-alt"></i> Yaoundé, Cameroun</li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="footer-bottom">
-        <p>&copy; 2026 <span class="text-gold">EVOLYX</span>. Tous droits réservés.</p>
-         
-      </div>
-    </div>
-  </footer>
-
-  <!-- SCRIPTS -->
-  <script src="js/api.js"></script>
+  <script src="js/config.js"></script>
   <script src="js/utils.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/wishlist.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/layout.js"></script>
   <script src="js/order-tracking.js"></script>
 </body>
 </html>

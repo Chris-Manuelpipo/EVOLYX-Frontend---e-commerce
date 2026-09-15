@@ -3,164 +3,94 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Panier - EVOLYX</title>
-  <link rel="stylesheet" href="css/style.css">
-  <!-- ✅ Favicon -->
-  <link rel="icon" type="image/png" href="assets/favicon.png"> 
-  <!-- ✅ Font Awesome pour les icônes -->
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem('evolyx-theme');
+        if (stored === 'light' || stored === 'dark') {
+          document.documentElement.setAttribute('data-theme', stored);
+        }
+      } catch (e) { /* stockage indisponible */ }
+    })();
+  </script>
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f6f3ea">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1a1814">
+  <title>Panier : EVOLYX Shop</title>
+  <meta name="description" content="Votre panier EVOLYX. Vérifiez les quantités puis commandez par WhatsApp.">
+  <meta property="og:title" content="Panier : EVOLYX Shop">
+  <meta property="og:description" content="Panier et commande WhatsApp EVOLYX.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://shop.evolyx.cm/cart.html">
+  <meta property="og:image" content="https://shop.evolyx.cm/assets/og-image.png">
+  <meta property="og:site_name" content="EVOLYX Shop">
+  <meta property="og:locale" content="fr_FR">
+  <link rel="canonical" href="https://shop.evolyx.cm/cart.html">
+  <link rel="icon" href="assets/favicon.ico">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <!-- HEADER -->
-  <header class="header">
+  <a class="skip-link" href="#cartContent">Aller au panier</a>
+  <div id="site-header"></div>
+
+  <main class="page-main">
     <div class="container">
-      <div class="header-content">
-        <div class="logo" id="adminAccess"> 
-            <img src="assets/evoly.png" alt="EVOLYX" class="logo-img">
-        </div>
-        <nav class="nav">
-          <a href="index.html" class="nav-link">Accueil</a>
-          <a href="index.html#catalog" class="nav-link">Catalogue</a> 
-        </nav>
-        <div class="header-actions">
-          <a href="cart.html" class="cart-link">
-            <i class="fas fa-shopping-cart"></i>
-            <span class="cart-count" id="cartCount">0</span>
-          </a>
-        </div>
-      </div>
+      <h1>Panier</h1>
+      <div id="cartContent"></div>
     </div>
-  </header>
+  </main>
 
-  <!-- CART SECTION -->
-  <div class="container">
-    <div class="cart-wrapper" style="padding: 60px 0;">
-      <h1>Mon Panier</h1>
-
-      <div class="cart-content" id="cartContent">
-        <!-- Loaded dynamically -->
+  <div id="checkoutModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Livraison</h2>
+        <button type="button" class="modal-close" onclick="closeCheckoutModal()" aria-label="Fermer">✕</button>
       </div>
+      <form id="checkoutForm" onsubmit="submitCheckout(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="checkoutName">Nom complet</label>
+            <input type="text" id="checkoutName" name="name" autocomplete="name" required>
+          </div>
+          <div class="form-group">
+            <label for="checkoutPhone">Téléphone</label>
+            <div class="phone-row">
+              <select id="countryCode" aria-label="Indicatif">
+                <option value="237" selected>+237</option>
+                <option value="225">+225</option>
+                <option value="241">+241</option>
+                <option value="242">+242</option>
+                <option value="243">+243</option>
+              </select>
+              <input type="tel" id="checkoutPhone" name="phone" inputmode="tel" placeholder="6 54 80 49 07" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="checkoutAddress">Adresse de livraison</label>
+            <textarea id="checkoutAddress" name="address" rows="3" placeholder="Ville, quartier, repère…" required></textarea>
+          </div>
+          <p>Total : <strong id="checkoutTotal" class="text-gold"></strong></p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeCheckoutModal()">Annuler</button>
+          <button type="submit" class="btn btn-primary">Confirmer</button>
+        </div>
+      </form>
     </div>
   </div>
 
-  <!-- MODAL CHECKOUT -->
-<div id="checkoutModal" class="modal" style="display: none;">
-  <div class="modal-content" style="max-width: 450px;">
-    <div class="modal-header">
-      <h3>📋 Informations de livraison</h3>
-      <button class="modal-close" onclick="closeCheckoutModal()">✕</button>
-    </div>
-    
-    <form id="checkoutForm" onsubmit="submitCheckout(event)">
-      <div class="modal-body">
-        <div class="form-group">
-          <label for="checkoutName">Nom complet *</label>
-          <input type="text" id="checkoutName" placeholder="Jean Dupont" required>
-        </div>
-        
-        <div class="form-group">
-          <div style="display: flex; gap: 10px;">
-            <select id="countryCode" style="width: 100px; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
-              <option value="237" selected>🇨🇲 +237</option>
-              <option value="225">🇨🇮 +225</option>
-              <option value="221">🇸🇳 +221</option>
-              <option value="229">🇧🇯 +229</option>
-              <option value="228">🇹🇬 +228</option>
-              <option value="226">🇧🇫 +226</option>
-              <option value="227">🇳🇪 +227</option>
-              <option value="233">🇬🇭 +233</option>
-              <option value="234">🇳🇬 +234</option>
-              <option value="241">🇬🇦 +241</option>
-              <option value="242">🇨🇬 +242</option>
-              <option value="243">🇨🇩 +243</option>
-              <option value="254">🇰🇪 +254</option>
-              <option value="255">🇹🇿 +255</option>
-              <option value="256">🇺🇬 +256</option>
-              <option value="257">🇧🇮 +257</option>
-              <option value="258">🇲🇿 +258</option>
-              <option value="260">🇿🇲 +260</option>
-              <option value="261">🇲🇬 +261</option>
-              <option value="262">🇷🇪 +262</option>
-              <option value="263">🇿🇼 +263</option>
-              <option value="264">🇳🇦 +264</option>
-              <option value="265">🇲🇼 +265</option>
-              <option value="266">🇱🇸 +266</option>
-              <option value="267">🇧🇼 +267</option>
-              <option value="268">🇸🇿 +268</option>
-              <option value="269">🇰🇲 +269</option>
-              <option value="290">🇸🇭 +290</option>
-            </select>
-            <input type="tel" id="checkoutPhone" placeholder="670000000" style="flex: 1; padding: 10px;" required>
-          </div>
-        </div>
-        
-        <div class="form-group">
-          <label for="checkoutAddress">Adresse de livraison *</label>
-          <textarea id="checkoutAddress" rows="3" placeholder="Ville, quartier, Rue..." required></textarea>
-        </div>
+  <div id="site-footer"></div>
 
-        <!-- Récapitulatif rapide -->
-        <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-top: 15px;">
-          <p style="margin: 0 0 5px 0;"><strong>Récapitulatif</strong></p>
-          <p style="margin: 0; font-size: 14px;">Total: <span id="checkoutTotal" class="text-gold"></span></p>
-        </div>
-      </div>
-      
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closeCheckoutModal()">Annuler</button>
-        <button type="submit" class="btn btn-primary">📱 Confirmer la commande</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-  <!-- FOOTER -->
-  <footer class="footer">
-    <div class="container">
-      <div class="footer-content">
-        <div class="footer-section">
-          <h4><i class="fas fa-store-alt"></i> À Propos</h4>
-          <p>EVOLYX est votre destination premium pour des produits de qualité exceptionnelle.</p>
-          <div class="social-links">
-            <a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a>
-            <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
-            <a href="#" class="social-link"><i class="fab fa-whatsapp"></i></a>
-            <a href="#" class="social-link"><i class="fab fa-tiktok"></i></a>
-          </div>
-        </div>
-
-        <div class="footer-section">
-          <h4><i class="fas fa-link"></i> Liens Rapides</h4>
-          <ul>
-            <li><a href="index.html"><i class="fas fa-chevron-right"></i> Accueil</a></li>
-            <li><a href="index.html#catalog"><i class="fas fa-chevron-right"></i> Catalogue</a></li>
-            <li><a href="order-tracking.html"><i class="fas fa-chevron-right"></i> Suivi Commande</a></li>
-            <li><a href="#"><i class="fas fa-chevron-right"></i> Contact</a></li>
-          </ul>
-        </div>
-
-        <div class="footer-section">
-          <h4><i class="fas fa-phone-alt"></i> Contact</h4>
-          <ul class="contact-info">
-            <li><i class="fas fa-envelope"></i> <a href="mailto:evolyxcmr@gmail.com">evolyxcmr@gmail.com</a></li>
-            <li><i class="fab fa-whatsapp"></i> <a href="https://wa.me/237654804907">+237 654 804 907</a></li>
-            <li><i class="fas fa-map-marker-alt"></i> Yaoundé, Cameroun</li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="footer-bottom">
-        <p>&copy; 2026 <span class="text-gold">EVOLYX</span>. Tous droits réservés.</p>
-         
-      </div>
-    </div>
-  </footer>
-
-
-  <!-- SCRIPTS -->
-  <script src="js/api.js"></script>
+  <script src="js/config.js"></script>
   <script src="js/utils.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/wishlist.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/layout.js"></script>
   <script src="js/cart.js"></script>
 </body>
 </html>

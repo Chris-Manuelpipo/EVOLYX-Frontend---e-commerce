@@ -3,145 +3,119 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EVOLYX - E-Commerce Premium</title>
-  
-  <!-- ✅ Favicon -->
-  <link rel="icon" type="image/png" href="assets/favicon.png"> 
-  
-  <!-- ✅ Font Awesome pour les icônes -->
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem('evolyx-theme');
+        if (stored === 'light' || stored === 'dark') {
+          document.documentElement.setAttribute('data-theme', stored);
+        }
+      } catch (e) { /* stockage indisponible : préférence système */ }
+    })();
+  </script>
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f6f3ea">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1a1814">
+  <title>EVOLYX Shop : boutique en ligne à Yaoundé</title>
+  <meta name="description" content="Boutique EVOLYX à Yaoundé. Commandez par WhatsApp, suivez votre commande, livraison au Cameroun.">
+  <meta property="og:title" content="EVOLYX Shop : boutique en ligne à Yaoundé">
+  <meta property="og:description" content="Catalogue EVOLYX. Commande confirmée par WhatsApp, suivi et livraison au Cameroun.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://shop.evolyx.cm/">
+  <meta property="og:image" content="https://shop.evolyx.cm/assets/og-image.png">
+  <meta property="og:site_name" content="EVOLYX Shop">
+  <meta property="og:locale" content="fr_FR">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="EVOLYX Shop : boutique en ligne à Yaoundé">
+  <meta name="twitter:description" content="Boutique EVOLYX à Yaoundé. Commandez par WhatsApp, suivez votre commande, livraison au Cameroun.">
+  <meta name="twitter:image" content="https://shop.evolyx.cm/assets/og-image.png">
+  <link rel="canonical" href="https://shop.evolyx.cm/">
+  <link rel="icon" href="assets/favicon.ico">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <!-- ============================================
-       HEADER / NAVIGATION AVEC LOGO
-       ============================================ -->
-  <header class="header">
-    <div class="container">
-      <div class="header-content">
-        <!-- ✅ Logo au lieu du texte -->
-        <div class="logo" id="adminAccess"> 
-            <img src="assets/evoly.png" alt="EVOLYX" class="logo-img">
-        </div>
+  <a class="skip-link" href="#catalog">Aller au catalogue</a>
+  <div id="site-header"></div>
 
-        <nav class="nav">
-          <a href="index.html" class="nav-link active">Accueil</a>
-          <a href="index.html#catalog" class="nav-link">Catalogue</a> 
-          <a href="order-tracking.html" class="nav-link">Suivi commande</a>
-        </nav>
-
-        <div class="header-actions">
-          <a href="cart.html" class="cart-link">
-            <i class="fas fa-shopping-cart"></i>
-            <span class="cart-count" id="cartCount">0</span>
-          </a>
+  <main>
+    <section class="hero">
+      <div class="container hero-content">
+        <p class="hero-kicker">Yaoundé, Cameroun</p>
+        <h1>Boutique EVOLYX</h1>
+        <p>Choisissez un produit, commandez, confirmez par WhatsApp. Livraison au Cameroun, suivi inclus.</p>
+        <div class="hero-actions">
+          <a href="#catalog" class="btn btn-primary">Voir le catalogue</a>
+          <a href="order-tracking.html" class="btn btn-outline">Suivre une commande</a>
         </div>
       </div>
-    </div>
-  </header>
+    </section>
 
-  <!-- ============================================
-       HERO SECTION
-       ============================================ -->
-  <section class="hero">
-    <div class="container">
-      <div class="hero-content">
-        <h1>Bienvenue chez <span class="text-gold">EVOLYX</span></h1>
-        <p>Découvrez notre collection exclusive de produits premium</p>
-        <a href="#catalog" class="btn btn-primary">Explorer</a>
+    <section class="featured" id="featuredSection" hidden>
+      <div class="container">
+        <h2>En vedette</h2>
+        <div class="products-grid" id="featuredGrid"></div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- ============================================
-       CATALOG SECTION
-       ============================================ -->
-  <section class="catalog" id="catalog">
-    <div class="container">
-      <h2>Notre Catalogue</h2>
-
-      <!-- Filters -->
-      <div class="filters">
-        <div class="form-group">
-          <input 
-            type="text" 
-            id="searchInput" 
-            placeholder="Rechercher un produit..."
-            class="search-input"
-          >
-        </div>
-
-        <div class="form-group">
-          <select id="categoryFilter">
-            <option value="">Toutes les catégories</option>
-          </select>
-        </div>
-
-        <button class="btn btn-secondary" id="resetFilter">Réinitialiser<i class="fas fa-sync"></i></button>
-      </div>
-
-      <!-- Products Grid -->
-      <div class="products-grid" id="productsGrid">
-        <!-- Loaded dynamically -->
-      </div>
-
-      <!-- Pagination -->
-      <div class="pagination" id="pagination">
-        <!-- Loaded dynamically -->
-      </div>
-    </div>
-  </section>
-
-  <!-- ============================================
-       FOOTER AMÉLIORÉ AVEC ICÔNES
-       ============================================ -->
-  <footer class="footer">
-    <div class="container">
-      <div class="footer-content">
-        <div class="footer-section">
-          <h4><i class="fas fa-store-alt"></i> À Propos</h4>
-          <p>EVOLYX est votre destination premium pour des produits de qualité exceptionnelle.</p>
-          <div class="social-links">
-            <a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a>
-            <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
-            <a href="#" class="social-link"><i class="fab fa-whatsapp"></i></a>
-            <a href="#" class="social-link"><i class="fab fa-tiktok"></i></a>
+    <section class="catalog" id="catalog">
+      <div class="container">
+        <h2>Catalogue</h2>
+        <div class="filters">
+          <div class="form-group">
+            <label for="searchInput">Recherche</label>
+            <input type="search" id="searchInput" class="search-input" placeholder="Nom du produit…" autocomplete="off">
           </div>
+          <div class="form-group">
+            <label for="categoryFilter">Catégorie</label>
+            <select id="categoryFilter">
+              <option value="">Toutes les catégories</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="sortFilter">Tri</label>
+            <select id="sortFilter">
+              <option value="">Pertinence</option>
+              <option value="newest">Nouveautés</option>
+              <option value="price_asc">Prix croissant</option>
+              <option value="price_desc">Prix décroissant</option>
+              <option value="featured">Vedettes</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="minPrice">Prix min (FCFA)</label>
+            <input type="number" id="minPrice" min="0" step="500" inputmode="numeric" placeholder="0">
+          </div>
+          <div class="form-group">
+            <label for="maxPrice">Prix max (FCFA)</label>
+            <input type="number" id="maxPrice" min="0" step="500" inputmode="numeric" placeholder="—">
+          </div>
+          <div class="form-group form-check">
+            <label for="inStockFilter">
+              <input type="checkbox" id="inStockFilter"> En stock
+            </label>
+          </div>
+          <button type="button" class="btn btn-secondary" id="resetFilter">
+            Réinitialiser <i class="fas fa-rotate" aria-hidden="true"></i>
+          </button>
         </div>
-
-        <div class="footer-section">
-          <h4><i class="fas fa-link"></i> Liens Rapides</h4>
-          <ul>
-            <li><a href="index.html"><i class="fas fa-chevron-right"></i> Accueil</a></li>
-            <li><a href="index.html#catalog"><i class="fas fa-chevron-right"></i> Catalogue</a></li>
-            <li><a href="order-tracking.html"><i class="fas fa-chevron-right"></i> Suivi Commande</a></li>
-            <li><a href="#"><i class="fas fa-chevron-right"></i> Contact</a></li>
-          </ul>
-        </div>
-
-        <div class="footer-section">
-          <h4><i class="fas fa-phone-alt"></i> Contact</h4>
-          <ul class="contact-info">
-            <li><i class="fas fa-envelope"></i> <a href="mailto:evolyxcmr@gmail.com">evolyxcmr@gmail.com</a></li>
-            <li><i class="fab fa-whatsapp"></i> <a href="https://wa.me/237654804907">+237 654 804 907</a></li>
-            <li><i class="fas fa-map-marker-alt"></i> Yaoundé, Cameroun</li>
-          </ul>
-        </div>
+        <div class="products-grid" id="productsGrid"></div>
+        <div class="pagination" id="pagination"></div>
       </div>
+    </section>
+  </main>
 
-      <div class="footer-bottom">
-        <p>&copy; 2026 <span class="text-gold">EVOLYX</span>. Tous droits réservés.</p>
-         
-      </div>
-    </div>
-  </footer>
+  <div id="site-footer"></div>
 
-  <!-- ============================================
-       SCRIPTS
-       ============================================ -->
-  <script src="js/api.js"></script>
+  <script src="js/config.js"></script>
   <script src="js/utils.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/wishlist.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/layout.js"></script>
   <script src="js/catalog.js"></script>
 </body>
 </html>

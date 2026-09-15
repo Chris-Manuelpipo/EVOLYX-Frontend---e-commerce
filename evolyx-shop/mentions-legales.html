@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem('evolyx-theme');
+        if (stored === 'light' || stored === 'dark') {
+          document.documentElement.setAttribute('data-theme', stored);
+        }
+      } catch (e) { /* stockage indisponible */ }
+    })();
+  </script>
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f6f3ea">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1a1814">
+  <title>Mentions légales : EVOLYX Shop</title>
+  <meta name="description" content="Mentions légales d’EVOLYX Shop : éditeur, hébergement Vercel et Render, contact à Yaoundé.">
+  <meta property="og:title" content="Mentions légales : EVOLYX Shop">
+  <meta property="og:description" content="Éditeur, hébergement et contact d’EVOLYX Shop.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://shop.evolyx.cm/mentions-legales.html">
+  <meta property="og:image" content="https://shop.evolyx.cm/assets/og-image.png">
+  <meta property="og:site_name" content="EVOLYX Shop">
+  <meta property="og:locale" content="fr_FR">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="canonical" href="https://shop.evolyx.cm/mentions-legales.html">
+  <link rel="icon" href="assets/favicon.ico">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#legal">Aller au contenu</a>
+  <div id="site-header"></div>
+  <main class="page-main">
+    <article class="container legal-page" id="legal">
+      <p class="legal-kicker">Groupe EVOLYX</p>
+      <h1>Mentions légales</h1>
+      <p class="legal-meta">Dernière mise à jour : septembre 2026</p>
+
+      <h2>Éditeur</h2>
+      <dl class="legal-dl">
+        <div><dt>Dénomination</dt><dd>EVOLYX Shop, boutique en ligne du groupe EVOLYX</dd></div>
+        <div><dt>Branche associée</dt><dd>EVOLYX Digital</dd></div>
+        <div><dt>Siège</dt><dd>Yaoundé, Cameroun</dd></div>
+        <div><dt>Directeur de publication</dt><dd>ETCHOME Chris Manuel</dd></div>
+      </dl>
+
+      <h2>Hébergement</h2>
+      <p>Le site boutique (pages, assets) est hébergé par Vercel. L’API de commande est hébergée par Render.</p>
+      <dl class="legal-dl">
+        <div>
+          <dt>Front (Vercel Inc.)</dt>
+          <dd>440 N Barranca Ave #4133, Covina, CA 91723, États-Unis — <a href="https://vercel.com" rel="noopener noreferrer">vercel.com</a></dd>
+        </div>
+        <div>
+          <dt>API (Render Services, Inc.)</dt>
+          <dd>San Francisco, États-Unis — <a href="https://render.com" rel="noopener noreferrer">render.com</a></dd>
+        </div>
+      </dl>
+
+      <h2>Contact</h2>
+      <dl class="legal-dl">
+        <div><dt>E-mail</dt><dd><a href="mailto:evolyxcmr@gmail.com">evolyxcmr@gmail.com</a></dd></div>
+        <div><dt>WhatsApp</dt><dd><a href="https://wa.me/237654804907" rel="noopener noreferrer">+237 6 54 80 49 07</a></dd></div>
+        <div><dt>Site groupe</dt><dd><a href="https://evolyx.cm" rel="noopener noreferrer">evolyx.cm</a></dd></div>
+        <div><dt>Boutique</dt><dd><a href="https://shop.evolyx.cm">shop.evolyx.cm</a></dd></div>
+      </dl>
+
+      <p>Les <a href="cgv.html">conditions générales de vente</a> et la <a href="confidentialite.html">politique de confidentialité</a> complètent ces mentions.</p>
+    </article>
+  </main>
+  <div id="site-footer"></div>
+  <script src="js/config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/layout.js"></script>
+</body>
+</html>

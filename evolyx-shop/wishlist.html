@@ -15,17 +15,15 @@
   </script>
   <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f6f3ea">
   <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1a1814">
-  <title>Produit : EVOLYX Shop</title>
-  <meta name="description" content="Fiche produit EVOLYX. Options, stock et ajout au panier. Commande confirmée par WhatsApp.">
-  <meta property="og:title" content="Produit : EVOLYX Shop">
-  <meta property="og:description" content="Détail produit, variations et commande WhatsApp.">
-  <meta property="og:type" content="product">
-  <meta property="og:url" content="https://shop.evolyx.cm/product.html">
+  <title>Favoris : EVOLYX Shop</title>
+  <meta name="description" content="Vos produits favoris EVOLYX Shop. Retrouvez-les et commandez par WhatsApp.">
+  <meta property="og:title" content="Favoris : EVOLYX Shop">
+  <meta property="og:description" content="Liste de souhaits EVOLYX Shop.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://shop.evolyx.cm/wishlist.html">
   <meta property="og:image" content="https://shop.evolyx.cm/assets/og-image.png">
   <meta property="og:site_name" content="EVOLYX Shop">
-  <meta property="og:locale" content="fr_FR">
-  <meta name="twitter:card" content="summary_large_image">
-  <link rel="canonical" href="https://shop.evolyx.cm/product.html">
+  <link rel="canonical" href="https://shop.evolyx.cm/wishlist.html">
   <link rel="icon" href="assets/favicon.ico">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -35,25 +33,25 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <a class="skip-link" href="#productDetail">Aller au produit</a>
+  <a class="skip-link" href="#wishlistGrid">Aller aux favoris</a>
   <div id="site-header"></div>
-
-  <main class="page-main page-product">
+  <main class="page-main">
     <div class="container">
-      <div id="productDetail"></div>
-      <section id="reviewsSection" class="product-extras" hidden></section>
-      <section id="relatedSection" class="product-extras" hidden></section>
+      <h1>Favoris</h1>
+      <p class="text-gray">Touchez le cœur sur un produit pour le retrouver ici. La liste est synchronisée avec le serveur.</p>
+      <div class="products-grid" id="wishlistGrid"></div>
     </div>
   </main>
-
   <div id="site-footer"></div>
-
   <script src="js/config.js"></script>
   <script src="js/utils.js"></script>
   <script src="js/api.js"></script>
   <script src="js/wishlist.js"></script>
   <script src="js/theme.js"></script>
   <script src="js/layout.js"></script>
-  <script src="js/product-detail.js"></script>
+  <script src="js/catalog.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => Wishlist.renderPage());
+  </script>
 </body>
 </html>
