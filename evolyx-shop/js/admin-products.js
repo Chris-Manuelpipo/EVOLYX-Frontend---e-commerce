@@ -8,6 +8,7 @@ let allProducts = [];
 let categories = [];
 let selectedProductId = null;
 let selectedImages = [];
+let selectedImageUrls = [];
 let deletedVariationIds = [];
 // ============================================
 // PAGINATION VARIABLES
@@ -206,20 +207,20 @@ function renderProducts(products) {
 
 function openProductModal() {
   selectedProductId = null;
-  selectedImages = [];
+  clearSelectedImages();
   deletedVariationIds = [];
   document.getElementById('modalTitle').textContent = 'Nouveau Produit';
   document.getElementById('productForm').reset();
   document.getElementById('imagePreview').innerHTML = '';
   document.getElementById('productModal').classList.add('active');
   document.getElementById('productCostPrice').value = '';
-  if (typeof updateImagesLabel === 'function') updateImagesLabel();
+  updateImagesLabel();
 }
 
 function closeProductModal() {
   document.getElementById('productModal').classList.remove('active');
   selectedProductId = null;
-  selectedImages = [];
+  clearSelectedImages();
   deletedVariationIds = [];
 }
 
@@ -238,6 +239,7 @@ async function editProduct(productId) {
     const variations = variationsResponse.data || [];
 
     selectedProductId = productId;
+    clearSelectedImages();
     deletedVariationIds = [];
     document.getElementById('modalTitle').textContent = 'Éditer Produit';
 
@@ -372,7 +374,6 @@ async function saveProduct(event) {
       }
     }
 
-    selectedImages = [];
     closeProductModal();
     await loadProducts();
       }
@@ -432,23 +433,43 @@ function fileKey(file) {
   return `${file.name}|${file.size}|${file.lastModified || 0}`;
 }
 
-function renderSelectedImagePreviews() {
-  const preview = document.getElementById('imagePreview');
-  Utils.DOM.empty(preview);
-  selectedImages.forEach((file, index) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const div = document.createElement('div');
-      div.className = 'file-preview-item';
-      div.innerHTML = `
-        <img src="${e.target.result}" alt="preview">
-        <button type="button" class="file-preview-remove" onclick="removeImage(${index})" aria-label="Retirer l'image">✕</button>
-      `;
-      preview.appendChild(div);
-    };
-    reader.readAsDataURL(file);
+function clearSelectedImages() {
+  selectedImageUrls.forEach((url) => {
+    try {
+      URL.revokeObjectURL(url);
+    } catch (_) {
+      /* ignore */
+    }
   });
-  updateImagesLabel();
+  selectedImages = [];
+  selectedImageUrls = [];
+}
+
+function appendSelectedImagePreview(file, index) {
+  const preview = document.getElementById('imagePreview');
+  if (!preview) return;
+
+  const url = URL.createObjectURL(file);
+  selectedImageUrls[index] = url;
+
+  const div = document.createElement('div');
+  div.className = 'file-preview-item';
+  div.dataset.selectedIndex = String(index);
+  div.innerHTML = `
+    <img src="${url}" alt="preview">
+    <button type="button" class="file-preview-remove" onclick="removeImage(${index})" aria-label="Retirer l'image">✕</button>
+  `;
+  preview.appendChild(div);
+}
+
+function reindexSelectedImagePreviews() {
+  const preview = document.getElementById('imagePreview');
+  if (!preview) return;
+  preview.querySelectorAll('[data-selected-index]').forEach((el, index) => {
+    el.dataset.selectedIndex = String(index);
+    const btn = el.querySelector('.file-preview-remove');
+    if (btn) btn.setAttribute('onclick', `removeImage(${index})`);
+  });
 }
 
 function handleImageSelect(event) {
@@ -466,11 +487,12 @@ function handleImageSelect(event) {
     if (seen.has(key)) return;
     seen.add(key);
     selectedImages.push(file);
+    appendSelectedImagePreview(file, selectedImages.length - 1);
     added += 1;
   });
 
   event.target.value = '';
-  renderSelectedImagePreviews();
+  updateImagesLabel();
   if (added) {
     Utils.showToast(
       added === 1 ? 'Image ajoutée' : `${added} images ajoutées`,
@@ -480,10 +502,24 @@ function handleImageSelect(event) {
 }
 
 function removeImage(index) {
+  const url = selectedImageUrls[index];
+  if (url) {
+    try {
+      URL.revokeObjectURL(url);
+    } catch (_) {
+      /* ignore */
+    }
+  }
   selectedImages.splice(index, 1);
+  selectedImageUrls.splice(index, 1);
+
+  const preview = document.getElementById('imagePreview');
+  preview?.querySelector(`[data-selected-index="${index}"]`)?.remove();
+  reindexSelectedImagePreviews();
+
   const input = document.getElementById('productImages');
   if (input) input.value = '';
-  renderSelectedImagePreviews();
+  updateImagesLabel();
 }
 
 function removeExistingImage(imageId) {
