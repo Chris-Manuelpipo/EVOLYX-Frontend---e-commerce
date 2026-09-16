@@ -23,13 +23,15 @@ document.addEventListener('DOMContentLoaded', () => {
 // ============================================
 async function loadOrders() {
   try {
-    const response = await API.getAdminOrders();
-    allOrders = Utils.unwrapList(response);
-    filteredOrders = [...allOrders];
-    renderOrders(filteredOrders);
-    updateFilterStats();
-    const openId = new URLSearchParams(location.search).get('id');
-    if (openId) viewOrder(openId);
+    await Utils.withBusy('Chargement des commandes…', async () => {
+      const response = await API.getAdminOrders();
+      allOrders = Utils.unwrapList(response);
+      filteredOrders = [...allOrders];
+      renderOrders(filteredOrders);
+      updateFilterStats();
+      const openId = new URLSearchParams(location.search).get('id');
+      if (openId) viewOrder(openId);
+    });
   } catch (error) {
     console.error('Failed to load orders:', error);
     Utils.showToast('Erreur lors du chargement des commandes', 'error');
@@ -262,13 +264,15 @@ async function updateOrderStatus() {
   const newStatus = document.getElementById('orderStatusSelect').value;
 
   try {
-    await API.updateOrderStatus(selectedOrderId, newStatus);
-    Utils.showToast('Statut mis à jour', 'success');
-    closeOrderModal();
-    loadOrders();
+    await Utils.withBusy('Mise à jour du statut…', async () => {
+      await API.updateOrderStatus(selectedOrderId, newStatus);
+      Utils.showToast('Statut mis à jour', 'success');
+      closeOrderModal();
+      await loadOrders();
+    });
   } catch (error) {
     console.error('Failed to update order status:', error);
-    Utils.showToast('Erreur lors de la mise à jour', 'error');
+    Utils.showToast(error.message || 'Erreur lors de la mise à jour', 'error');
   }
 }
 

@@ -14,10 +14,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function loadCategories() {
   try {
-    const response = await API.getCategories();
-    allCategories = response.data || [];
-    renderCategories();
-    // populateCategoryParentSelect();
+    await Utils.withBusy('Chargement des catégories…', async () => {
+      const response = await API.getCategories();
+      allCategories = response.data || [];
+      renderCategories();
+    });
   } catch (error) {
     console.error('Failed to load categories:', error);
     Utils.showToast('Erreur lors du chargement des catégories', 'error');
@@ -52,23 +53,6 @@ function renderCategories() {
   });
 }
 
-// function populateCategoryParentSelect() {
-//   const select = document.getElementById('categoryParent');
-//   // Clear except first option
-//   while (select.options.length > 1) {
-//     select.remove(1);
-//   }
-
-//   allCategories.forEach(cat => {
-//     if (cat.id !== selectedCategoryId) {
-//       const option = document.createElement('option');
-//       option.value = cat.id;
-//       option.textContent = cat.name;
-//       select.appendChild(option);
-//     }
-//   });
-// }
-
 function openCategoryModal() {
   selectedCategoryId = null;
   document.getElementById('modalTitle').textContent = 'Nouvelle Catégorie';
@@ -82,18 +66,16 @@ function closeCategoryModal() {
 
 async function editCategory(categoryId) {
   try {
-    const response = await API.getCategory(categoryId);
-    const category = response.data;
+    await Utils.withBusy('Chargement…', async () => {
+      const response = await API.getCategory(categoryId);
+      const category = response.data;
 
-    selectedCategoryId = categoryId;
-    document.getElementById('modalTitle').textContent = 'Éditer Catégorie';
-    document.getElementById('categoryName').value = category.name;
-    document.getElementById('categoryDescription').value = category.description || '';
-    // document.getElementById('categoryParent').value = category.parent_id || '';
-    // document.getElementById('categoryActive').checked = category.active;
-
-    // populateCategoryParentSelect();
-    document.getElementById('categoryModal').classList.add('active');
+      selectedCategoryId = categoryId;
+      document.getElementById('modalTitle').textContent = 'Éditer Catégorie';
+      document.getElementById('categoryName').value = category.name;
+      document.getElementById('categoryDescription').value = category.description || '';
+      document.getElementById('categoryModal').classList.add('active');
+    });
   } catch (error) {
     console.error('Failed to edit category:', error);
     Utils.showToast('Erreur lors de la récupération de la catégorie', 'error');
@@ -106,20 +88,23 @@ async function saveCategory(event) {
   const categoryData = {
     name: document.getElementById('categoryName').value,
     description: document.getElementById('categoryDescription').value,
-    // parent_id: document.getElementById('categoryParent').value || null,
-    // active: document.getElementById('categoryActive').checked,
   };
 
   try {
-    if (selectedCategoryId) {
-      await API.updateCategory(selectedCategoryId, categoryData);
-      Utils.showToast('Catégorie mise à jour', 'success');
-    } else {
-      await API.createCategory(categoryData);
-      Utils.showToast('Catégorie créée', 'success');
-    }
-    closeCategoryModal();
-    loadCategories();
+    await Utils.withBusy(
+      selectedCategoryId ? 'Mise à jour…' : 'Création de la catégorie…',
+      async () => {
+        if (selectedCategoryId) {
+          await API.updateCategory(selectedCategoryId, categoryData);
+          Utils.showToast('Catégorie mise à jour', 'success');
+        } else {
+          await API.createCategory(categoryData);
+          Utils.showToast('Catégorie créée', 'success');
+        }
+        closeCategoryModal();
+        await loadCategories();
+      }
+    );
   } catch (error) {
     console.error('Failed to save category:', error);
     Utils.showToast(error.message || 'Erreur lors de l\'enregistrement', 'error');
@@ -130,9 +115,11 @@ async function deleteCategory(categoryId) {
   if (!confirm('Êtes-vous sûr de vouloir supprimer cette catégorie?')) return;
 
   try {
-    await API.deleteCategory(categoryId);
-    Utils.showToast('Catégorie supprimée', 'success');
-    loadCategories();
+    await Utils.withBusy('Suppression…', async () => {
+      await API.deleteCategory(categoryId);
+      Utils.showToast('Catégorie supprimée', 'success');
+      await loadCategories();
+    });
   } catch (error) {
     console.error('Failed to delete category:', error);
     Utils.showToast('Erreur lors de la suppression', 'error');

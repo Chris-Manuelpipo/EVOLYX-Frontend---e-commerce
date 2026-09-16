@@ -9,10 +9,12 @@ async function loadPromos() {
   const tbody = document.getElementById('promosTableBody');
   const notice = document.getElementById('promosNotice');
   try {
-    const response = await API.getAdminPromos();
-    const promos = Utils.unwrapList(response);
-    if (notice) notice.innerHTML = '';
-    renderPromos(promos);
+    await Utils.withBusy('Chargement des promos…', async () => {
+      const response = await API.getAdminPromos();
+      const promos = Utils.unwrapList(response);
+      if (notice) notice.innerHTML = '';
+      renderPromos(promos);
+    });
   } catch (error) {
     tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;">Aucune promo chargée</td></tr>';
     if (notice) {
@@ -119,11 +121,13 @@ async function savePromo(event) {
   event.preventDefault();
   const data = readPromoForm();
   try {
-    if (selectedPromoId) await API.updatePromo(selectedPromoId, data);
-    else await API.createPromo(data);
-    Utils.showToast('Promo enregistrée', 'success');
-    closePromoModal();
-    loadPromos();
+    await Utils.withBusy('Enregistrement…', async () => {
+      if (selectedPromoId) await API.updatePromo(selectedPromoId, data);
+      else await API.createPromo(data);
+      Utils.showToast('Promo enregistrée', 'success');
+      closePromoModal();
+      await loadPromos();
+    });
   } catch (error) {
     Utils.showToast(error.message || 'Enregistrement impossible', 'error');
   }
@@ -132,9 +136,11 @@ async function savePromo(event) {
 async function deletePromo(id) {
   if (!confirm('Supprimer ce code promo ?')) return;
   try {
-    await API.deletePromo(id);
-    Utils.showToast('Promo supprimée', 'success');
-    loadPromos();
+    await Utils.withBusy('Suppression…', async () => {
+      await API.deletePromo(id);
+      Utils.showToast('Promo supprimée', 'success');
+      await loadPromos();
+    });
   } catch (error) {
     Utils.showToast(error.message || 'Suppression impossible', 'error');
   }

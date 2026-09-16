@@ -88,20 +88,15 @@ function populateProductSelects() {
  
 async function loadVariations() {
   try {
-    console.log('🎨 Chargement des variations...');
-    const response = await API.getAdminVariations();
-    
-    // ✅ Extraction des variations (response.data)
-    if (response?.data && Array.isArray(response.data)) {
-      allVariations = response.data;
-      console.log(`✅ ${allVariations.length} variations chargées`);
-    } else {
-      console.warn('⚠️ Format variations inattendu');
-      allVariations = [];
-    }
-    
-    renderVariations(allVariations);
-    
+    await Utils.withBusy('Chargement des variations…', async () => {
+      const response = await API.getAdminVariations();
+      if (response?.data && Array.isArray(response.data)) {
+        allVariations = response.data;
+      } else {
+        allVariations = [];
+      }
+      renderVariations(allVariations);
+    });
   } catch (error) {
     console.error('❌ Failed to load variations:', error);
     Utils.showToast('Erreur lors du chargement des variations', 'error');
@@ -278,22 +273,23 @@ async function saveVariation(event) {
   };
 
   try {
-    console.log('💾 Sauvegarde variation:', variationData);
-    
-    if (selectedVariationId) {
-      await API.updateVariation(selectedVariationId, variationData);
-      Utils.showToast('Variation mise à jour', 'success');
-    } else {
-      await API.createVariation(variationData);
-      Utils.showToast('Variation créée', 'success');
-    }
-    
-    closeVariationModal();
-    await loadVariations(); // Recharger la liste
-    
+    await Utils.withBusy(
+      selectedVariationId ? 'Mise à jour…' : 'Création de la variation…',
+      async () => {
+        if (selectedVariationId) {
+          await API.updateVariation(selectedVariationId, variationData);
+          Utils.showToast('Variation mise à jour', 'success');
+        } else {
+          await API.createVariation(variationData);
+          Utils.showToast('Variation créée', 'success');
+        }
+        closeVariationModal();
+        await loadVariations();
+      }
+    );
   } catch (error) {
     console.error('❌ Failed to save variation:', error);
-    Utils.showToast('Erreur lors de l\'enregistrement', 'error');
+    Utils.showToast(error.message || 'Erreur lors de l\'enregistrement', 'error');
   }
 }
 
@@ -305,13 +301,14 @@ async function deleteVariation(variationId) {
   if (!confirm('Êtes-vous sûr de vouloir supprimer cette variation?')) return;
 
   try {
-    console.log(`🗑️ Suppression variation #${variationId}`);
-    await API.deleteVariation(variationId);
-    Utils.showToast('Variation supprimée', 'success');
-    await loadVariations(); // Recharger la liste
+    await Utils.withBusy('Suppression…', async () => {
+      await API.deleteVariation(variationId);
+      Utils.showToast('Variation supprimée', 'success');
+      await loadVariations();
+    });
   } catch (error) {
     console.error('❌ Failed to delete variation:', error);
-    Utils.showToast('Erreur lors de la suppression', 'error');
+    Utils.showToast(error.message || 'Erreur lors de la suppression', 'error');
   }
 }
 

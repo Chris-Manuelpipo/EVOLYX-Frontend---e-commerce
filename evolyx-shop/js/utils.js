@@ -470,6 +470,55 @@ function showLoading(container, show = true) {
   }
 }
 
+let busyDepth = 0;
+
+function ensureBusyOverlay() {
+  let overlay = document.getElementById('evolyx-busy');
+  if (overlay) return overlay;
+  overlay = document.createElement('div');
+  overlay.id = 'evolyx-busy';
+  overlay.className = 'busy-overlay';
+  overlay.hidden = true;
+  overlay.setAttribute('role', 'status');
+  overlay.setAttribute('aria-live', 'polite');
+  overlay.innerHTML =
+    '<div class="busy-card">' +
+    '<div class="loading-spinner" aria-hidden="true"><span></span><span></span><span></span></div>' +
+    '<p class="busy-label">Chargement…</p>' +
+    '</div>';
+  document.body.appendChild(overlay);
+  return overlay;
+}
+
+function setBusy(show, label = 'Chargement…') {
+  const overlay = ensureBusyOverlay();
+  if (show) {
+    busyDepth += 1;
+    const labelEl = overlay.querySelector('.busy-label');
+    if (labelEl) labelEl.textContent = label || 'Chargement…';
+    overlay.hidden = false;
+    document.body.classList.add('is-busy');
+  } else {
+    busyDepth = Math.max(0, busyDepth - 1);
+    if (busyDepth === 0) {
+      overlay.hidden = true;
+      document.body.classList.remove('is-busy');
+    }
+  }
+}
+
+async function withBusy(labelOrFn, maybeFn) {
+  const hasLabel = typeof labelOrFn === 'string';
+  const label = hasLabel ? labelOrFn : 'Chargement…';
+  const fn = hasLabel ? maybeFn : labelOrFn;
+  setBusy(true, label);
+  try {
+    return await fn();
+  } finally {
+    setBusy(false);
+  }
+}
+
 window.Utils = {
   formatPrice,
   formatDate,
@@ -499,4 +548,6 @@ window.Utils = {
   Validate,
   showToast,
   showLoading,
+  setBusy,
+  withBusy,
 };

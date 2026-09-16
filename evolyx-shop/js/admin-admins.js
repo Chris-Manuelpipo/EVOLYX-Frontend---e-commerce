@@ -41,15 +41,14 @@ async function createAdmin(event) {
   }
 
   try {
-    Utils.showLoading(event.target, true);
-    await API.createAdmin({ email, password, role });
-    Utils.showToast('Administrateur créé', 'success');
-    event.target.reset();
-    Utils.showLoading(event.target, false);
+    await Utils.withBusy('Création de l\'administrateur…', async () => {
+      await API.createAdmin({ email, password, role });
+      Utils.showToast('Administrateur créé', 'success');
+      event.target.reset();
+    });
   } catch (error) {
     console.error(error);
     Utils.showToast(error.message || 'Création impossible', 'error');
-    Utils.showLoading(event.target, false);
   }
 }
 

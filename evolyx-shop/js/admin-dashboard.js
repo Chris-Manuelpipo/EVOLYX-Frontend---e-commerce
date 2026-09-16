@@ -36,17 +36,13 @@ function setupNavigation() {
 
 async function loadDashboardData() {
   try {
-    console.log('📊 Début chargement dashboard');
-    
-    // ✅ Afficher loader
-    showLoading(true);
+    await Utils.withBusy('Chargement du tableau de bord…', async () => {
     
     // 1. CHARGER LES STATS (prioritaire)
     let stats = {};
     try {
       const statsResponse = await API.getDashboardStats();
       stats = statsResponse?.data || {};
-      console.log('📊 Stats reçues:', stats);
     } catch (statsError) {
       console.warn('⚠️ Erreur stats, utilisation valeurs par défaut', statsError);
     }
@@ -55,7 +51,6 @@ async function loadDashboardData() {
     let allOrders = [];
     try {
       const ordersResponse = await API.getAdminOrders();
-      console.log('📦 Réponse commandes brute:', ordersResponse);
       
       // ✅ Extraction des commandes (response.data)
       if (ordersResponse?.data && Array.isArray(ordersResponse.data)) {
@@ -63,7 +58,6 @@ async function loadDashboardData() {
       } else if (Array.isArray(ordersResponse)) {
         allOrders = ordersResponse;
       }
-      console.log('📦 Commandes extraites:', allOrders.length);
     } catch (ordersError) {
       console.warn('⚠️ Erreur commandes:', ordersError);
     }
@@ -102,31 +96,10 @@ async function loadDashboardData() {
     updateStatsCards(stats, allOrders, allProducts);
     displayRecentOrders(allOrders.slice(0, 5));
     displayTopProducts(allProducts);
-    
-    // ✅ Cacher loader
-    showLoading(false);
-    
+    });
   } catch (error) {
     console.error('❌ Erreur globale:', error);
     Utils.showToast('Erreur lors du chargement du dashboard', 'error');
-    showLoading(false);
-  }
-}
-
-// ============================================
-// LOADER
-// ============================================
-
-function showLoading(show) {
-  const content = document.querySelector('.admin-content');
-  if (!content) return;
-
-  if (show) {
-    content.style.opacity = '0.5';
-    content.style.pointerEvents = 'none';
-  } else {
-    content.style.opacity = '1';
-    content.style.pointerEvents = 'auto';
   }
 }
 

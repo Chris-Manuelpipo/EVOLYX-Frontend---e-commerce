@@ -76,11 +76,9 @@ async function loadCategories() {
  
 async function loadProducts() {
   try {
-    console.log('📦 Chargement des produits...');
-    
+    await Utils.withBusy('Chargement des produits…', async () => {
     //LIMITE POUR TOUT AFFICHER
     const response = await API.getAdminProducts({limit: 999});
-    console.log('📦 Réponse brute:', response);
     
     // ✅ Extraire les produits correctement
     let products = [];
@@ -107,11 +105,9 @@ async function loadProducts() {
     filteredProducts = [...allProducts]; // Initialiser les produits filtrés
     currentPage = 1; // Reset à la page 1
     
-    console.log('📦 Produits finaux:', allProducts.length);
-    
     renderPaginatedProducts();
     updatePaginationControls();
-    
+    });
   } catch (error) {
     console.error('❌ Failed to load products:', error);
     Utils.showToast('Erreur lors du chargement des produits', 'error');
@@ -321,8 +317,9 @@ async function saveProduct(event) {
   });
 
   try {
-    Utils.showLoading(document.getElementById('productForm'), true);
-
+    await Utils.withBusy(
+      selectedProductId ? 'Mise à jour du produit…' : 'Création du produit…',
+      async () => {
     const files = selectedImages.slice();
     let product;
     if (selectedProductId) {
@@ -369,13 +366,13 @@ async function saveProduct(event) {
       }
     }
 
-    Utils.showLoading(document.getElementById('productForm'), false);
     closeProductModal();
-    loadProducts();
+    await loadProducts();
+      }
+    );
   } catch (error) {
     console.error('Failed to save product:', error);
-    Utils.showToast('Erreur lors de l\'enregistrement', 'error');
-    Utils.showLoading(document.getElementById('productForm'), false);
+    Utils.showToast(error.message || 'Erreur lors de l\'enregistrement', 'error');
   }
 }
 
@@ -389,12 +386,14 @@ async function deleteProduct(productId) {
   }
 
   try {
-    await API.deleteProduct(productId);
-    Utils.showToast('Produit supprimé', 'success');
-    loadProducts();
+    await Utils.withBusy('Suppression du produit…', async () => {
+      await API.deleteProduct(productId);
+      Utils.showToast('Produit supprimé', 'success');
+      await loadProducts();
+    });
   } catch (error) {
     console.error('Failed to delete product:', error);
-    Utils.showToast('Erreur lors de la suppression', 'error');
+    Utils.showToast(error.message || 'Erreur lors de la suppression', 'error');
   }
 }
 

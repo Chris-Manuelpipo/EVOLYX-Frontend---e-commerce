@@ -7,10 +7,12 @@ async function loadReturns() {
   const tbody = document.getElementById('returnsTableBody');
   const notice = document.getElementById('returnsNotice');
   try {
-    const response = await API.getAdminReturns();
-    const returns = Utils.unwrapList(response);
-    if (notice) notice.innerHTML = '';
-    renderReturns(returns);
+    await Utils.withBusy('Chargement des retours…', async () => {
+      const response = await API.getAdminReturns();
+      const returns = Utils.unwrapList(response);
+      if (notice) notice.innerHTML = '';
+      renderReturns(returns);
+    });
   } catch (error) {
     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;">Aucun retour chargé</td></tr>';
     if (notice) {
@@ -72,9 +74,11 @@ function returnLabel(status) {
 
 async function changeReturnStatus(id, status) {
   try {
-    await API.updateReturnStatus(id, status);
-    Utils.showToast('Statut mis à jour', 'success');
-    loadReturns();
+    await Utils.withBusy('Mise à jour…', async () => {
+      await API.updateReturnStatus(id, status);
+      Utils.showToast('Statut mis à jour', 'success');
+      await loadReturns();
+    });
   } catch (error) {
     Utils.showToast(error.message || 'Mise à jour impossible', 'error');
     loadReturns();
