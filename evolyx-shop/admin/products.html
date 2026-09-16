@@ -163,14 +163,14 @@
             <div class="form-group form-group-full">
               <label>Images</label>
               <div class="file-input-wrapper">
-                <input type="file" id="productImages" name="images" multiple accept="image/*" />
-                <label for="productImages" class="file-input-label">
-                  📸 Ajouter des images (plusieurs à la fois, ou une par une)
+                <!-- Pas de multiple : sur Firefox/Android le bouton Ouvrir bloque souvent la multi-sélection -->
+                <input type="file" id="productImages" name="images" accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif" />
+                <label for="productImages" class="file-input-label" id="productImagesLabel">
+                  📸 Ajouter une image
                 </label>
               </div>
-              <p class="text-gray" style="margin:0.4rem 0 0;font-size:0.8rem;">
-                Astuce : sur ordinateur, Ctrl (ou Cmd) + clic pour en choisir plusieurs.
-                Sur téléphone, rouvrez le sélecteur pour en ajouter d’autres — elles s’accumulent.
+              <p class="text-gray" style="margin:0.4rem 0 0;font-size:0.8rem;" id="productImagesHint">
+                Ajoutez les images une par une : rouvrez le sélecteur pour chaque photo. Elles s’accumulent ci-dessous.
               </p>
               <div class="file-preview" id="imagePreview"></div>
             </div>

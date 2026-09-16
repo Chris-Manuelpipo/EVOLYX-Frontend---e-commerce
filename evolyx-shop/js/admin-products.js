@@ -213,6 +213,7 @@ function openProductModal() {
   document.getElementById('imagePreview').innerHTML = '';
   document.getElementById('productModal').classList.add('active');
   document.getElementById('productCostPrice').value = '';
+  if (typeof updateImagesLabel === 'function') updateImagesLabel();
 }
 
 function closeProductModal() {
@@ -395,6 +396,22 @@ async function deleteProduct(productId) {
 // IMAGE HANDLING
 // ============================================
 
+function updateImagesLabel() {
+  const label = document.getElementById('productImagesLabel');
+  const hint = document.getElementById('productImagesHint');
+  const n = selectedImages.length;
+  if (label) {
+    label.textContent = n
+      ? `📸 Ajouter une autre image (${n} sélectionnée${n > 1 ? 's' : ''})`
+      : '📸 Ajouter une image';
+  }
+  if (hint) {
+    hint.textContent = n
+      ? `${n} image${n > 1 ? 's' : ''} prête${n > 1 ? 's' : ''} — rouvrez le sélecteur pour en ajouter.`
+      : 'Ajoutez les images une par une : rouvrez le sélecteur pour chaque photo. Elles s’accumulent ci-dessous.';
+  }
+}
+
 function fileKey(file) {
   return `${file.name}|${file.size}|${file.lastModified || 0}`;
 }
@@ -415,6 +432,7 @@ function renderSelectedImagePreviews() {
     };
     reader.readAsDataURL(file);
   });
+  updateImagesLabel();
 }
 
 function handleImageSelect(event) {
@@ -422,16 +440,27 @@ function handleImageSelect(event) {
   if (!incoming.length) return;
 
   const seen = new Set(selectedImages.map(fileKey));
+  let added = 0;
   incoming.forEach((file) => {
+    if (!file.type || !file.type.startsWith('image/')) {
+      Utils.showToast(`Fichier ignoré (pas une image) : ${file.name}`, 'warning');
+      return;
+    }
     const key = fileKey(file);
     if (seen.has(key)) return;
     seen.add(key);
     selectedImages.push(file);
+    added += 1;
   });
 
-  // Permet de resélectionner les mêmes fichiers plus tard si besoin
   event.target.value = '';
   renderSelectedImagePreviews();
+  if (added) {
+    Utils.showToast(
+      added === 1 ? 'Image ajoutée' : `${added} images ajoutées`,
+      'success'
+    );
+  }
 }
 
 function removeImage(index) {
