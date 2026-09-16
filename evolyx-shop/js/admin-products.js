@@ -395,15 +395,13 @@ async function deleteProduct(productId) {
 // IMAGE HANDLING
 // ============================================
 
-function handleImageSelect(event) {
-  const incoming = Array.from(event.target.files || []);
-  selectedImages = incoming;
+function fileKey(file) {
+  return `${file.name}|${file.size}|${file.lastModified || 0}`;
+}
 
+function renderSelectedImagePreviews() {
   const preview = document.getElementById('imagePreview');
   Utils.DOM.empty(preview);
-
-  if (!selectedImages.length) return;
-
   selectedImages.forEach((file, index) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -411,7 +409,7 @@ function handleImageSelect(event) {
       div.className = 'file-preview-item';
       div.innerHTML = `
         <img src="${e.target.result}" alt="preview">
-        <button type="button" class="file-preview-remove" onclick="removeImage(${index})">✕</button>
+        <button type="button" class="file-preview-remove" onclick="removeImage(${index})" aria-label="Retirer l'image">✕</button>
       `;
       preview.appendChild(div);
     };
@@ -419,25 +417,28 @@ function handleImageSelect(event) {
   });
 }
 
+function handleImageSelect(event) {
+  const incoming = Array.from(event.target.files || []);
+  if (!incoming.length) return;
+
+  const seen = new Set(selectedImages.map(fileKey));
+  incoming.forEach((file) => {
+    const key = fileKey(file);
+    if (seen.has(key)) return;
+    seen.add(key);
+    selectedImages.push(file);
+  });
+
+  // Permet de resélectionner les mêmes fichiers plus tard si besoin
+  event.target.value = '';
+  renderSelectedImagePreviews();
+}
+
 function removeImage(index) {
   selectedImages.splice(index, 1);
   const input = document.getElementById('productImages');
   if (input) input.value = '';
-  const preview = document.getElementById('imagePreview');
-  Utils.DOM.empty(preview);
-  selectedImages.forEach((file, i) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const div = document.createElement('div');
-      div.className = 'file-preview-item';
-      div.innerHTML = `
-        <img src="${e.target.result}" alt="preview">
-        <button type="button" class="file-preview-remove" onclick="removeImage(${i})">✕</button>
-      `;
-      preview.appendChild(div);
-    };
-    reader.readAsDataURL(file);
-  });
+  renderSelectedImagePreviews();
 }
 
 function removeExistingImage(imageId) {
