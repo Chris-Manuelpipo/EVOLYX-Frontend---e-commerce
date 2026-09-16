@@ -7,7 +7,7 @@ async function loadReturns() {
   const tbody = document.getElementById('returnsTableBody');
   const notice = document.getElementById('returnsNotice');
   try {
-    await Utils.withBusy('Chargement des retours…', async () => {
+    await Utils.withListLoading(tbody, async () => {
       const response = await API.getAdminReturns();
       const returns = Utils.unwrapList(response);
       if (notice) notice.innerHTML = '';

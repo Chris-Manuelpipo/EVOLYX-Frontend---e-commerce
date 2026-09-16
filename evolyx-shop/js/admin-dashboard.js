@@ -35,9 +35,19 @@ function setupNavigation() {
 // ============================================
 
 async function loadDashboardData() {
+  const statEls = ['totalProducts', 'totalOrders', 'monthlyRevenue', 'pendingOrders']
+    .map((id) => document.getElementById(id))
+    .filter(Boolean);
+
   try {
-    await Utils.withBusy('Chargement du tableau de bord…', async () => {
-    
+    Utils.showTableSkeleton('recentOrdersTable', { rows: 5 });
+    Utils.showTableSkeleton('topProductsTable', { rows: 5 });
+    statEls.forEach((el) => {
+      el.dataset.skeletonPrev = el.textContent;
+      el.classList.add('is-skeleton');
+      el.textContent = '\u00a0';
+    });
+
     // 1. CHARGER LES STATS (prioritaire)
     let stats = {};
     try {
@@ -96,10 +106,11 @@ async function loadDashboardData() {
     updateStatsCards(stats, allOrders, allProducts);
     displayRecentOrders(allOrders.slice(0, 5));
     displayTopProducts(allProducts);
-    });
   } catch (error) {
     console.error('❌ Erreur globale:', error);
     Utils.showToast('Erreur lors du chargement du dashboard', 'error');
+  } finally {
+    statEls.forEach((el) => el.classList.remove('is-skeleton'));
   }
 }
 

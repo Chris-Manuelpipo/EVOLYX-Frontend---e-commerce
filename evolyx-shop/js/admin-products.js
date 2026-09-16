@@ -76,7 +76,7 @@ async function loadCategories() {
  
 async function loadProducts() {
   try {
-    await Utils.withBusy('Chargement des produits…', async () => {
+    await Utils.withListLoading('productsTableBody', async () => {
     //LIMITE POUR TOUT AFFICHER
     const response = await API.getAdminProducts({limit: 999});
     

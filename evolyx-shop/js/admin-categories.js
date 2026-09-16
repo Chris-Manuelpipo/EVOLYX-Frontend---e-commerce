@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function loadCategories() {
   try {
-    await Utils.withBusy('Chargement des catégories…', async () => {
+    await Utils.withListLoading('categoriesTableBody', async () => {
       const response = await API.getCategories();
       allCategories = response.data || [];
       renderCategories();
@@ -44,7 +44,7 @@ function renderCategories() {
       
       <td>
         <div class="action-buttons">
-          <button class="btn btn-sm btn-primary" onclick="editCategory(${cat.id})"><i class="fas fa-edit"></i></button>
+          <button class="btn btn-sm btn-primary" onclick="editCategory(${cat.id}, this)"><i class="fas fa-edit"></i></button>
           <button class="btn btn-sm" style="background: #EF4444; color: white;" onclick="deleteCategory(${cat.id}, this)"><i class="fas fa-trash-alt"></i></button>
         </div>
       </td>
@@ -64,9 +64,9 @@ function closeCategoryModal() {
   document.getElementById('categoryModal').classList.remove('active');
 }
 
-async function editCategory(categoryId) {
+async function editCategory(categoryId, trigger) {
   try {
-    await Utils.withBusy('Chargement…', async () => {
+    await Utils.withBusy(trigger, async () => {
       const response = await API.getCategory(categoryId);
       const category = response.data;
 

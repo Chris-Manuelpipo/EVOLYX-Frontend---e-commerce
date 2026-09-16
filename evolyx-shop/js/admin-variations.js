@@ -88,7 +88,7 @@ function populateProductSelects() {
  
 async function loadVariations() {
   try {
-    await Utils.withBusy('Chargement des variations…', async () => {
+    await Utils.withListLoading('variationsTableBody', async () => {
       const response = await API.getAdminVariations();
       if (response?.data && Array.isArray(response.data)) {
         allVariations = response.data;

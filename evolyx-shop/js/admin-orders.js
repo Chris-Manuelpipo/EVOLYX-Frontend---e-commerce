@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // ============================================
 async function loadOrders() {
   try {
-    await Utils.withBusy('Chargement des commandes…', async () => {
+    await Utils.withListLoading('ordersTableBody', async () => {
       const response = await API.getAdminOrders();
       allOrders = Utils.unwrapList(response);
       filteredOrders = [...allOrders];

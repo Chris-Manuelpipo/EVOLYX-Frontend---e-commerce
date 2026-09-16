@@ -9,7 +9,7 @@ async function loadPromos() {
   const tbody = document.getElementById('promosTableBody');
   const notice = document.getElementById('promosNotice');
   try {
-    await Utils.withBusy('Chargement des promos…', async () => {
+    await Utils.withListLoading(tbody, async () => {
       const response = await API.getAdminPromos();
       const promos = Utils.unwrapList(response);
       if (notice) notice.innerHTML = '';

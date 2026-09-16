@@ -1670,6 +1670,45 @@ select:focus {
   to { transform: rotate(360deg); }
 }
 
+.skeleton-row td {
+  vertical-align: middle;
+}
+
+.skeleton-bar {
+  display: block;
+  height: 0.7rem;
+  width: var(--skeleton-w, 60%);
+  max-width: 100%;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--outline) 55%, transparent) 0%,
+    color-mix(in srgb, var(--on-surface) 8%, var(--surface)) 45%,
+    color-mix(in srgb, var(--outline) 55%, transparent) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.2s ease-in-out infinite;
+}
+
+.stat-value.is-skeleton,
+.skeleton-text {
+  color: transparent !important;
+  border-radius: 0.4rem;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--outline) 55%, transparent) 0%,
+    color-mix(in srgb, var(--on-surface) 8%, var(--surface)) 45%,
+    color-mix(in srgb, var(--outline) 55%, transparent) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
 .login-page {
   min-height: 100vh;
   display: flex;

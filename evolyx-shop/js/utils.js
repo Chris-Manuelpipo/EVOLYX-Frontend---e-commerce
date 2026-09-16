@@ -470,6 +470,49 @@ function showLoading(container, show = true) {
   }
 }
 
+function countTableCols(tbody) {
+  const table = tbody?.closest?.('table');
+  if (!table) return 5;
+  const heads = table.querySelectorAll('thead th');
+  if (heads.length) return heads.length;
+  const first = tbody.querySelector('tr');
+  return first?.children?.length || 5;
+}
+
+function showTableSkeleton(tbodyOrId, options = {}) {
+  const tbody = typeof tbodyOrId === 'string'
+    ? document.getElementById(tbodyOrId)
+    : tbodyOrId;
+  if (!tbody) return null;
+
+  const cols = options.cols || countTableCols(tbody);
+  const rows = options.rows || 6;
+  const widths = [72, 48, 64, 40, 56, 36, 60, 44];
+
+  tbody.setAttribute('aria-busy', 'true');
+  tbody.innerHTML = Array.from({ length: rows }, (_, r) => {
+    const cells = Array.from({ length: cols }, (_, c) => {
+      const w = widths[(r + c) % widths.length];
+      return `<td><span class="skeleton-bar" style="--skeleton-w:${w}%"></span></td>`;
+    }).join('');
+    return `<tr class="skeleton-row">${cells}</tr>`;
+  }).join('');
+  return tbody;
+}
+
+/** Skeleton dans le tbody pendant le chargement d’une liste. */
+async function withListLoading(tbodyOrId, fn, options) {
+  showTableSkeleton(tbodyOrId, options);
+  try {
+    return await fn();
+  } finally {
+    const tbody = typeof tbodyOrId === 'string'
+      ? document.getElementById(tbodyOrId)
+      : tbodyOrId;
+    tbody?.removeAttribute('aria-busy');
+  }
+}
+
 function resolveBusyButton(target) {
   if (!target) return null;
   if (target instanceof HTMLButtonElement) return target;
@@ -583,6 +626,8 @@ window.Utils = {
   Validate,
   showToast,
   showLoading,
+  showTableSkeleton,
+  withListLoading,
   setBusy,
   withBusy,
 };
