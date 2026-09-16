@@ -349,7 +349,7 @@ async function loadOutOfStockProducts() {
       <div class="out-of-stock-item">
         <img src="${Utils.escapeHtml(imageUrl)}"
              alt="${Utils.escapeHtml(product.name)}"
-             class="${Utils.logoPlaceholderClass(imageUrl).trim()}"
+             class="admin-product-thumb${Utils.logoPlaceholderClass(imageUrl)}"
              onerror="${onError}">
         <div class="item-info">
           <strong>${Utils.escapeHtml(product.name)}</strong>

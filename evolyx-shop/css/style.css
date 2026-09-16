@@ -895,9 +895,20 @@ select:focus {
 img.is-logo-placeholder {
   object-fit: contain !important;
   object-position: center;
-  padding: 22%;
-  opacity: 0.25;
-  background: var(--surface-container);
+  padding: 18%;
+  opacity: 0.4;
+  background: var(--surface-high);
+}
+
+/* Miniatures serrées (admin, panier) : le filigrane 0.25 disparaissait sur fond sombre */
+img.is-logo-placeholder.admin-product-thumb,
+img.cart-thumb.is-logo-placeholder,
+.out-of-stock-item img.is-logo-placeholder {
+  padding: 10%;
+  opacity: 0.75;
+  background: var(--surface-high);
+  border: 1px solid var(--outline);
+  box-sizing: border-box;
 }
 
 .product-image:has(img.is-logo-placeholder),
