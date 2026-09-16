@@ -165,7 +165,7 @@ function renderProducts(products) {
     const imageHtml = `
       <img src="${Utils.escapeHtml(imageUrl)}" 
            alt="${Utils.escapeHtml(product.name)}" 
-           class="${Utils.logoPlaceholderClass(imageUrl).trim()}"
+           class="admin-product-thumb${Utils.logoPlaceholderClass(imageUrl)}"
            style="width: 50px; height: 50px; border-radius: 4px;"
            onerror="${onError}"
       >
@@ -223,7 +223,7 @@ function closeProductModal() {
 async function editProduct(productId) {
   try {
     // Charger le produit
-    const productResponse = await API.getProduct(productId);
+    const productResponse = await API.getAdminProduct(productId);
     const product = productResponse.data;
 
     // Charger les variations du produit

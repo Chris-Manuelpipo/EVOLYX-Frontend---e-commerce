@@ -223,6 +223,8 @@ const API = {
     }
   },
 
+  getAdminProduct: (id) => apiCall(`/admin/products/${id}`),
+
   createProduct: async (productData, files = []) => {
     const response = await apiCall('/admin/products', {
       method: 'POST',
