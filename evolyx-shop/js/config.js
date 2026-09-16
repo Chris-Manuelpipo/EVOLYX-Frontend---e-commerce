@@ -14,6 +14,12 @@
     return 'https://apievolyxcm.vercel.app/api';
   }
 
+  function resolveAsset(relativePath) {
+    const path = (global.location && global.location.pathname) || '';
+    const inAdmin = /\/admin(?:\/|$)/.test(path);
+    return (inAdmin ? '../' : '') + String(relativePath).replace(/^\//, '');
+  }
+
   const WHATSAPP_NUMBER = '237654804907';
 
   global.EVOLYX_CONFIG = {
@@ -27,7 +33,7 @@
     SHOP_URL: 'https://shop.evolyx.cm',
     CANONICAL: 'https://shop.evolyx.cm',
     CITY: 'Yaoundé, Cameroun',
-    PLACEHOLDER_IMAGE:
-      'https://res.cloudinary.com/dvnxsn73m/image/upload/v1771500491/image_placeholder_iuqezd.png',
+    /* Même emblème que evolyx-digital (ProjectCover sans illustration) */
+    PLACEHOLDER_IMAGE: resolveAsset('assets/logo.png'),
   };
 })(window);

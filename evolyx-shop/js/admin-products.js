@@ -160,22 +160,14 @@ function renderProducts(products) {
       ? '<span style="color: green;"><i class="fas fa-toggle-on" ></i> Actif</span>' 
       : '<span style="color: red;"><i class="fas fa-toggle-off" style="color: #999;"></i>Inactif</span>';
     
-    // ✅ Construire l'URL de l'image
-    let imageUrl = `https://res.cloudinary.com/dvnxsn73m/image/upload/v1771500491/image_placeholder_iuqezd.png`;
-    
-    if (product.images && product.images.length > 0) {
-      const mainImage = product.images.find(img => img.is_main) || product.images[0];
-      imageUrl = String(mainImage.url || '').trim();
-    } else if (product.image) {
-      imageUrl = String(product.image).trim();
-    }
-    
-    // ✅ Image avec gestion d'erreur
+    const imageUrl = Utils.productImageUrl(product);
+    const onError = Utils.placeholderOnErrorHandler();
     const imageHtml = `
-      <img src="${imageUrl}" 
-           alt="${product.name}" 
-           style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;"
-           onerror="this.src='https://res.cloudinary.com/dvnxsn73m/image/upload/v1771500491/image_placeholder_iuqezd.png'; this.style.opacity='0.5';"
+      <img src="${Utils.escapeHtml(imageUrl)}" 
+           alt="${Utils.escapeHtml(product.name)}" 
+           class="${Utils.logoPlaceholderClass(imageUrl).trim()}"
+           style="width: 50px; height: 50px; border-radius: 4px;"
+           onerror="${onError}"
       >
     `;
 

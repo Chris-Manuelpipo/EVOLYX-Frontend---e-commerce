@@ -342,18 +342,23 @@ async function loadOutOfStockProducts() {
       return;
     }
 
-    container.innerHTML = outOfStock.map(product => `
+    const onError = Utils.placeholderOnErrorHandler();
+    container.innerHTML = outOfStock.map(product => {
+      const imageUrl = Utils.productImageUrl(product);
+      return `
       <div class="out-of-stock-item">
-        <img src="${product.images?.[0]?.url || 'default.png'}"
-             alt="${product.name}"
-             onerror="this.src='https://res.cloudinary.com/dvnxsn73m/image/upload/v1771500491/image_placeholder_iuqezd.png'">
+        <img src="${Utils.escapeHtml(imageUrl)}"
+             alt="${Utils.escapeHtml(product.name)}"
+             class="${Utils.logoPlaceholderClass(imageUrl).trim()}"
+             onerror="${onError}">
         <div class="item-info">
-          <strong>${product.name}</strong>
+          <strong>${Utils.escapeHtml(product.name)}</strong>
           <small>Stock: ${product.stock}</small>
         </div>
         <a href="products.html?edit=${product.id}" class="btn btn-sm btn-primary"><i class="fas fa-sync-alt"></i></a>
       </div>
-    `).join('');
+    `;
+    }).join('');
 
   } catch (error) {
     console.error('Erreur chargement ruptures:', error);

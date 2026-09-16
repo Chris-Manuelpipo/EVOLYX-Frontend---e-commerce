@@ -281,7 +281,8 @@ function showCatalogError(error) {
 function createProductCard(product) {
   const card = Utils.DOM.create('article', { class: 'product-card card' });
   const image = Utils.productImageUrl(product);
-  const placeholder = window.EVOLYX_CONFIG.PLACEHOLDER_IMAGE;
+  const placeholderClass = Utils.logoPlaceholderClass(image);
+  const onError = Utils.placeholderOnErrorHandler();
   const cat =
     Utils.categoryName(product.category, '') ||
     categories.find((c) => String(c.id) === String(product.category_id))?.name ||
@@ -293,7 +294,8 @@ function createProductCard(product) {
     <a href="product.html?id=${product.id}" class="product-card-link">
       <div class="product-image">
         <img src="${Utils.escapeHtml(image)}" alt="${Utils.escapeHtml(product.name)}"
-             loading="lazy" onerror="this.src='${placeholder}'">
+             class="${placeholderClass.trim()}"
+             loading="lazy" onerror="${onError}">
         ${product.is_featured ? '<span class="badge badge-featured">Vedette</span>' : ''}
       </div>
       <div class="product-info">

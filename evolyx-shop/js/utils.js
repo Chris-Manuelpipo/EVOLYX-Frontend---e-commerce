@@ -90,6 +90,23 @@ function placeholderImage() {
   return (window.EVOLYX_CONFIG && window.EVOLYX_CONFIG.PLACEHOLDER_IMAGE) || '';
 }
 
+function isPlaceholderImage(url) {
+  if (!url) return true;
+  const value = String(url);
+  const ph = placeholderImage();
+  if (ph && value === ph) return true;
+  return /(?:^|\/)assets\/logo\.png(?:\?|$)/i.test(value);
+}
+
+function logoPlaceholderClass(url) {
+  return isPlaceholderImage(url) ? ' is-logo-placeholder' : '';
+}
+
+function placeholderOnErrorHandler() {
+  const ph = escapeHtml(placeholderImage());
+  return `this.onerror=null;this.src='${ph}';this.classList.add('is-logo-placeholder')`;
+}
+
 function coerceImageUrl(value, depth = 0) {
   if (value == null || depth > 3) return '';
   if (typeof value === 'string') {
@@ -611,6 +628,10 @@ window.Utils = {
   updateWishlistBadge,
   productImageUrl,
   productImage: productImageUrl,
+  isPlaceholderImage,
+  logoPlaceholderClass,
+  placeholderOnErrorHandler,
+  placeholderImage,
   unwrapList,
   unwrapData,
   isUuid,

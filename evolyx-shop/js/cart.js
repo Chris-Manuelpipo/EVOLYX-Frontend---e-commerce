@@ -221,15 +221,17 @@ function createCartItemHTML(item, index) {
   const variationText = variationParts.length
     ? `<p class="text-gray text-sm">${Utils.escapeHtml(variationParts.join(' · '))}</p>`
     : '';
-  const placeholder = window.EVOLYX_CONFIG.PLACEHOLDER_IMAGE || '';
+  const placeholder = Utils.placeholderImage() || '';
   const image = Utils.productImageUrl(item) || placeholder;
   const name = item.product_name || 'Produit';
+  const onError = Utils.placeholderOnErrorHandler();
 
   return `
     <article class="cart-card card">
       <div class="cart-thumb-wrap">
-        <img src="${Utils.escapeHtml(image)}" alt="${Utils.escapeHtml(name)}" class="cart-thumb"
-             onerror="this.onerror=null;this.src='${Utils.escapeHtml(placeholder)}'">
+        <img src="${Utils.escapeHtml(image)}" alt="${Utils.escapeHtml(name)}"
+             class="cart-thumb${Utils.logoPlaceholderClass(image)}"
+             onerror="${onError}">
       </div>
       <div class="cart-card-body">
         <h2>${Utils.escapeHtml(name)}</h2>

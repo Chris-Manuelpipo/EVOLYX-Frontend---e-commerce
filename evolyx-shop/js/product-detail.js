@@ -96,8 +96,9 @@ function renderProductDetail() {
   const container = document.getElementById('productDetail');
   Utils.DOM.empty(container);
 
-  const placeholder = window.EVOLYX_CONFIG.PLACEHOLDER_IMAGE;
+  const onError = Utils.placeholderOnErrorHandler();
   const mainSrc = Utils.productImageUrl(product);
+  const mainClass = Utils.logoPlaceholderClass(mainSrc);
   const catLabel = Utils.categoryName(product.category);
   const thumbs = galleryImageUrls();
   const descText = String(product.description || '').trim();
@@ -111,9 +112,9 @@ function renderProductDetail() {
             ${thumbs
               .map((url, index) => `
               <img src="${Utils.escapeHtml(url)}" alt=""
-                   onerror="this.src='${placeholder}'"
-                   onclick="changeMainImage(this)"
-                   class="thumbnail${index === activeThumb ? ' active' : ''}">`)
+                   class="thumbnail${index === activeThumb ? ' active' : ''}${Utils.logoPlaceholderClass(url)}"
+                   onerror="${onError}"
+                   onclick="changeMainImage(this)">`)
               .join('')}
           </div>`
       : '';
@@ -124,7 +125,8 @@ function renderProductDetail() {
         <div class="product-gallery">
           <figure class="product-gallery-stage">
             <img id="mainImage" src="${Utils.escapeHtml(mainSrc)}" alt="${Utils.escapeHtml(product.name)}"
-                 onerror="this.src='${placeholder}'">
+                 class="${mainClass.trim()}"
+                 onerror="${onError}">
           </figure>
           ${thumbsHtml}
         </div>
@@ -246,7 +248,7 @@ async function loadRelated() {
       section.hidden = true;
       return;
     }
-    const placeholder = window.EVOLYX_CONFIG.PLACEHOLDER_IMAGE;
+    const onError = Utils.placeholderOnErrorHandler();
     section.hidden = false;
     section.innerHTML = `
       <h2 class="product-extras-title">Vous aimerez aussi</h2>
@@ -261,7 +263,8 @@ async function loadRelated() {
                 <a href="product.html?id=${item.id}" class="product-card-link">
                   <div class="product-image">
                     <img src="${Utils.escapeHtml(image)}" alt="${Utils.escapeHtml(item.name || '')}"
-                         loading="lazy" onerror="this.src='${placeholder}'">
+                         class="${Utils.logoPlaceholderClass(image).trim()}"
+                         loading="lazy" onerror="${onError}">
                   </div>
                   <div class="product-info">
                     <h3 class="product-name">${Utils.escapeHtml(Utils.truncateText(item.name, 40))}</h3>
@@ -651,7 +654,10 @@ function addItemToCart(qty) {
 function changeMainImage(element) {
   const src = typeof element === 'string' ? element : element.src;
   const main = document.getElementById('mainImage');
-  if (main) main.src = src;
+  if (main) {
+    main.src = src;
+    main.classList.toggle('is-logo-placeholder', Utils.isPlaceholderImage(src));
+  }
   document.querySelectorAll('.thumbnail').forEach((thumb) => thumb.classList.remove('active'));
   if (element && element.classList) element.classList.add('active');
 }

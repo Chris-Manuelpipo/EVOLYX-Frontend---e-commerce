@@ -891,6 +891,21 @@ select:focus {
   object-fit: cover;
 }
 
+/* Emblème EVOLYX en filigrane — même logique que ProjectCover (evolyx-digital) */
+img.is-logo-placeholder {
+  object-fit: contain !important;
+  object-position: center;
+  padding: 22%;
+  opacity: 0.25;
+  background: var(--surface-container);
+}
+
+.product-image:has(img.is-logo-placeholder),
+.product-gallery-stage:has(img.is-logo-placeholder),
+.cart-thumb-wrap:has(img.is-logo-placeholder) {
+  background: var(--surface-container);
+}
+
 .badge {
   position: absolute;
   top: 0.45rem;
