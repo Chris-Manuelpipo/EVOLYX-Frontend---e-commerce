@@ -646,3 +646,75 @@
   .stats-cell--stock,
   .chart-card { grid-column: span 12; }
 }
+
+/* Interrupteur statut produit */
+.status-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0;
+  cursor: pointer;
+  user-select: none;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  color: var(--on-variant);
+}
+
+.status-switch input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  pointer-events: none;
+}
+
+.status-switch-ui {
+  position: relative;
+  width: 2.5rem;
+  height: 1.4rem;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--surface-high);
+  border: 1px solid var(--outline-strong);
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.status-switch-ui::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--on-surface) 25%, transparent);
+  transition: transform 0.2s ease;
+}
+
+.status-switch input:checked + .status-switch-ui {
+  background: var(--success, #22c55e);
+  border-color: color-mix(in srgb, var(--success, #22c55e) 70%, black);
+}
+
+.status-switch input:checked + .status-switch-ui::after {
+  transform: translateX(1.05rem);
+}
+
+.status-switch input:focus-visible + .status-switch-ui {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.status-switch input:disabled + .status-switch-ui {
+  opacity: 0.55;
+}
+
+.status-switch:has(input:checked) .status-switch-text {
+  color: var(--success, #22c55e);
+}
+
+.status-switch:has(input:not(:checked)) .status-switch-text {
+  color: var(--on-muted);
+}

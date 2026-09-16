@@ -156,9 +156,17 @@ function renderProducts(products) {
   products.forEach(product => {
     const row = document.createElement('tr');
     const categoryName = categories.find(c => c.id === product.category_id)?.name || '-';
-    const statusBadge = product.is_active 
-      ? '<span style="color: green;"><i class="fas fa-toggle-on" ></i> Actif</span>' 
-      : '<span style="color: red;"><i class="fas fa-toggle-off" style="color: #999;"></i>Inactif</span>';
+    const isActive = product.is_active !== false && product.is_active !== 'false' && product.is_active !== 0;
+    const statusToggle = `
+      <label class="status-switch">
+        <input type="checkbox"
+               ${isActive ? 'checked' : ''}
+               aria-label="${isActive ? 'Désactiver' : 'Activer'} ${Utils.escapeHtml(product.name)}"
+               onchange="toggleProductActive(${product.id}, this)">
+        <span class="status-switch-ui" aria-hidden="true"></span>
+        <span class="status-switch-text">${isActive ? 'Actif' : 'Inactif'}</span>
+      </label>
+    `;
     
     const imageUrl = Utils.productImageUrl(product);
     const onError = Utils.placeholderOnErrorHandler();
@@ -178,7 +186,7 @@ function renderProducts(products) {
       <td>${categoryName}</td>
       <td>${Utils.formatPrice(product.base_price)}</td>
       <td>${product.stock}</td>
-      <td>${statusBadge}</td>
+      <td>${statusToggle}</td>
       <td>
         <div class="action-buttons">
           <button class="btn btn-sm btn-primary" onclick="editProduct(${product.id})">
@@ -273,6 +281,41 @@ async function editProduct(productId) {
     Utils.showToast('Erreur lors de la récupération du produit', 'error');
   }
 }
+
+async function toggleProductActive(productId, input) {
+  const nextActive = Boolean(input?.checked);
+  const previous = !nextActive;
+  if (input) input.disabled = true;
+
+  try {
+    await API.updateProduct(productId, { is_active: nextActive });
+
+    const sync = (list) => {
+      const item = list.find((p) => Number(p.id) === Number(productId));
+      if (item) item.is_active = nextActive;
+    };
+    sync(allProducts);
+    sync(filteredProducts);
+
+    const label = input?.closest('.status-switch')?.querySelector('.status-switch-text');
+    if (label) label.textContent = nextActive ? 'Actif' : 'Inactif';
+    if (input) {
+      input.setAttribute(
+        'aria-label',
+        `${nextActive ? 'Désactiver' : 'Activer'} le produit`
+      );
+    }
+    Utils.showToast(nextActive ? 'Produit activé' : 'Produit désactivé', 'success');
+  } catch (error) {
+    if (input) input.checked = previous;
+    console.error('Failed to toggle product status:', error);
+    Utils.showToast(error.message || 'Impossible de modifier le statut', 'error');
+  } finally {
+    if (input) input.disabled = false;
+  }
+}
+
+window.toggleProductActive = toggleProductActive;
 
 // ============================================
 // SAVE PRODUCT
