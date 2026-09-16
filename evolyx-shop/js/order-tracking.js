@@ -124,7 +124,7 @@ function renderOrderStatus(order) {
           <a href="${wa}" target="_blank" rel="noopener noreferrer">${phone}</a>
         </p>
       </div>
-      <a href="index.html" class="btn btn-secondary btn-lg" style="width:100%;margin-top:16px;">Retour au catalogue</a>
+      <a href="catalog.html" class="btn btn-secondary btn-lg" style="width:100%;margin-top:16px;">Retour au catalogue</a>
     </div>
   `;
 }

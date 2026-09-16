@@ -75,7 +75,7 @@ async function loadProduct(productId) {
     container.innerHTML = `
       <div class="catalog-state catalog-state-error">
         <p>Ce produit est introuvable ou n’est plus en ligne.</p>
-        <a href="index.html#catalog" class="btn btn-primary">Retour au catalogue</a>
+        <a href="catalog.html" class="btn btn-primary">Retour au catalogue</a>
       </div>
     `;
   }
@@ -133,7 +133,7 @@ function renderProductDetail() {
           <nav class="breadcrumb" aria-label="Fil d’Ariane">
             <a href="index.html">Accueil</a>
             <span aria-hidden="true">/</span>
-            <a href="index.html#catalog">Catalogue</a>
+            <a href="catalog.html">Catalogue</a>
             <span aria-hidden="true">/</span>
             <span>${Utils.escapeHtml(product.name)}</span>
           </nav>

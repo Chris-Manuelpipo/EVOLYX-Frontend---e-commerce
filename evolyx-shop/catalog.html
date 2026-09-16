@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem('evolyx-theme');
+        if (stored === 'light' || stored === 'dark') {
+          document.documentElement.setAttribute('data-theme', stored);
+        }
+      } catch (e) { /* stockage indisponible : préférence système */ }
+    })();
+  </script>
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f6f3ea">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1a1814">
+  <title>Catalogue : EVOLYX Shop</title>
+  <meta name="description" content="Catalogue EVOLYX à Yaoundé. Filtrez par catégorie et prix, commandez par WhatsApp, livraison au Cameroun.">
+  <meta property="og:title" content="Catalogue : EVOLYX Shop">
+  <meta property="og:description" content="Produits EVOLYX. Commande confirmée par WhatsApp, suivi et livraison au Cameroun.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://shop.evolyx.cm/catalog.html">
+  <meta property="og:image" content="https://shop.evolyx.cm/assets/og-image.png">
+  <meta property="og:site_name" content="EVOLYX Shop">
+  <meta property="og:locale" content="fr_FR">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Catalogue : EVOLYX Shop">
+  <meta name="twitter:description" content="Catalogue EVOLYX à Yaoundé. Commandez par WhatsApp, livraison au Cameroun.">
+  <meta name="twitter:image" content="https://shop.evolyx.cm/assets/og-image.png">
+  <link rel="canonical" href="https://shop.evolyx.cm/catalog.html">
+  <link rel="icon" href="assets/favicon.ico">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css?v=stock-pad">
+</head>
+<body>
+  <a class="skip-link" href="#productsGrid">Aller aux produits</a>
+  <div id="site-header"></div>
+
+  <main>
+    <section class="catalog catalog-page" id="catalog">
+      <div class="container">
+        <div class="catalog-toolbar">
+          <div class="catalog-toolbar-title">
+            <h1>Catalogue</h1>
+            <p class="catalog-count" id="catalogCount" hidden></p>
+          </div>
+          <div class="catalog-search">
+            <i class="fas fa-search" aria-hidden="true"></i>
+            <input type="search" id="searchInput" placeholder="Rechercher" aria-label="Rechercher un produit" autocomplete="off">
+          </div>
+          <div class="catalog-pills">
+            <div class="catalog-chip">
+              <select id="categoryFilter" aria-label="Catégorie">
+                <option value="">Catégorie</option>
+              </select>
+            </div>
+            <details class="catalog-chip catalog-price">
+              <summary>Prix</summary>
+              <div class="catalog-price-panel">
+                <label for="minPrice">Min (FCFA)</label>
+                <input type="number" id="minPrice" min="0" step="500" inputmode="numeric" placeholder="0">
+                <label for="maxPrice">Max (FCFA)</label>
+                <input type="number" id="maxPrice" min="0" step="500" inputmode="numeric" placeholder="—">
+              </div>
+            </details>
+            <label class="catalog-chip catalog-check">
+              <input type="checkbox" id="inStockFilter">
+              En stock
+            </label>
+            <div class="catalog-chip">
+              <select id="sortFilter" aria-label="Tri">
+                <option value="">Pertinence</option>
+                <option value="newest">Nouveautés</option>
+                <option value="price_asc">Prix croissant</option>
+                <option value="price_desc">Prix décroissant</option>
+                <option value="featured">Vedettes</option>
+              </select>
+            </div>
+            <button type="button" class="catalog-reset" id="resetFilter" hidden>Réinitialiser</button>
+          </div>
+        </div>
+        <div class="products-grid" id="productsGrid"></div>
+        <div class="pagination" id="pagination"></div>
+      </div>
+    </section>
+  </main>
+
+  <div id="site-footer"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/wishlist.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/layout.js?v=footer-copy"></script>
+  <script src="js/catalog.js?v=home-fill"></script>
+</body>
+</html>

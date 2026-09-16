@@ -35,75 +35,30 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=mobile-2col2">
+  <script>
+    (function () {
+      var params = new URLSearchParams(location.search);
+      var keys = ['q', 'category_id', 'min_price', 'max_price', 'sort', 'in_stock', 'page'];
+      var hasFilter = keys.some(function (key) { return params.get(key); });
+      if (location.hash === '#catalog' || hasFilter) {
+        location.replace('catalog.html' + location.search);
+      }
+    })();
+  </script>
 </head>
 <body>
-  <a class="skip-link" href="#catalog">Aller au catalogue</a>
+  <a class="skip-link" href="#featuredSection">Aller aux produits</a>
   <div id="site-header"></div>
 
   <main>
-    <section class="hero">
-      <div class="container hero-content">
-        <p class="hero-kicker">Yaoundé, Cameroun</p>
-        <h1>Boutique EVOLYX</h1>
-        <p>Choisissez un produit, commandez, confirmez par WhatsApp. Livraison au Cameroun, suivi inclus.</p>
-        <div class="hero-actions">
-          <a href="#catalog" class="btn btn-primary">Voir le catalogue</a>
-          <a href="order-tracking.html" class="btn btn-outline">Suivre une commande</a>
-        </div>
-      </div>
-    </section>
-
-    <section class="featured" id="featuredSection" hidden>
+    <section class="featured" id="featuredSection">
       <div class="container">
-        <h2>En vedette</h2>
+        <div class="section-head">
+          <h1 id="homeGridTitle">Nouveautés</h1>
+          <a href="catalog.html">Tout voir</a>
+        </div>
         <div class="products-grid" id="featuredGrid"></div>
-      </div>
-    </section>
-
-    <section class="catalog" id="catalog">
-      <div class="container">
-        <h2>Catalogue</h2>
-        <div class="filters">
-          <div class="form-group">
-            <label for="searchInput">Recherche</label>
-            <input type="search" id="searchInput" class="search-input" placeholder="Nom du produit…" autocomplete="off">
-          </div>
-          <div class="form-group">
-            <label for="categoryFilter">Catégorie</label>
-            <select id="categoryFilter">
-              <option value="">Toutes les catégories</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="sortFilter">Tri</label>
-            <select id="sortFilter">
-              <option value="">Pertinence</option>
-              <option value="newest">Nouveautés</option>
-              <option value="price_asc">Prix croissant</option>
-              <option value="price_desc">Prix décroissant</option>
-              <option value="featured">Vedettes</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="minPrice">Prix min (FCFA)</label>
-            <input type="number" id="minPrice" min="0" step="500" inputmode="numeric" placeholder="0">
-          </div>
-          <div class="form-group">
-            <label for="maxPrice">Prix max (FCFA)</label>
-            <input type="number" id="maxPrice" min="0" step="500" inputmode="numeric" placeholder="—">
-          </div>
-          <div class="form-group form-check">
-            <label for="inStockFilter">
-              <input type="checkbox" id="inStockFilter"> En stock
-            </label>
-          </div>
-          <button type="button" class="btn btn-secondary" id="resetFilter">
-            Réinitialiser <i class="fas fa-rotate" aria-hidden="true"></i>
-          </button>
-        </div>
-        <div class="products-grid" id="productsGrid"></div>
-        <div class="pagination" id="pagination"></div>
       </div>
     </section>
   </main>
@@ -115,7 +70,7 @@
   <script src="js/api.js"></script>
   <script src="js/wishlist.js"></script>
   <script src="js/theme.js"></script>
-  <script src="js/layout.js"></script>
-  <script src="js/catalog.js"></script>
+  <script src="js/layout.js?v=footer-copy"></script>
+  <script src="js/catalog.js?v=home-fill"></script>
 </body>
 </html>

@@ -8,7 +8,7 @@
   function currentPage() {
     const file = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
     if (file === '' || file === 'index.html') return 'home';
-    if (file === 'product.html') return 'catalog';
+    if (file === 'catalog.html' || file === 'product.html') return 'catalog';
     if (file === 'order-tracking.html') return 'tracking';
     if (file === 'cart.html') return 'cart';
     if (file === 'wishlist.html') return 'wishlist';
@@ -32,7 +32,7 @@
 
           <nav class="site-nav" id="site-nav" aria-label="Navigation principale">
             <a href="index.html" class="nav-link${page === 'home' ? ' is-active' : ''}">Accueil</a>
-            <a href="index.html#catalog" class="nav-link${page === 'catalog' ? ' is-active' : ''}">Catalogue</a>
+            <a href="catalog.html" class="nav-link${page === 'catalog' ? ' is-active' : ''}">Catalogue</a>
             <a href="order-tracking.html" class="nav-link${page === 'tracking' ? ' is-active' : ''}">Suivi</a>
           </nav>
 
@@ -55,7 +55,7 @@
         <nav class="mobile-nav" id="mobileNav" hidden aria-label="Navigation mobile">
           <div class="mobile-nav-panel">
             <a href="index.html"${page === 'home' ? ' class="is-active"' : ''}>Accueil</a>
-            <a href="index.html#catalog"${page === 'catalog' ? ' class="is-active"' : ''}>Catalogue</a>
+            <a href="catalog.html"${page === 'catalog' ? ' class="is-active"' : ''}>Catalogue</a>
             <a href="wishlist.html"${page === 'wishlist' ? ' class="is-active"' : ''}>Favoris</a>
             <a href="order-tracking.html"${page === 'tracking' ? ' class="is-active"' : ''}>Suivi</a>
             <a href="cart.html"${page === 'cart' ? ' class="is-active"' : ''}>Panier</a>
@@ -79,14 +79,13 @@
               <img src="assets/logo.png" alt="" class="brand-logo" width="32" height="32">
               <span class="brand-wordmark">EVOLYX <span class="brand-accent">Shop</span></span>
             </div>
-            <p class="footer-tagline">Boutique en ligne à Yaoundé. Commande confirmée par WhatsApp, livraison au Cameroun.</p>
-            <p class="footer-city">${cfg.CITY || 'Yaoundé, Cameroun'}</p>
+            <p class="footer-tagline">Articles en stock. Confirmation avant expédition.</p>
           </div>
           <nav aria-label="Liens boutique">
             <h2>Boutique</h2>
             <ul>
               <li><a href="index.html">Accueil</a></li>
-              <li><a href="index.html#catalog">Catalogue</a></li>
+              <li><a href="catalog.html">Catalogue</a></li>
               <li><a href="wishlist.html">Favoris</a></li>
               <li><a href="order-tracking.html">Suivi de commande</a></li>
               <li><a href="${group}" rel="noopener noreferrer">evolyx.cm</a></li>

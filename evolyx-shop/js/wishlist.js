@@ -177,7 +177,7 @@ const Wishlist = {
       grid.innerHTML = `
         <div class="catalog-state" style="grid-column:1/-1;">
           <p>Aucun favori pour le moment. Touchez le cœur sur un produit du catalogue.</p>
-          <a href="index.html#catalog" class="btn btn-primary">Voir le catalogue</a>
+          <a href="catalog.html" class="btn btn-primary">Voir le catalogue</a>
         </div>`;
       Utils.updateWishlistBadge();
       return;

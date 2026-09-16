@@ -157,7 +157,7 @@ function renderCart() {
     container.innerHTML = `
       <div class="empty-cart catalog-state">
         <p>Votre panier est vide. Ajoutez un article depuis le catalogue, puis confirmez par WhatsApp.</p>
-        <a href="index.html#catalog" class="btn btn-primary">Voir le catalogue</a>
+        <a href="catalog.html" class="btn btn-primary">Voir le catalogue</a>
       </div>
     `;
     Utils.updateCartBadge();
@@ -207,7 +207,7 @@ function renderCart() {
         <button type="button" class="btn btn-primary btn-lg" style="width:100%;margin-top:16px;" onclick="proceedToCheckout()">
           Commander
         </button>
-        <a href="index.html#catalog" class="btn btn-secondary" style="width:100%;margin-top:10px;">
+        <a href="catalog.html" class="btn btn-secondary" style="width:100%;margin-top:10px;">
           Continuer vos achats
         </a>
       </aside>

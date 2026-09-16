@@ -12,6 +12,7 @@ const FILTER_KEYS = ['q', 'category_id', 'min_price', 'max_price', 'sort', 'in_s
 
 document.addEventListener('DOMContentLoaded', () => {
   applyUrlToForm();
+  syncFilterChrome();
   loadCategories();
   loadFeaturedProducts();
   loadProductsWithFilters();
@@ -132,21 +133,52 @@ async function loadFeaturedProducts() {
   const grid = document.getElementById('featuredGrid');
   if (!section || !grid) return;
 
+  const HOME_LIMIT = 8;
+  const title = document.getElementById('homeGridTitle');
+  section.hidden = false;
+  showCatalogSkeleton(grid);
+
+  let list = [];
+  let featuredCount = 0;
   try {
-    const response = await API.getFeaturedProducts();
-    const featured = Utils.unwrapList(response);
-    if (!featured.length) {
-      section.hidden = true;
-      return;
-    }
-    grid.innerHTML = '';
-    featured.forEach((product) => grid.appendChild(createProductCard(product)));
-    if (window.Wishlist) Wishlist.bind(grid);
-    section.hidden = false;
+    list = Utils.unwrapList(await API.getFeaturedProducts());
+    featuredCount = list.length;
   } catch (error) {
     console.warn('Vedettes indisponibles:', error);
-    section.hidden = true;
   }
+
+  if (list.length < HOME_LIMIT) {
+    try {
+      const extra = Utils.unwrapList(await API.getProducts({ limit: 12, sort: 'newest' }));
+      const seen = new Set(list.map((product) => String(product.id)));
+      extra.forEach((product) => {
+        if (!seen.has(String(product.id))) {
+          seen.add(String(product.id));
+          list.push(product);
+        }
+      });
+    } catch (error) {
+      console.warn('Catalogue accueil indisponible:', error);
+    }
+  }
+
+  list = list.slice(0, HOME_LIMIT);
+
+  if (!list.length) {
+    grid.innerHTML = `
+      <div class="catalog-state" style="grid-column:1/-1;">
+        <p>Aucun produit pour le moment. Le catalogue se met à jour bientôt.</p>
+        <a href="catalog.html" class="btn btn-primary">Voir le catalogue</a>
+      </div>`;
+    return;
+  }
+
+  if (title) {
+    title.textContent = featuredCount > 0 && featuredCount === list.length ? 'En vedette' : 'Nouveautés';
+  }
+  grid.innerHTML = '';
+  list.forEach((product) => grid.appendChild(createProductCard(product)));
+  if (window.Wishlist) Wishlist.bind(grid);
 }
 
 async function loadProductsWithFilters() {
@@ -163,6 +195,7 @@ async function loadProductsWithFilters() {
     const total = response.total || response.data?.total || filteredProducts.length;
     renderProducts(filteredProducts);
     renderPagination(total);
+    syncFilterChrome(total);
   } catch (error) {
     console.error('Failed to filter products:', error);
     showCatalogError(error);
@@ -172,6 +205,38 @@ async function loadProductsWithFilters() {
 
 function loadProducts() {
   return loadProductsWithFilters();
+}
+
+function syncFilterChrome(total) {
+  const count = document.getElementById('catalogCount');
+  if (count && Number.isFinite(total)) {
+    count.hidden = false;
+    count.textContent = `${total} produit${total > 1 ? 's' : ''}`;
+  }
+
+  const filters = readFiltersFromForm();
+  const dirty = Boolean(
+    filters.q ||
+      filters.category_id ||
+      filters.min_price ||
+      filters.max_price ||
+      filters.sort ||
+      filters.in_stock
+  );
+  const reset = document.getElementById('resetFilter');
+  if (reset) reset.hidden = !dirty;
+
+  const categoryChip = document.getElementById('categoryFilter')?.closest('.catalog-chip');
+  if (categoryChip) categoryChip.classList.toggle('is-on', Boolean(filters.category_id));
+
+  const sortChip = document.getElementById('sortFilter')?.closest('.catalog-chip');
+  if (sortChip) sortChip.classList.toggle('is-on', Boolean(filters.sort));
+
+  const stockChip = document.querySelector('.catalog-check');
+  if (stockChip) stockChip.classList.toggle('is-on', Boolean(filters.in_stock));
+
+  const priceChip = document.querySelector('.catalog-price');
+  if (priceChip) priceChip.classList.toggle('is-on', Boolean(filters.min_price || filters.max_price));
 }
 
 function renderProducts(products = filteredProducts) {
@@ -185,7 +250,7 @@ function renderProducts(products = filteredProducts) {
     grid.innerHTML = `
       <div class="catalog-state" style="grid-column: 1/-1;">
         <p>Aucun produit ne correspond. Changez le mot-clé ou réinitialisez les filtres.</p>
-        <button type="button" class="btn btn-secondary" onclick="document.getElementById('resetFilter').click()">
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('resetFilter')?.click()">
           Réinitialiser les filtres
         </button>
       </div>
