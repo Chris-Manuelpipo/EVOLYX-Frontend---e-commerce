@@ -5,7 +5,7 @@
  */
 const API_BASE_URL =
   (window.EVOLYX_CONFIG && window.EVOLYX_CONFIG.API_BASE_URL) ||
-  'https://evolyx-api.onrender.com/api';
+  'https://apievolyxcm.vercel.app/api';
 
 async function handleResponse(response) {
   if (response.status === 204) {

@@ -1,7 +1,7 @@
 /**
  * Configuration front EVOLYX Shop
  * Surcharge API : window.EVOLYX_API_BASE = 'https://…/api' avant ce script.
- * Prod HTTPS : laisser le défaut Render, ou définir EVOLYX_API_BASE sur le HTML hébergé (Vercel).
+ * Prod HTTPS : défaut Vercel (apievolyxcm). En local : localhost:5000.
  */
 (function initEvolyxConfig(global) {
   function resolveApiBase() {
@@ -11,7 +11,7 @@
     if (host === 'localhost' || host === '127.0.0.1') {
       return 'http://localhost:5000/api';
     }
-    return 'https://evolyx-api.onrender.com/api';
+    return 'https://apievolyxcm.vercel.app/api';
   }
 
   const WHATSAPP_NUMBER = '237654804907';
