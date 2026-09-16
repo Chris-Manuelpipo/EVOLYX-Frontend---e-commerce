@@ -418,6 +418,45 @@ select:focus {
 
 .form-group { margin-bottom: 1rem; }
 
+.password-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-field input {
+  width: 100%;
+  padding-right: 2.75rem;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 0.35rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--on-muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+}
+
+.password-toggle:hover,
+.password-toggle[aria-pressed="true"] {
+  color: var(--on-surface);
+}
+
+.password-toggle:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--gold-soft);
+}
+
 .theme-toggle {
   display: inline-flex;
   align-items: center;
@@ -1608,6 +1647,51 @@ select:focus {
 @keyframes pulse {
   0%, 100% { opacity: 0.3; }
   50% { opacity: 1; }
+}
+
+.busy-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: color-mix(in srgb, var(--surface-page) 55%, transparent);
+  backdrop-filter: blur(2px);
+}
+
+.busy-overlay[hidden] {
+  display: none !important;
+}
+
+.busy-card {
+  min-width: min(16rem, 90vw);
+  padding: 1.25rem 1.5rem;
+  border-radius: var(--radius-md, 0.75rem);
+  border: 1px solid var(--outline);
+  background: var(--surface);
+  box-shadow: 0 12px 40px color-mix(in srgb, var(--on-surface) 12%, transparent);
+  text-align: center;
+}
+
+.busy-card .loading-spinner {
+  padding: 0.5rem 0 0.75rem;
+}
+
+.busy-label {
+  margin: 0;
+  color: var(--on-variant);
+  font-size: 0.9rem;
+}
+
+body.is-busy {
+  overflow: hidden;
+}
+
+body.is-busy .modal.active,
+body.is-busy .admin-content {
+  pointer-events: none;
 }
 
 .login-page {

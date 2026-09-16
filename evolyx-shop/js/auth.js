@@ -2,6 +2,32 @@
  * Authentification admin.
  */
 
+function initPasswordToggles(root = document) {
+  root.querySelectorAll('[data-password-toggle]').forEach((btn) => {
+    if (btn.dataset.bound === '1') return;
+    btn.dataset.bound = '1';
+    btn.addEventListener('click', () => {
+      const input = document.getElementById(btn.getAttribute('data-password-toggle'));
+      if (!input) return;
+      const show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+      btn.setAttribute('aria-label', show ? 'Masquer le mot de passe' : 'Afficher le mot de passe');
+      const icon = btn.querySelector('i');
+      if (icon) {
+        icon.classList.toggle('fa-eye', !show);
+        icon.classList.toggle('fa-eye-slash', show);
+      }
+    });
+  });
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => initPasswordToggles());
+} else {
+  initPasswordToggles();
+}
+
 async function handleLogin(event) {
   event.preventDefault();
   const email = document.getElementById('email').value;
@@ -13,26 +39,26 @@ async function handleLogin(event) {
   }
 
   try {
-    Utils.showLoading(document.querySelector('form'), true);
-    const response = await API.adminLogin(email, password);
+    await Utils.withBusy('Connexion…', async () => {
+      const response = await API.adminLogin(email, password);
 
-    if (response.success && response.data?.token) {
-      Utils.Storage.setAdminToken(response.data.token);
-      const role = response.data.role || response.data.user?.role;
-      if (role) {
-        localStorage.setItem('userRole', role);
+      if (response.success && response.data?.token) {
+        Utils.Storage.setAdminToken(response.data.token);
+        const role = response.data.role || response.data.user?.role;
+        if (role) {
+          localStorage.setItem('userRole', role);
+        }
+        Utils.showToast('Connecté', 'success');
+        setTimeout(() => {
+          window.location.href = 'admin/dashboard.html';
+        }, 800);
+      } else {
+        throw new Error('Token non reçu');
       }
-      Utils.showToast('Connecté', 'success');
-      setTimeout(() => {
-        window.location.href = 'admin/dashboard.html';
-      }, 800);
-    } else {
-      throw new Error('Token non reçu');
-    }
+    });
   } catch (error) {
     console.error('Login failed:', error);
     Utils.showToast('E-mail ou mot de passe incorrect', 'error');
-    Utils.showLoading(document.querySelector('form'), false);
   }
 }
 
