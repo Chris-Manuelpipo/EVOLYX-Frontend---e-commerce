@@ -359,13 +359,7 @@ async function saveProduct(event) {
       }
     }
 
-    const alreadyUploaded = Array.isArray(product?.images) && product.images.length > 0;
-    if (files.length > 0 && productId && !alreadyUploaded) {
-      for (const file of files) {
-        await API.uploadProductImage(productId, file);
-      }
-    }
-
+    selectedImages = [];
     closeProductModal();
     await loadProducts();
       }
@@ -402,13 +396,15 @@ async function deleteProduct(productId) {
 // ============================================
 
 function handleImageSelect(event) {
-  const files = Array.from(event.target.files);
-  selectedImages = files;
+  const incoming = Array.from(event.target.files || []);
+  selectedImages = incoming;
 
   const preview = document.getElementById('imagePreview');
   Utils.DOM.empty(preview);
 
-  files.forEach((file, index) => {
+  if (!selectedImages.length) return;
+
+  selectedImages.forEach((file, index) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       const div = document.createElement('div');
@@ -425,7 +421,23 @@ function handleImageSelect(event) {
 
 function removeImage(index) {
   selectedImages.splice(index, 1);
-  handleImageSelect({ target: { files: selectedImages } });
+  const input = document.getElementById('productImages');
+  if (input) input.value = '';
+  const preview = document.getElementById('imagePreview');
+  Utils.DOM.empty(preview);
+  selectedImages.forEach((file, i) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const div = document.createElement('div');
+      div.className = 'file-preview-item';
+      div.innerHTML = `
+        <img src="${e.target.result}" alt="preview">
+        <button type="button" class="file-preview-remove" onclick="removeImage(${i})">✕</button>
+      `;
+      preview.appendChild(div);
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
 function removeExistingImage(imageId) {

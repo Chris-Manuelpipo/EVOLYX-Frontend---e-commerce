@@ -223,17 +223,44 @@ const API = {
     }
   },
 
-  createProduct: (productData, files = []) =>
-    sendProduct('POST', '/admin/products', productData, files),
+  createProduct: async (productData, files = []) => {
+    const response = await apiCall('/admin/products', {
+      method: 'POST',
+      body: JSON.stringify(productData),
+    });
+    const product = response.data || response;
+    const id = product && product.id;
+    if (id && Array.isArray(files) && files.length) {
+      for (let i = 0; i < files.length; i++) {
+        await API.uploadProductImage(id, files[i], i === 0);
+      }
+      const refreshed = await apiCall(`/admin/products/${id}`);
+      return refreshed.data ? refreshed : { success: true, data: refreshed };
+    }
+    return response;
+  },
 
-  updateProduct: (id, productData, files = []) =>
-    sendProduct('PUT', `/admin/products/${id}`, productData, files),
+  updateProduct: async (id, productData, files = []) => {
+    const response = await apiCall(`/admin/products/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(productData),
+    });
+    if (Array.isArray(files) && files.length) {
+      for (const file of files) {
+        await API.uploadProductImage(id, file, false);
+      }
+      const refreshed = await apiCall(`/admin/products/${id}`);
+      return refreshed.data ? refreshed : { success: true, data: refreshed };
+    }
+    return response;
+  },
 
   deleteProduct: (id) => apiCall(`/admin/products/${id}`, { method: 'DELETE' }),
 
-  uploadProductImage: (id, file) => {
+  uploadProductImage: (id, file, isMain = false) => {
     const formData = new FormData();
     formData.append('image', file);
+    if (isMain) formData.append('is_main', 'true');
     const headers = {};
     const token = localStorage.getItem('adminToken');
     if (token) headers.Authorization = `Bearer ${token}`;
