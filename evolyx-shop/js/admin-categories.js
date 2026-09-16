@@ -122,7 +122,7 @@ async function saveCategory(event) {
     loadCategories();
   } catch (error) {
     console.error('Failed to save category:', error);
-    Utils.showToast('Erreur lors de l\'enregistrement', 'error');
+    Utils.showToast(error.message || 'Erreur lors de l\'enregistrement', 'error');
   }
 }
 
