@@ -46,7 +46,7 @@ function renderPromos(promos) {
       <td>${promo.is_active ? 'Oui' : 'Non'}</td>
       <td>
         <button class="btn btn-sm btn-primary" type="button" onclick="editPromo(${promo.id})"><i class="fas fa-edit"></i></button>
-        <button class="btn btn-sm btn-danger" type="button" onclick="deletePromo(${promo.id})"><i class="fas fa-trash-alt"></i></button>
+        <button class="btn btn-sm btn-danger" type="button" onclick="deletePromo(${promo.id}, this)"><i class="fas fa-trash-alt"></i></button>
       </td>`;
     tbody.appendChild(row);
   });
@@ -121,7 +121,7 @@ async function savePromo(event) {
   event.preventDefault();
   const data = readPromoForm();
   try {
-    await Utils.withBusy('Enregistrement…', async () => {
+    await Utils.withBusy(event, async () => {
       if (selectedPromoId) await API.updatePromo(selectedPromoId, data);
       else await API.createPromo(data);
       Utils.showToast('Promo enregistrée', 'success');
@@ -133,10 +133,10 @@ async function savePromo(event) {
   }
 }
 
-async function deletePromo(id) {
+async function deletePromo(id, trigger) {
   if (!confirm('Supprimer ce code promo ?')) return;
   try {
-    await Utils.withBusy('Suppression…', async () => {
+    await Utils.withBusy(trigger, async () => {
       await API.deletePromo(id);
       Utils.showToast('Promo supprimée', 'success');
       await loadPromos();

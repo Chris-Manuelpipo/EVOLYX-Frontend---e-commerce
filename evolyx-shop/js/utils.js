@@ -470,53 +470,88 @@ function showLoading(container, show = true) {
   }
 }
 
-let busyDepth = 0;
-
-function ensureBusyOverlay() {
-  let overlay = document.getElementById('evolyx-busy');
-  if (overlay) return overlay;
-  overlay = document.createElement('div');
-  overlay.id = 'evolyx-busy';
-  overlay.className = 'busy-overlay';
-  overlay.hidden = true;
-  overlay.setAttribute('role', 'status');
-  overlay.setAttribute('aria-live', 'polite');
-  overlay.innerHTML =
-    '<div class="busy-card">' +
-    '<div class="loading-spinner" aria-hidden="true"><span></span><span></span><span></span></div>' +
-    '<p class="busy-label">Chargement…</p>' +
-    '</div>';
-  document.body.appendChild(overlay);
-  return overlay;
+function resolveBusyButton(target) {
+  if (!target) return null;
+  if (target instanceof HTMLButtonElement) return target;
+  if (target instanceof HTMLInputElement && target.type === 'submit') return target;
+  if (typeof Event !== 'undefined' && target instanceof Event) {
+    if (target.submitter instanceof HTMLElement) return target.submitter;
+    const form = target.currentTarget instanceof HTMLFormElement
+      ? target.currentTarget
+      : target.target?.closest?.('form');
+    if (form) {
+      return form.querySelector('button[type="submit"], input[type="submit"], .btn-primary');
+    }
+    return target.currentTarget instanceof HTMLButtonElement
+      ? target.currentTarget
+      : target.target?.closest?.('button');
+  }
+  if (target instanceof HTMLFormElement) {
+    return target.querySelector('button[type="submit"], input[type="submit"], .btn-primary');
+  }
+  if (target instanceof HTMLElement) {
+    return target.closest('button') || target.querySelector('button[type="submit"], .btn-primary');
+  }
+  return null;
 }
 
-function setBusy(show, label = 'Chargement…') {
-  const overlay = ensureBusyOverlay();
-  if (show) {
-    busyDepth += 1;
-    const labelEl = overlay.querySelector('.busy-label');
-    if (labelEl) labelEl.textContent = label || 'Chargement…';
-    overlay.hidden = false;
-    document.body.classList.add('is-busy');
-  } else {
-    busyDepth = Math.max(0, busyDepth - 1);
-    if (busyDepth === 0) {
-      overlay.hidden = true;
-      document.body.classList.remove('is-busy');
+function setButtonBusy(btn, busy) {
+  if (!btn) return;
+  if (btn.tagName === 'SELECT') {
+    btn.disabled = !!busy;
+    if (busy) btn.setAttribute('aria-busy', 'true');
+    else btn.removeAttribute('aria-busy');
+    return;
+  }
+  if (busy) {
+    if (btn.dataset.busyDepth) {
+      btn.dataset.busyDepth = String(Number(btn.dataset.busyDepth) + 1);
+      return;
     }
+    btn.dataset.busyDepth = '1';
+    btn.dataset.busyHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.classList.add('is-loading');
+    btn.setAttribute('aria-busy', 'true');
+    btn.innerHTML = '<span class="btn-spinner" aria-hidden="true"></span>';
+  } else {
+    const depth = Math.max(0, Number(btn.dataset.busyDepth || '1') - 1);
+    if (depth > 0) {
+      btn.dataset.busyDepth = String(depth);
+      return;
+    }
+    btn.disabled = false;
+    btn.classList.remove('is-loading');
+    btn.removeAttribute('aria-busy');
+    if (btn.dataset.busyHtml != null) {
+      btn.innerHTML = btn.dataset.busyHtml;
+    }
+    delete btn.dataset.busyHtml;
+    delete btn.dataset.busyDepth;
   }
 }
 
-async function withBusy(labelOrFn, maybeFn) {
-  const hasLabel = typeof labelOrFn === 'string';
-  const label = hasLabel ? labelOrFn : 'Chargement…';
-  const fn = hasLabel ? maybeFn : labelOrFn;
-  setBusy(true, label);
+/** Spinner sur le bouton (event / bouton / form). Sans cible : exécute fn sans overlay. */
+async function withBusy(targetOrFn, maybeFn) {
+  let btn = null;
+  let fn = maybeFn;
+  if (typeof targetOrFn === 'function') {
+    fn = targetOrFn;
+  } else if (typeof targetOrFn === 'string') {
+    fn = maybeFn;
+  } else {
+    btn = resolveBusyButton(targetOrFn);
+  }
+  setButtonBusy(btn, true);
   try {
     return await fn();
   } finally {
-    setBusy(false);
+    setButtonBusy(btn, false);
   }
+}
+
+function setBusy() {
+  /* legacy no-op : préférer withBusy(event|button, fn) */
 }
 
 window.Utils = {

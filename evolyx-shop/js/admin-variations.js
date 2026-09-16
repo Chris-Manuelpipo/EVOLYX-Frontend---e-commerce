@@ -151,7 +151,7 @@ function renderVariations(variations) {
           <button class="btn btn-sm btn-primary" onclick="editVariation(${variation.id})">
             <i class="fas fa-edit"></i>
           </button>
-          <button class="btn btn-sm" style="background: #EF4444; color: white;" onclick="deleteVariation(${variation.id})">
+          <button class="btn btn-sm" style="background: #EF4444; color: white;" onclick="deleteVariation(${variation.id}, this)">
             <i class="fas fa-trash-alt"></i>
           </button>
         </div>
@@ -273,9 +273,7 @@ async function saveVariation(event) {
   };
 
   try {
-    await Utils.withBusy(
-      selectedVariationId ? 'Mise à jour…' : 'Création de la variation…',
-      async () => {
+    await Utils.withBusy(event, async () => {
         if (selectedVariationId) {
           await API.updateVariation(selectedVariationId, variationData);
           Utils.showToast('Variation mise à jour', 'success');
@@ -285,8 +283,7 @@ async function saveVariation(event) {
         }
         closeVariationModal();
         await loadVariations();
-      }
-    );
+    });
   } catch (error) {
     console.error('❌ Failed to save variation:', error);
     Utils.showToast(error.message || 'Erreur lors de l\'enregistrement', 'error');
@@ -297,11 +294,11 @@ async function saveVariation(event) {
 // DELETE VARIATION
 // ============================================
 
-async function deleteVariation(variationId) {
+async function deleteVariation(variationId, trigger) {
   if (!confirm('Êtes-vous sûr de vouloir supprimer cette variation?')) return;
 
   try {
-    await Utils.withBusy('Suppression…', async () => {
+    await Utils.withBusy(trigger, async () => {
       await API.deleteVariation(variationId);
       Utils.showToast('Variation supprimée', 'success');
       await loadVariations();

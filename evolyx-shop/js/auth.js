@@ -39,7 +39,7 @@ async function handleLogin(event) {
   }
 
   try {
-    await Utils.withBusy('Connexion…', async () => {
+    await Utils.withBusy(event, async () => {
       const response = await API.adminLogin(email, password);
 
       if (response.success && response.data?.token) {

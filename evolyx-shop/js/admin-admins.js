@@ -41,7 +41,7 @@ async function createAdmin(event) {
   }
 
   try {
-    await Utils.withBusy('Création de l\'administrateur…', async () => {
+    await Utils.withBusy(event, async () => {
       await API.createAdmin({ email, password, role });
       Utils.showToast('Administrateur créé', 'success');
       event.target.reset();

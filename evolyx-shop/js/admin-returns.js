@@ -41,7 +41,7 @@ function renderReturns(returns) {
       <td>${Utils.statusBadge(status)}</td>
       <td>${Utils.formatDate(item.created_at)}</td>
       <td>
-        <select onchange="changeReturnStatus(${item.id}, this.value)" aria-label="Statut du retour">
+        <select onchange="changeReturnStatus(${item.id}, this.value, this)" aria-label="Statut du retour">
           ${['requested', 'approved', 'rejected', 'refunded']
             .map(
               (key) =>
@@ -72,9 +72,9 @@ function returnLabel(status) {
   return map[status] || status;
 }
 
-async function changeReturnStatus(id, status) {
+async function changeReturnStatus(id, status, trigger) {
   try {
-    await Utils.withBusy('Mise à jour…', async () => {
+    await Utils.withBusy(trigger, async () => {
       await API.updateReturnStatus(id, status);
       Utils.showToast('Statut mis à jour', 'success');
       await loadReturns();

@@ -45,7 +45,7 @@ function renderCategories() {
       <td>
         <div class="action-buttons">
           <button class="btn btn-sm btn-primary" onclick="editCategory(${cat.id})"><i class="fas fa-edit"></i></button>
-          <button class="btn btn-sm" style="background: #EF4444; color: white;" onclick="deleteCategory(${cat.id})"><i class="fas fa-trash-alt"></i></button>
+          <button class="btn btn-sm" style="background: #EF4444; color: white;" onclick="deleteCategory(${cat.id}, this)"><i class="fas fa-trash-alt"></i></button>
         </div>
       </td>
     `;
@@ -91,9 +91,7 @@ async function saveCategory(event) {
   };
 
   try {
-    await Utils.withBusy(
-      selectedCategoryId ? 'Mise à jour…' : 'Création de la catégorie…',
-      async () => {
+    await Utils.withBusy(event, async () => {
         if (selectedCategoryId) {
           await API.updateCategory(selectedCategoryId, categoryData);
           Utils.showToast('Catégorie mise à jour', 'success');
@@ -103,19 +101,18 @@ async function saveCategory(event) {
         }
         closeCategoryModal();
         await loadCategories();
-      }
-    );
+    });
   } catch (error) {
     console.error('Failed to save category:', error);
     Utils.showToast(error.message || 'Erreur lors de l\'enregistrement', 'error');
   }
 }
 
-async function deleteCategory(categoryId) {
+async function deleteCategory(categoryId, trigger) {
   if (!confirm('Êtes-vous sûr de vouloir supprimer cette catégorie?')) return;
 
   try {
-    await Utils.withBusy('Suppression…', async () => {
+    await Utils.withBusy(trigger, async () => {
       await API.deleteCategory(categoryId);
       Utils.showToast('Catégorie supprimée', 'success');
       await loadCategories();

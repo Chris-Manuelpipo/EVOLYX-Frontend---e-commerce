@@ -258,13 +258,13 @@ async function viewOrder(orderId) {
 // ============================================
 // UPDATE ORDER STATUS
 // ============================================
-async function updateOrderStatus() {
+async function updateOrderStatus(trigger) {
   if (!selectedOrderId) return;
 
   const newStatus = document.getElementById('orderStatusSelect').value;
 
   try {
-    await Utils.withBusy('Mise à jour du statut…', async () => {
+    await Utils.withBusy(trigger || document.querySelector('#orderModal .btn-primary'), async () => {
       await API.updateOrderStatus(selectedOrderId, newStatus);
       Utils.showToast('Statut mis à jour', 'success');
       closeOrderModal();

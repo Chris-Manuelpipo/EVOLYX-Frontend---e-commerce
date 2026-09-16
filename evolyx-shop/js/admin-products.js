@@ -191,7 +191,7 @@ function renderProducts(products) {
           <button class="btn btn-sm btn-primary" onclick="editProduct(${product.id})">
             <i class="fas fa-edit"></i>
           </button>
-          <button class="btn btn-sm" style="background: #EF4444; color: white;" onclick="deleteProduct(${product.id})">
+          <button class="btn btn-sm" style="background: #EF4444; color: white;" onclick="deleteProduct(${product.id}, this)">
             <i class="fas fa-trash-alt"></i>
           </button>
         </div>
@@ -332,9 +332,7 @@ async function saveProduct(event) {
   });
 
   try {
-    await Utils.withBusy(
-      selectedProductId ? 'Mise à jour du produit…' : 'Création du produit…',
-      async () => {
+    await Utils.withBusy(event, async () => {
     const files = selectedImages.slice();
     let product;
     if (selectedProductId) {
@@ -393,13 +391,13 @@ async function saveProduct(event) {
 // DELETE PRODUCT
 // ============================================
 
-async function deleteProduct(productId) {
+async function deleteProduct(productId, trigger) {
   if (!confirm('Êtes-vous sûr de vouloir supprimer ce produit?')) {
     return;
   }
 
   try {
-    await Utils.withBusy('Suppression du produit…', async () => {
+    await Utils.withBusy(trigger, async () => {
       await API.deleteProduct(productId);
       Utils.showToast('Produit supprimé', 'success');
       await loadProducts();
