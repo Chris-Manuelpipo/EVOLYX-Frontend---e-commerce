@@ -65,17 +65,68 @@ document.addEventListener('DOMContentLoaded', () => {
 // LOAD DATA
 // ============================================
 
+const STATS_SKELETON_IDS = [
+  'totalRevenue',
+  'totalExpense',
+  'totalProfit',
+  'profitMargin',
+  'revenueTrend',
+  'expenseTrend',
+  'profitTrend',
+  'todayOrdersCount',
+  'todayRevenue',
+  'todayPending',
+  'stockCostValue',
+  'stockSellingValue',
+  'outOfStockCount',
+];
+
+function setStatsPageSkeleton(on) {
+  STATS_SKELETON_IDS.forEach((id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (on) {
+      el.classList.add('is-skeleton');
+      el.textContent = '\u00a0';
+    } else {
+      el.classList.remove('is-skeleton');
+    }
+  });
+
+  document.querySelectorAll('.chart-canvas').forEach((el) => {
+    el.classList.toggle('chart-skeleton', on);
+  });
+
+  const stockGrid = document.getElementById('outOfStockProducts');
+  if (stockGrid) {
+    if (on) {
+      stockGrid.classList.add('is-skeleton');
+      stockGrid.innerHTML = Array.from({ length: 4 }, () =>
+        '<span class="skeleton-tile" aria-hidden="true"></span>'
+      ).join('');
+    } else {
+      stockGrid.classList.remove('is-skeleton');
+      if (stockGrid.querySelector('.skeleton-tile')) {
+        stockGrid.innerHTML = '';
+      }
+    }
+  }
+
+  if (on) {
+    Utils.showTableSkeleton('categorySalesTable', { rows: 5 });
+    Utils.showTableSkeleton('calendarBody', { rows: 5, cols: 7 });
+  }
+}
+
 async function loadStatsData() {
+  setStatsPageSkeleton(true);
   try {
-    // Load orders
     const ordersResponse = await API.getAdminOrders();
     allOrders = ordersResponse.data || [];
 
-    // Load products avec une limite suffisante
     const productsResponse = await API.getAdminProducts({ limit: 999 });
     allProducts = productsResponse?.products || [];
 
-    // Load categories
     const categoriesResponse = await API.getCategories();
     allCategories = categoriesResponse.data || [];
 
@@ -83,17 +134,14 @@ async function loadStatsData() {
     console.log('📦 Produits:', allProducts.length);
     console.log('🏷️ Catégories:', allCategories.length);
 
-    // Load out of stock products
+    setStatsPageSkeleton(false);
     loadOutOfStockProducts();
-    // dans loadStatsData, après allProducts = ...
     updateStockValues();
-
-    // Initial update
     updateStats();
     generateCalendar();
-
   } catch (error) {
     console.error('Failed to load stats:', error);
+    setStatsPageSkeleton(false);
     Utils.showToast('Erreur lors du chargement des statistiques', 'error');
   }
 }

@@ -1691,9 +1691,54 @@ select:focus {
 }
 
 .stat-value.is-skeleton,
+.financial-value.is-skeleton,
+.summary-value.is-skeleton,
+.financial-trend.is-skeleton,
+.badge.is-skeleton,
 .skeleton-text {
   color: transparent !important;
   border-radius: 0.4rem;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--outline) 55%, transparent) 0%,
+    color-mix(in srgb, var(--on-surface) 8%, var(--surface)) 45%,
+    color-mix(in srgb, var(--outline) 55%, transparent) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.2s ease-in-out infinite;
+}
+
+.chart-skeleton {
+  position: relative;
+  min-height: 14rem;
+  border-radius: var(--radius-md, 0.75rem);
+  overflow: hidden;
+}
+
+.chart-skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--outline) 45%, transparent) 0%,
+    color-mix(in srgb, var(--on-surface) 7%, var(--surface)) 45%,
+    color-mix(in srgb, var(--outline) 45%, transparent) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.2s ease-in-out infinite;
+}
+
+.out-of-stock-grid.is-skeleton {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: 0.75rem;
+}
+
+.out-of-stock-grid.is-skeleton .skeleton-tile {
+  display: block;
+  aspect-ratio: 1;
+  border-radius: var(--radius-md, 0.75rem);
   background: linear-gradient(
     90deg,
     color-mix(in srgb, var(--outline) 55%, transparent) 0%,
