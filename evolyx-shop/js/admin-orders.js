@@ -16,6 +16,21 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('statusFilter').addEventListener('change', filterOrders);
   document.getElementById('dateFrom').addEventListener('change', filterOrders);
   document.getElementById('dateTo').addEventListener('change', filterOrders);
+
+  const tbody = document.getElementById('ordersTableBody');
+  if (tbody) {
+    tbody.addEventListener('click', (event) => {
+      const btn = event.target.closest('[data-action]');
+      if (!btn) return;
+      const action = btn.dataset.action;
+      const orderId = btn.dataset.orderId;
+      if (action === 'view') viewOrder(orderId);
+      else if (action === 'invoice') openAdminInvoice(orderId);
+      else if (action === 'contact') {
+        contactCustomer(btn.dataset.phone, btn.dataset.name, orderId);
+      }
+    });
+  }
 });
 
 // ============================================
@@ -123,28 +138,34 @@ function renderOrders(orders) {
     
     // Nettoyer le numéro de téléphone
     const cleanPhone = order.customer_phone?.replace(/\s+/g, '').replace(/[^0-9+]/g, '') || '';
+    const customerName = order.customer_name || 'Client';
     
     row.innerHTML = `
-      <td>#${order.id}</td>
-      <td>${order.customer_name || 'N/A'}</td>
-      <td>${order.customer_phone || 'N/A'}</td>
+      <td>#${Utils.escapeHtml(order.id)}</td>
+      <td>${Utils.escapeHtml(order.customer_name || 'N/A')}</td>
+      <td>${Utils.escapeHtml(order.customer_phone || 'N/A')}</td>
       <td>${Utils.formatPrice(order.total_amount || 0)}</td>
       <td>${statusBadge}</td>
       <td>${Utils.formatDate(order.created_at)}</td>
       <td>
         <div style="display: flex; gap: 5px;">
-          <button class="btn btn-sm btn-primary" onclick="viewOrder(${order.id})" title="Voir détails">
+          <button type="button" class="btn btn-sm btn-primary" data-action="view"
+                  data-order-id="${Utils.escapeHtml(order.id)}" title="Voir détails">
             <i class="fas fa-eye"></i>
           </button>
           ${
             order.status === 'delivered'
-              ? `<button class="btn btn-sm btn-secondary" onclick="openAdminInvoice(${order.id})" title="Facture PDF">
+              ? `<button type="button" class="btn btn-sm btn-secondary" data-action="invoice"
+                  data-order-id="${Utils.escapeHtml(order.id)}" title="Facture PDF">
             <i class="fas fa-file-invoice"></i>
           </button>`
               : ''
           }
-          <button class="btn btn-sm" style="background: #25D366; color: white;" 
-                  onclick="contactCustomer('${cleanPhone}', '${order.customer_name || 'Client'}', ${order.id})"
+          <button type="button" class="btn btn-sm" style="background: #25D366; color: white;"
+                  data-action="contact"
+                  data-phone="${Utils.escapeHtml(cleanPhone)}"
+                  data-name="${Utils.escapeHtml(customerName)}"
+                  data-order-id="${Utils.escapeHtml(order.id)}"
                   title="Contacter sur WhatsApp"
                   ${!cleanPhone ? 'disabled' : ''}>
             <i class="fab fa-whatsapp"></i>
@@ -170,7 +191,7 @@ function fillStatusSelect(current) {
   select.innerHTML = options
     .map((key) => {
       const info = Utils.statusInfo(key);
-      return `<option value="${key}"${key === current ? ' selected' : ''}>${info.label}</option>`;
+      return `<option value="${Utils.escapeHtml(key)}"${key === current ? ' selected' : ''}>${Utils.escapeHtml(info.label)}</option>`;
     })
     .join('');
 }
@@ -191,18 +212,21 @@ async function viewOrder(orderId) {
       ? order.items.map(item => `
           <tr>
             <td>${Utils.escapeHtml(Utils.formatOrderItemLabel(item))}</td>
-            <td>${item.quantity}x</td>
+            <td>${Utils.escapeHtml(item.quantity)}x</td>
             <td>${Utils.formatPrice(item.price)}</td>
             <td>${Utils.formatPrice(item.price * item.quantity)}</td>
           </tr>
         `).join('')
       : '<tr><td colspan="4">Aucun article</td></tr>';
 
+    const cleanPhone = order.customer_phone?.replace(/\s+/g, '').replace(/[^0-9+]/g, '') || '';
+    const customerName = order.customer_name || 'Client';
+
     const detailsHTML = `
       <div style="background: #F5F5F5; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-        <p><strong>Client:</strong> ${order.customer_name}</p>
-        <p><strong>Téléphone:</strong> ${order.customer_phone}</p>
-        <p><strong>Adresse:</strong> ${order.customer_address}</p>
+        <p><strong>Client:</strong> ${Utils.escapeHtml(order.customer_name)}</p>
+        <p><strong>Téléphone:</strong> ${Utils.escapeHtml(order.customer_phone)}</p>
+        <p><strong>Adresse:</strong> ${Utils.escapeHtml(order.customer_address)}</p>
         <p><strong>Date:</strong> ${Utils.formatDate(order.created_at)}</p>
         <p><strong>Statut actuel:</strong> ${getStatusBadge(order.status)}</p>
       </div>
@@ -229,25 +253,40 @@ async function viewOrder(orderId) {
       <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;">
         ${
           order.status === 'delivered'
-            ? `<button class="btn btn-sm btn-secondary" type="button" onclick="openAdminInvoice(${order.id})">
+            ? `<button class="btn btn-sm btn-secondary" type="button" data-action="invoice"
+                data-order-id="${Utils.escapeHtml(order.id)}">
           Facture PDF
         </button>`
             : ''
         }
-        <button class="btn btn-sm" style="background: #25D366; color: white;"
-                onclick="contactCustomer('${order.customer_phone}', '${order.customer_name}', ${order.id})">
+        <button class="btn btn-sm" type="button" style="background: #25D366; color: white;"
+                data-action="contact"
+                data-phone="${Utils.escapeHtml(cleanPhone)}"
+                data-name="${Utils.escapeHtml(customerName)}"
+                data-order-id="${Utils.escapeHtml(order.id)}">
           Contacter client
         </button>
       </div>
 
       ${order.notes ? `
         <div style="margin-top: 15px; padding: 10px; background: #F9F9F9; border-left: 3px solid #D4AF37;">
-          <strong>Notes:</strong> ${order.notes}
+          <strong>Notes:</strong> ${Utils.escapeHtml(order.notes)}
         </div>
       ` : ''}
     `;
 
-    document.getElementById('orderDetails').innerHTML = detailsHTML;
+    const detailsEl = document.getElementById('orderDetails');
+    detailsEl.innerHTML = detailsHTML;
+    detailsEl.querySelectorAll('[data-action]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const action = btn.dataset.action;
+        const id = btn.dataset.orderId;
+        if (action === 'invoice') openAdminInvoice(id);
+        else if (action === 'contact') {
+          contactCustomer(btn.dataset.phone, btn.dataset.name, id);
+        }
+      });
+    });
     document.getElementById('orderModal').classList.add('active');
   } catch (error) {
     console.error('Failed to view order:', error);
@@ -285,12 +324,13 @@ function contactCustomer(phone, customerName, orderId) {
     return;
   }
 
-  if (!confirm(`Ouvrir WhatsApp pour contacter ${customerName} ?`)) {
+  const safeName = String(customerName || 'Client');
+  if (!confirm(`Ouvrir WhatsApp pour contacter ${safeName} ?`)) {
     return;
   }
 
   // Nettoyer et formater le numéro
-  let cleanPhone = phone.replace(/\s+/g, '').replace(/[^0-9+]/g, '');
+  let cleanPhone = String(phone).replace(/\s+/g, '').replace(/[^0-9+]/g, '');
   
   if (!cleanPhone.startsWith('+')) {
     // Numéros camerounais
@@ -308,15 +348,22 @@ function contactCustomer(phone, customerName, orderId) {
     }
   }
 
-
+  const waNumber = cleanPhone.replace(/^\+/, '');
   const message = encodeURIComponent(
-    `Bonjour ${customerName} 👋\n\n` +
+    `Bonjour ${safeName} 👋\n\n` +
     `Je vous contacte concernant votre commande #${orderId} sur EVOLYX.\n` +
     `Puis-je vous aider ?`
   );
 
-  window.open(`https://wa.me/${cleanPhone}?text=${message}`, '_blank');
-  Utils.showToast(`WhatsApp ouvert pour ${customerName}`, 'success');
+  const waUrl = `https://wa.me/${waNumber}?text=${message}`;
+  const safeUrl = Utils.safeExternalUrl(waUrl);
+  if (!safeUrl) {
+    Utils.showToast('Lien WhatsApp invalide', 'error');
+    return;
+  }
+
+  window.open(safeUrl, '_blank', 'noopener,noreferrer');
+  Utils.showToast(`WhatsApp ouvert pour ${safeName}`, 'success');
 }
 
 // ============================================
@@ -326,8 +373,11 @@ async function openAdminInvoice(orderId) {
   try {
     const blob = await API.fetchInvoice(orderId);
     if (!(blob instanceof Blob)) throw new Error('Facture indisponible');
+    if (!(blob.type || '').includes('pdf')) {
+      throw new Error('Facture indisponible (format invalide)');
+    }
     const url = URL.createObjectURL(blob);
-    window.open(url, '_blank', 'noopener');
+    window.open(url, '_blank', 'noopener,noreferrer');
   } catch (error) {
     Utils.showToast(
       error.status === 401

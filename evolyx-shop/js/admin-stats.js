@@ -664,10 +664,10 @@ function updateCategorySalesTable(orders) {
 
     const row = document.createElement('tr');
     row.innerHTML = `
-      <td>${category}</td>
-      <td>${stats.items}</td>
+      <td>${Utils.escapeHtml(category)}</td>
+      <td>${Utils.escapeHtml(stats.items)}</td>
       <td>${Utils.formatPrice(stats.revenue)}</td>
-      <td>${percentage}%</td>
+      <td>${Utils.escapeHtml(percentage)}%</td>
       <td class="text-gold">${Utils.formatPrice(profit)}</td>
     `;
     tbody.appendChild(row);

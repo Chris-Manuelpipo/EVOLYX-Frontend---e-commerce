@@ -89,7 +89,10 @@ async function openAdminInvoice(orderId) {
   try {
     const blob = await API.fetchInvoice(orderId);
     if (!(blob instanceof Blob)) throw new Error('Facture indisponible');
-    window.open(URL.createObjectURL(blob), '_blank', 'noopener');
+    if (!(blob.type || '').includes('pdf')) {
+      throw new Error('Facture indisponible (format invalide)');
+    }
+    window.open(URL.createObjectURL(blob), '_blank', 'noopener,noreferrer');
   } catch (error) {
     Utils.showToast(error.message || 'Facture indisponible', 'error');
   }

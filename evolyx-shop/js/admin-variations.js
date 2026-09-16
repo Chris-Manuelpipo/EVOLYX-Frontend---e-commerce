@@ -141,17 +141,17 @@ function renderVariations(variations) {
     
     const row = document.createElement('tr');
     row.innerHTML = `
-      <td>#${variation.id || '?'}</td>
-      <td>${product?.name || 'Produit inconnu'}</td>
-      <td>${variation.color || '-'}</td>
-      <td>${variation.size || '-'}</td>
-      <td>${variation.stock || 0}</td>
+      <td>#${Utils.escapeHtml(variation.id || '?')}</td>
+      <td>${Utils.escapeHtml(product?.name || 'Produit inconnu')}</td>
+      <td>${Utils.escapeHtml(variation.color || '-')}</td>
+      <td>${Utils.escapeHtml(variation.size || '-')}</td>
+      <td>${Utils.escapeHtml(variation.stock || 0)}</td>
       <td>
         <div class="action-buttons">
-          <button class="btn btn-sm btn-primary" onclick="editVariation(${variation.id})">
+          <button class="btn btn-sm btn-primary" onclick="editVariation(${Number(variation.id) || 0})">
             <i class="fas fa-edit"></i>
           </button>
-          <button class="btn btn-sm" style="background: #EF4444; color: white;" onclick="deleteVariation(${variation.id}, this)">
+          <button class="btn btn-sm" style="background: #EF4444; color: white;" onclick="deleteVariation(${Number(variation.id) || 0}, this)">
             <i class="fas fa-trash-alt"></i>
           </button>
         </div>

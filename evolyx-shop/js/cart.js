@@ -396,6 +396,11 @@ function extractOrderPayload(response, fallbackItems, totalAmount) {
     status: order?.status || 'pending',
     total_amount: order?.total_amount ?? totalAmount,
     items: Array.isArray(order?.items) && order.items.length ? order.items : fallbackItems,
+    invoice_token:
+      order?.invoice_token ||
+      response?.invoice_token ||
+      response?.data?.invoice_token ||
+      null,
   };
 
   return { order: normalized, whatsappLink };
@@ -441,6 +446,7 @@ async function createOrder(name, phone, address) {
     if (order.id) {
       Utils.Storage.setLastOrderId(order.id);
       Utils.Storage.setOrderSnapshot(order.id, {
+        invoice_token: order.invoice_token || null,
         items: cart.items.map((item) => ({
           product_id: Number(item.product_id),
           variation_id: item.variation_id != null ? Number(item.variation_id) : null,
@@ -473,6 +479,12 @@ function showOrderConfirmation(order, whatsappLink, name, phone, address) {
     )
     .join('');
 
+  const safeWa = Utils.safeExternalUrl(whatsappLink);
+  const token = order.invoice_token || '';
+  const trackParams = new URLSearchParams({ id: String(order.id) });
+  if (token) trackParams.set('token', token);
+  const trackHref = `order-tracking.html?${trackParams.toString()}`;
+
   container.innerHTML = `
     <div class="order-confirmation card">
       <div class="text-center">
@@ -494,10 +506,16 @@ function showOrderConfirmation(order, whatsappLink, name, phone, address) {
         </div>
       </div>
       <div class="order-actions">
-        <a href="${Utils.escapeHtml(whatsappLink)}" target="_blank" rel="noopener noreferrer" class="btn btn-whatsapp btn-lg">
+        ${
+          safeWa
+            ? `<a href="${Utils.escapeHtml(safeWa)}" target="_blank" rel="noopener noreferrer" class="btn btn-whatsapp btn-lg">
           Confirmer via WhatsApp
-        </a>
-        <a href="order-tracking.html?id=${Utils.escapeHtml(order.id)}" class="btn btn-secondary btn-lg">Suivre ma commande</a>
+        </a>`
+            : `<span class="btn btn-whatsapp btn-lg" aria-disabled="true" style="opacity:0.6;pointer-events:none;">
+          Confirmer via WhatsApp
+        </span>`
+        }
+        <a href="${Utils.escapeHtml(trackHref)}" class="btn btn-secondary btn-lg">Suivre ma commande</a>
         <a href="index.html" class="btn btn-secondary btn-lg">Continuer vos achats</a>
       </div>
     </div>

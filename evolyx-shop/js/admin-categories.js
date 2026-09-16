@@ -38,14 +38,14 @@ function renderCategories() {
     
     const row = document.createElement('tr');
     row.innerHTML = `
-      <td>#${cat.id}</td>
-      <td>${cat.name}</td>
-      <td>${cat.description || '-'}</td>
+      <td>#${Utils.escapeHtml(cat.id)}</td>
+      <td>${Utils.escapeHtml(cat.name)}</td>
+      <td>${Utils.escapeHtml(cat.description || '-')}</td>
       
       <td>
         <div class="action-buttons">
-          <button class="btn btn-sm btn-primary" onclick="editCategory(${cat.id}, this)"><i class="fas fa-edit"></i></button>
-          <button class="btn btn-sm" style="background: #EF4444; color: white;" onclick="deleteCategory(${cat.id}, this)"><i class="fas fa-trash-alt"></i></button>
+          <button class="btn btn-sm btn-primary" onclick="editCategory(${Number(cat.id) || 0}, this)"><i class="fas fa-edit"></i></button>
+          <button class="btn btn-sm" style="background: #EF4444; color: white;" onclick="deleteCategory(${Number(cat.id) || 0}, this)"><i class="fas fa-trash-alt"></i></button>
         </div>
       </td>
     `;

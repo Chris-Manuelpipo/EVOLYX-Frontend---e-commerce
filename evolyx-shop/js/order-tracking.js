@@ -1,22 +1,35 @@
 /**
  * Suivi de commande : pending → confirmed → preparing → shipped → delivered.
  * cancelled hors séquence. Retour possible si livrée. Pas de facture côté client.
+ * Accès protégé par ?token= (invoice_token).
  */
 
 let currentOrder = null;
+let currentInvoiceToken = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
   const orderId = params.get('id');
+  const token = params.get('token');
   if (orderId) {
     document.getElementById('orderId').value = orderId;
+  }
+  if (orderId && token) {
+    currentInvoiceToken = token;
     searchOrder(new Event('submit'));
+  } else if (orderId && !token) {
+    Utils.showToast('Lien de suivi incomplet : le jeton (?token=) est requis', 'warning');
   }
   if (window.Utils) {
     Utils.updateCartBadge();
     Utils.updateWishlistBadge();
   }
 });
+
+function getTrackingToken() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('token') || currentInvoiceToken || '';
+}
 
 async function searchOrder(event) {
   event.preventDefault();
@@ -26,15 +39,25 @@ async function searchOrder(event) {
     return;
   }
 
+  const token = getTrackingToken();
+  if (!token) {
+    Utils.showToast(
+      'Utilisez le lien de suivi reçu (avec ?token=) après validation de la commande',
+      'warning'
+    );
+    return;
+  }
+
+  currentInvoiceToken = token;
   const result = document.getElementById('trackingResult');
   const url = new URL(location.href);
   url.searchParams.set('id', orderId);
-  url.searchParams.delete('token');
+  url.searchParams.set('token', token);
   history.replaceState(null, '', url);
 
   try {
     Utils.showLoading(result, true);
-    const response = await API.trackOrder(orderId);
+    const response = await API.trackOrder(orderId, token);
     const payload = response.data || response;
     const order = payload.order || payload;
     renderOrderStatus(order);
@@ -43,7 +66,7 @@ async function searchOrder(event) {
     Utils.showToast('Commande non trouvée', 'error');
     result.innerHTML = `
       <div class="card catalog-state catalog-state-error">
-        <p>Aucune commande pour ce numéro. Vérifiez le numéro reçu après validation.</p>
+        <p>Aucune commande pour ce numéro. Vérifiez le lien de suivi reçu après validation.</p>
       </div>
     `;
   }
@@ -54,7 +77,8 @@ function renderOrderStatus(order) {
   const container = document.getElementById('trackingResult');
   Utils.DOM.empty(container);
   const statusInfo = Utils.statusInfo(order.status);
-  const wa = (window.EVOLYX_CONFIG && window.EVOLYX_CONFIG.WHATSAPP_URL) || 'https://wa.me/237654804907';
+  const waRaw = (window.EVOLYX_CONFIG && window.EVOLYX_CONFIG.WHATSAPP_URL) || 'https://wa.me/237654804907';
+  const wa = Utils.safeExternalUrl(waRaw) || '#';
   const phone = (window.EVOLYX_CONFIG && window.EVOLYX_CONFIG.PHONE_DISPLAY) || '+237 6 54 80 49 07';
   const items = Array.isArray(order.items) ? order.items : [];
   const delivered = order.status === 'delivered';
@@ -71,7 +95,7 @@ function renderOrderStatus(order) {
                   item.price != null && item.price !== ''
                     ? ' · ' + Utils.formatPrice(Number(item.price) * Number(item.quantity || 0))
                     : '';
-                return `<li>${Utils.escapeHtml(Utils.formatOrderItemLabel(item))} ×${item.quantity}${line}</li>`;
+                return `<li>${Utils.escapeHtml(Utils.formatOrderItemLabel(item))} ×${Utils.escapeHtml(item.quantity)}${line}</li>`;
               })
               .join('')}
           </ul>
@@ -91,7 +115,7 @@ function renderOrderStatus(order) {
           <div>
             <p class="text-gray">Statut</p>
             <p style="font-weight:600;color:${statusInfo.color};">
-              <i class="fas ${statusInfo.icon}" aria-hidden="true"></i> ${statusInfo.label}
+              <i class="fas ${statusInfo.icon}" aria-hidden="true"></i> ${Utils.escapeHtml(statusInfo.label)}
             </p>
           </div>
           <div>
@@ -112,7 +136,8 @@ function renderOrderStatus(order) {
       ${
         delivered
           ? `<div class="order-actions" style="margin-top:1rem;">
-        <button type="button" class="btn btn-secondary" onclick="showReturnForm('${Utils.escapeHtml(order.id)}')">Demander un retour</button>
+        <button type="button" class="btn btn-secondary" id="requestReturnBtn"
+                data-order-id="${Utils.escapeHtml(order.id)}">Demander un retour</button>
       </div>`
           : ''
       }
@@ -121,12 +146,19 @@ function renderOrderStatus(order) {
         <p><strong>Besoin d’aide ?</strong></p>
         <p>
           WhatsApp :
-          <a href="${wa}" target="_blank" rel="noopener noreferrer">${phone}</a>
+          <a href="${Utils.escapeHtml(wa)}" target="_blank" rel="noopener noreferrer">${Utils.escapeHtml(phone)}</a>
         </p>
       </div>
       <a href="catalog.html" class="btn btn-secondary btn-lg" style="width:100%;margin-top:16px;">Retour au catalogue</a>
     </div>
   `;
+
+  const returnBtn = document.getElementById('requestReturnBtn');
+  if (returnBtn) {
+    returnBtn.addEventListener('click', () => {
+      showReturnForm(returnBtn.dataset.orderId);
+    });
+  }
 }
 
 function eventAt(order, status) {
@@ -167,9 +199,9 @@ function timelineItem(info, isActive, isCurrent, at) {
         <i class="fas ${info.icon}" aria-hidden="true"></i>
       </div>
       <div>
-        <p class="timeline-label">${info.label}</p>
-        <p class="text-gray text-sm">${info.description}</p>
-        ${at ? `<p class="text-gray text-sm">${at}</p>` : ''}
+        <p class="timeline-label">${Utils.escapeHtml(info.label)}</p>
+        <p class="text-gray text-sm">${Utils.escapeHtml(info.description)}</p>
+        ${at ? `<p class="text-gray text-sm">${Utils.escapeHtml(at)}</p>` : ''}
         ${isCurrent ? '<p class="timeline-now">Statut actuel</p>' : ''}
       </div>
     </div>
@@ -197,8 +229,9 @@ function showReturnForm(orderId) {
   const box = document.getElementById('returnBox');
   if (!box) return;
   box.innerHTML = `
-    <form class="review-form card" style="margin-top:1rem;" onsubmit="submitReturn(event, '${Utils.escapeHtml(orderId)}')">
+    <form class="review-form card" style="margin-top:1rem;" id="returnForm">
       <h3>Demande de retour</h3>
+      <input type="hidden" id="returnOrderId" value="${Utils.escapeHtml(orderId)}">
       <div class="form-group">
         <label for="returnReason">Motif</label>
         <textarea id="returnReason" rows="3" required maxlength="500" placeholder="Produit endommagé, erreur de taille…"></textarea>
@@ -207,6 +240,13 @@ function showReturnForm(orderId) {
       <button type="submit" class="btn btn-primary">Envoyer la demande</button>
     </form>
   `;
+  const form = document.getElementById('returnForm');
+  if (form) {
+    form.addEventListener('submit', (event) => {
+      const id = document.getElementById('returnOrderId')?.value || orderId;
+      submitReturn(event, id);
+    });
+  }
 }
 
 async function submitReturn(event, orderId) {
@@ -214,11 +254,30 @@ async function submitReturn(event, orderId) {
   const reason = document.getElementById('returnReason').value.trim();
   const hint = document.getElementById('returnHint');
   if (!reason) return;
-  const items = returnItemsForOrder(currentOrder && String(currentOrder.id) === String(orderId) ? currentOrder : { id: orderId, items: [] });
-  const payload = { reason };
+
+  const invoiceToken =
+    getTrackingToken() ||
+    (orderId ? Utils.Storage.getOrderSnapshot(orderId)?.invoice_token : null) ||
+    '';
+
+  if (!invoiceToken) {
+    const text = 'Jeton de suivi manquant : rouvrez le lien reçu après commande';
+    if (hint) hint.textContent = text;
+    Utils.showToast(text, 'error');
+    return;
+  }
+
+  const items = returnItemsForOrder(
+    currentOrder && String(currentOrder.id) === String(orderId)
+      ? currentOrder
+      : { id: orderId, items: [] }
+  );
+  const payload = { reason, invoice_token: invoiceToken };
   if (items.length) payload.items = items;
+
   try {
-    await API.requestReturn(orderId, payload);
+    const createFn = API.createReturn || API.requestReturn;
+    await createFn(orderId, payload);
     Utils.showToast('Demande de retour envoyée', 'success');
     if (hint) hint.textContent = 'Demande enregistrée. Nous vous contactons sur WhatsApp.';
     event.target.querySelector('button[type="submit"]').disabled = true;

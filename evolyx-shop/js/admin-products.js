@@ -181,18 +181,18 @@ function renderProducts(products) {
 
     row.innerHTML = `
       <td>${imageHtml}</td>
-      <td>#${product.id}</td>
-      <td>${product.name}</td>
-      <td>${categoryName}</td>
+      <td>#${Utils.escapeHtml(product.id)}</td>
+      <td>${Utils.escapeHtml(product.name)}</td>
+      <td>${Utils.escapeHtml(categoryName)}</td>
       <td>${Utils.formatPrice(product.base_price)}</td>
-      <td>${product.stock}</td>
+      <td>${Utils.escapeHtml(product.stock)}</td>
       <td>${statusToggle}</td>
       <td>
         <div class="action-buttons">
-          <button class="btn btn-sm btn-primary" onclick="editProduct(${product.id})">
+          <button class="btn btn-sm btn-primary" onclick="editProduct(${Number(product.id) || 0})">
             <i class="fas fa-edit"></i>
           </button>
-          <button class="btn btn-sm" style="background: #EF4444; color: white;" onclick="deleteProduct(${product.id}, this)">
+          <button class="btn btn-sm" style="background: #EF4444; color: white;" onclick="deleteProduct(${Number(product.id) || 0}, this)">
             <i class="fas fa-trash-alt"></i>
           </button>
         </div>
@@ -600,21 +600,21 @@ function addVariationField(variation = null) {
     <div style="position: relative; flex: 2;">
       <input type="text" 
         placeholder="Couleur" 
-        value="${variation?.color || ''}" 
+        value="${Utils.escapeHtml(variation?.color || '')}" 
         class="variation-color-input" 
         readonly
         style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; background: white;"
         onclick="openColorPalette(this)">
-      <input type="hidden" class="variation-color-value" value="${variation?.color || ''}">
+      <input type="hidden" class="variation-color-value" value="${Utils.escapeHtml(variation?.color || '')}">
     </div>
     <input type="text" 
       placeholder="Taille" 
-      value="${variation?.size || ''}" 
+      value="${Utils.escapeHtml(variation?.size || '')}" 
       class="variation-size-input"
       style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
     <input type="number" 
       placeholder="Stock" 
-      value="${variation?.stock || 0}" 
+      value="${Utils.escapeHtml(variation?.stock ?? 0)}" 
       min="0" 
       class="variation-stock-input"
       style="width: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">

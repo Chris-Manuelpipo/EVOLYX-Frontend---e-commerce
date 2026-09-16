@@ -168,13 +168,13 @@ function displayRecentOrders(orders) {
   orders.forEach(order => {
     const row = document.createElement('tr');
     row.innerHTML = `
-      <td>#${order.id}</td>
-      <td>${order.customer_name || 'N/A'}</td>
+      <td>#${Utils.escapeHtml(order.id)}</td>
+      <td>${Utils.escapeHtml(order.customer_name || 'N/A')}</td>
       <td>${Utils.formatPrice(order.total_amount || 0)}</td>
       <td>${getStatusBadge(order.status || 'pending')}</td>
       <td>${Utils.formatDate(order.created_at)}</td>
       <td>
-        <button class="btn btn-sm btn-primary" onclick="viewOrder(${order.id})">
+        <button class="btn btn-sm btn-primary" onclick="viewOrder(${Number(order.id) || 0})">
           <i class="fa-solid fa-eye"></i>
         </button>
       </td>
@@ -213,14 +213,14 @@ function displayTopProducts(products) {
                        product.stock > 0 ? 'text-warning' : 'text-error';
 
     row.innerHTML = `
-      <td>${product.name || 'N/A'}</td>
-      <td>${product.sales_count || 0}</td>
+      <td>${Utils.escapeHtml(product.name || 'N/A')}</td>
+      <td>${Utils.escapeHtml(product.sales_count || 0)}</td>
       <td>
-        <span class="${stockClass}">${product.stock || 0}</span>
+        <span class="${stockClass}">${Utils.escapeHtml(product.stock || 0)}</span>
       </td>
       <td>${Utils.formatPrice(product.base_price || 0)}</td>
       <td>
-        <button class="btn btn-sm btn-primary" onclick="editProduct(${product.id})">
+        <button class="btn btn-sm btn-primary" onclick="editProduct(${Number(product.id) || 0})">
           Éditer <i class="fas fa-edit"></i>
         </button>
       </td>

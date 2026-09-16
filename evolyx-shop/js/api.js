@@ -178,8 +178,14 @@ const API = {
       body: JSON.stringify(data),
     }),
   getOrder: (id) => apiCall(`/orders/${id}`),
-  trackOrder: (id) => apiCall(`/orders/${id}/track`),
+  trackOrder: (id, token) =>
+    apiCall(`/orders/${id}/track${toQuery({ token })}`),
   requestReturn: (id, data) =>
+    apiCall(`/orders/${id}/returns`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  createReturn: (id, data) =>
     apiCall(`/orders/${id}/returns`, {
       method: 'POST',
       body: JSON.stringify(data),
@@ -191,6 +197,7 @@ const API = {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     }),
+  adminMe: () => apiCall('/admin/me'),
   adminLogout: async () => {
     try {
       return await apiCall('/admin/logout', { method: 'POST' });

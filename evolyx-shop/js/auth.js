@@ -84,10 +84,56 @@ function isLoggedIn() {
   return Utils.Storage.isAdminLoggedIn();
 }
 
+function clearAuthAndRedirect() {
+  localStorage.removeItem('adminToken');
+  localStorage.removeItem('userRole');
+  if (window.Utils) Utils.Storage.remove('adminToken');
+  window.location.href = '../login.html';
+}
+
+/**
+ * Vérifie le token local puis valide la session via /admin/me.
+ * Stocke le rôle renvoyé. Retourne une Promise (les pages peuvent await).
+ */
 function requireAuth() {
   if (!isLoggedIn()) {
     window.location.href = '../login.html';
+    return Promise.resolve(false);
   }
+
+  const meCall =
+    window.API && typeof API.adminMe === 'function'
+      ? API.adminMe()
+      : fetch(
+          `${(window.EVOLYX_CONFIG && window.EVOLYX_CONFIG.API_BASE_URL) || ''}/admin/me`,
+          {
+            headers: {
+              Authorization: `Bearer ${Utils.Storage.getAdminToken()}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        ).then(async (res) => {
+          if (!res.ok) {
+            const err = new Error('Session invalide');
+            err.status = res.status;
+            throw err;
+          }
+          return res.json();
+        });
+
+  return meCall
+    .then((response) => {
+      const me = response?.data || response;
+      const role = me?.role;
+      if (role) {
+        localStorage.setItem('userRole', role);
+      }
+      return true;
+    })
+    .catch(() => {
+      clearAuthAndRedirect();
+      return false;
+    });
 }
 
 function getAuthHeaders() {

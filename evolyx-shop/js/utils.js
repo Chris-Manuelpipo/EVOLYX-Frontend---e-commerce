@@ -43,6 +43,22 @@ function escapeHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
+/** N’autorise que les liens WhatsApp https (wa.me / api.whatsapp.com). */
+function safeExternalUrl(url) {
+  if (url == null || url === '') return '';
+  try {
+    const parsed = new URL(String(url), typeof location !== 'undefined' ? location.href : undefined);
+    if (parsed.protocol !== 'https:') return '';
+    const host = parsed.hostname.toLowerCase();
+    if (host === 'wa.me' || host === 'api.whatsapp.com') {
+      return parsed.href;
+    }
+    return '';
+  } catch (error) {
+    return '';
+  }
+}
+
 function debounce(fn, wait = 300) {
   let timer;
   return function debounced(...args) {
@@ -274,8 +290,9 @@ function statusBadge(status) {
     received: { label: 'Reçu', className: 'status-confirmed' },
     refunded: { label: 'Remboursé', className: 'status-delivered' },
   };
-  const info = ORDER_STATUSES[status] || extra[status] || { label: status || '—', className: 'status-pending' };
-  return `<span class="status-badge ${info.className}">${info.label}</span>`;
+  const known = ORDER_STATUSES[status] || extra[status];
+  const info = known || { label: status || '—', className: 'status-pending' };
+  return `<span class="status-badge ${escapeHtml(info.className)}">${escapeHtml(info.label)}</span>`;
 }
 
 const Storage = {
@@ -620,6 +637,7 @@ window.Utils = {
   formatTime,
   truncateText,
   escapeHtml,
+  safeExternalUrl,
   debounce,
   categoryName,
   formatOrderItemLabel,
