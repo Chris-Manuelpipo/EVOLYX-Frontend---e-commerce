@@ -287,16 +287,30 @@ async function editProduct(productId) {
 async function saveProduct(event) {
   event.preventDefault();
 
+  const categoryRaw = document.getElementById('productCategory').value;
   const productData = {
-    name: document.getElementById('productName').value,
-    category_id: parseInt(document.getElementById('productCategory').value),
+    name: document.getElementById('productName').value.trim(),
+    category_id: categoryRaw ? parseInt(categoryRaw, 10) : null,
     base_price: parseFloat(document.getElementById('productPrice').value),
-    cost_price: parseFloat(document.getElementById('productCostPrice').value) || 0, 
-    stock: parseInt(document.getElementById('productStock').value) || 0,
+    cost_price: parseFloat(document.getElementById('productCostPrice').value) || 0,
+    stock: parseInt(document.getElementById('productStock').value, 10) || 0,
     description: document.getElementById('productDescription').value,
     is_featured: document.getElementById('productFeatured').checked,
     is_active: document.getElementById('productActive').checked,
   };
+
+  if (!productData.name) {
+    Utils.showToast('Indiquez un nom de produit', 'warning');
+    return;
+  }
+  if (!productData.category_id) {
+    Utils.showToast('Choisissez une catégorie', 'warning');
+    return;
+  }
+  if (!(productData.base_price > 0)) {
+    Utils.showToast('Indiquez un prix valide', 'warning');
+    return;
+  }
 
   // ✅ Récupérer les variations
   const variationRows = document.querySelectorAll('.variation-row');
@@ -367,7 +381,11 @@ async function saveProduct(event) {
     );
   } catch (error) {
     console.error('Failed to save product:', error);
-    Utils.showToast(error.message || 'Erreur lors de l\'enregistrement', 'error');
+    Utils.showToast(error.message || 'Erreur lors de l\'enregistrement', error.partial ? 'warning' : 'error');
+    if (error.partial) {
+      closeProductModal();
+      loadProducts();
+    }
   }
 }
 

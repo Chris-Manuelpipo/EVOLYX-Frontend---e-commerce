@@ -230,14 +230,37 @@ const API = {
     });
     const product = response.data || response;
     const id = product && product.id;
-    if (id && Array.isArray(files) && files.length) {
-      for (let i = 0; i < files.length; i++) {
-        await API.uploadProductImage(id, files[i], i === 0);
-      }
-      const refreshed = await apiCall(`/admin/products/${id}`);
-      return refreshed.data ? refreshed : { success: true, data: refreshed };
+    if (!id || !Array.isArray(files) || !files.length) {
+      return response;
     }
-    return response;
+
+    const uploadErrors = [];
+    for (let i = 0; i < files.length; i++) {
+      try {
+        await API.uploadProductImage(id, files[i], i === 0);
+      } catch (err) {
+        uploadErrors.push(err.message || 'upload échoué');
+      }
+    }
+
+    let refreshed = response;
+    try {
+      refreshed = await apiCall(`/admin/products/${id}`);
+    } catch (_) {
+      /* garder la réponse initiale */
+    }
+
+    if (uploadErrors.length) {
+      const err = new Error(
+        `Produit enregistré, mais ${uploadErrors.length} image(s) ont échoué : ${uploadErrors[0]}`
+      );
+      err.status = 502;
+      err.partial = true;
+      err.payload = refreshed;
+      throw err;
+    }
+
+    return refreshed.data ? refreshed : { success: true, data: refreshed };
   },
 
   updateProduct: async (id, productData, files = []) => {
@@ -245,14 +268,34 @@ const API = {
       method: 'PUT',
       body: JSON.stringify(productData),
     });
-    if (Array.isArray(files) && files.length) {
-      for (const file of files) {
+    if (!Array.isArray(files) || !files.length) return response;
+
+    const uploadErrors = [];
+    for (const file of files) {
+      try {
         await API.uploadProductImage(id, file, false);
+      } catch (err) {
+        uploadErrors.push(err.message || 'upload échoué');
       }
-      const refreshed = await apiCall(`/admin/products/${id}`);
-      return refreshed.data ? refreshed : { success: true, data: refreshed };
     }
-    return response;
+
+    let refreshed = response;
+    try {
+      refreshed = await apiCall(`/admin/products/${id}`);
+    } catch (_) {
+      /* ignore */
+    }
+
+    if (uploadErrors.length) {
+      const err = new Error(
+        `Produit mis à jour, mais ${uploadErrors.length} image(s) ont échoué : ${uploadErrors[0]}`
+      );
+      err.status = 502;
+      err.partial = true;
+      throw err;
+    }
+
+    return refreshed.data ? refreshed : { success: true, data: refreshed };
   },
 
   deleteProduct: (id) => apiCall(`/admin/products/${id}`, { method: 'DELETE' }),
