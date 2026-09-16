@@ -326,50 +326,49 @@ async function saveProduct(event) {
   });
 
   try {
+    const wasUpdate = Boolean(selectedProductId);
     await Utils.withBusy(event, async () => {
-    const files = selectedImages.slice();
-    let product;
-    if (selectedProductId) {
-      const response = await API.updateProduct(selectedProductId, productData, files);
-      product = response.data || response;
-      Utils.showToast('Produit mis à jour', 'success');
-    } else {
-      const response = await API.createProduct(productData, files);
-      product = response.data || response;
-      Utils.showToast('Produit créé', 'success');
-    }
-
-    const productId = product?.id || selectedProductId;
-
-    for (const id of deletedVariationIds) {
-      try {
-        await API.deleteVariation(id);
-      } catch (err) {
-        console.warn('Suppression variation:', err);
+      const files = selectedImages.slice();
+      let product;
+      if (wasUpdate) {
+        const response = await API.updateProduct(selectedProductId, productData, files);
+        product = response.data || response;
+      } else {
+        const response = await API.createProduct(productData, files);
+        product = response.data || response;
       }
-    }
-    deletedVariationIds = [];
 
-    if (productId) {
-      for (const variation of variations) {
-        const payload = {
-          product_id: productId,
-          color: variation.color,
-          size: variation.size,
-          stock: variation.stock,
-        };
-        if (variation.id) {
-          await API.updateVariation(variation.id, payload);
-        } else {
-          await API.createVariation(payload);
+      const productId = product?.id || selectedProductId;
+
+      for (const id of deletedVariationIds) {
+        try {
+          await API.deleteVariation(id);
+        } catch (err) {
+          console.warn('Suppression variation:', err);
         }
       }
-    }
+      deletedVariationIds = [];
 
+      if (productId) {
+        for (const variation of variations) {
+          const payload = {
+            product_id: productId,
+            color: variation.color,
+            size: variation.size,
+            stock: variation.stock,
+          };
+          if (variation.id) {
+            await API.updateVariation(variation.id, payload);
+          } else {
+            await API.createVariation(payload);
+          }
+        }
+      }
+    });
+
+    Utils.showToast(wasUpdate ? 'Produit mis à jour' : 'Produit créé', 'success');
     closeProductModal();
     await loadProducts();
-      }
-    );
   } catch (error) {
     console.error('Failed to save product:', error);
     Utils.showToast(error.message || 'Erreur lors de l\'enregistrement', error.partial ? 'warning' : 'error');
