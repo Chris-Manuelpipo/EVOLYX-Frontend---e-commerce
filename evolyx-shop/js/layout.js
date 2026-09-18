@@ -229,6 +229,9 @@
     if (footerSlot) footerSlot.outerHTML = footerHTML();
     bindHeader();
     hydrateLegal();
+    if (window.EvolyxSeo && typeof EvolyxSeo.initPublicSite === 'function') {
+      EvolyxSeo.initPublicSite();
+    }
   }
 
   if (document.readyState === 'loading') {
