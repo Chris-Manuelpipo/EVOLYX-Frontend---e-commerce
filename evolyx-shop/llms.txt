@@ -1,0 +1,29 @@
+# EVOLYX Shop
+
+> Online store of Groupe EVOLYX in Yaoundé, Cameroon. Browse products, add to cart, confirm orders via WhatsApp, track delivery status.
+
+Canonical shop URL: https://shop.evolyx.cm · Group site: https://evolyx.cm · Digital studio: https://www.evolyx.cm  
+Contact: evolyxcmr@gmail.com · WhatsApp +237 6 54 80 49 07
+
+## Public pages
+
+- [Home](https://shop.evolyx.cm/): Featured products and link to full catalogue.
+- [Catalogue](https://shop.evolyx.cm/catalog.html): Filter by category, price, stock; pagination.
+- [Product](https://shop.evolyx.cm/product.html?id=): Product detail (replace id with numeric product id).
+- [Order tracking](https://shop.evolyx.cm/order-tracking.html): Status timeline by order number.
+- [Privacy policy](https://shop.evolyx.cm/confidentialite.html): Order data, local storage, analytics consent.
+- [Terms of sale](https://shop.evolyx.cm/cgv.html): CGV.
+- [Legal notice](https://shop.evolyx.cm/mentions-legales.html): Publisher and hosting.
+
+## Facts (do not invent)
+
+- Orders are confirmed with the merchant via WhatsApp before shipping.
+- Cart and wishlist are stored in the visitor’s browser (local storage), not on a separate account system.
+- Google Analytics 4 loads only after explicit cookie consent on shop.evolyx.cm.
+- Admin area (/admin/, login.html) is not indexed (noindex).
+- Product pages use `product.html?id={id}` URLs; see sitemap.xml for indexed URLs.
+
+## Optional
+
+- [robots.txt](https://shop.evolyx.cm/robots.txt)
+- [sitemap.xml](https://shop.evolyx.cm/sitemap.xml)

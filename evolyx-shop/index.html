@@ -17,11 +17,17 @@
   <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1a1814">
   <title>EVOLYX Shop : boutique en ligne à Yaoundé</title>
   <meta name="description" content="Boutique EVOLYX à Yaoundé. Commandez par WhatsApp, suivez votre commande, livraison au Cameroun.">
+  <meta name="robots" content="index, follow">
+  <meta name="author" content="EVOLYX Shop">
+  <!-- gsc -->
   <meta property="og:title" content="EVOLYX Shop : boutique en ligne à Yaoundé">
   <meta property="og:description" content="Catalogue EVOLYX. Commande confirmée par WhatsApp, suivi et livraison au Cameroun.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://shop.evolyx.cm/">
   <meta property="og:image" content="https://shop.evolyx.cm/assets/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="EVOLYX Shop — boutique en ligne à Yaoundé">
   <meta property="og:site_name" content="EVOLYX Shop">
   <meta property="og:locale" content="fr_FR">
   <meta name="twitter:card" content="summary_large_image">
@@ -29,6 +35,7 @@
   <meta name="twitter:description" content="Boutique EVOLYX à Yaoundé. Commandez par WhatsApp, suivez votre commande, livraison au Cameroun.">
   <meta name="twitter:image" content="https://shop.evolyx.cm/assets/og-image.png">
   <link rel="canonical" href="https://shop.evolyx.cm/">
+  <link rel="alternate" type="text/plain" title="LLM" href="https://shop.evolyx.cm/llms.txt">
   <link rel="icon" href="assets/favicon.ico">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -36,6 +43,54 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="css/style.css?v=mobile-2col2">
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": ["Organization", "OnlineStore"],
+          "@id": "https://shop.evolyx.cm/#org",
+          "name": "EVOLYX Shop",
+          "url": "https://shop.evolyx.cm",
+          "email": "evolyxcmr@gmail.com",
+          "telephone": "+237654804907",
+          "image": "https://shop.evolyx.cm/assets/og-image.png",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://shop.evolyx.cm/assets/logo.png"
+          },
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "Yaoundé",
+            "addressCountry": "CM"
+          },
+          "areaServed": { "@type": "Country", "name": "Cameroon" },
+          "parentOrganization": {
+            "@type": "Organization",
+            "name": "Groupe EVOLYX",
+            "url": "https://evolyx.cm"
+          }
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://shop.evolyx.cm/#website",
+          "url": "https://shop.evolyx.cm",
+          "name": "EVOLYX Shop",
+          "inLanguage": "fr",
+          "publisher": { "@id": "https://shop.evolyx.cm/#org" }
+        },
+        {
+          "@type": "WebPage",
+          "@id": "https://shop.evolyx.cm/#webpage",
+          "url": "https://shop.evolyx.cm/",
+          "name": "EVOLYX Shop : boutique en ligne à Yaoundé",
+          "isPartOf": { "@id": "https://shop.evolyx.cm/#website" },
+          "about": { "@id": "https://shop.evolyx.cm/#org" },
+          "inLanguage": "fr"
+        }
+      ]
+    }
+  </script>
   <script>
     (function () {
       var params = new URLSearchParams(location.search);
@@ -66,6 +121,7 @@
   <div id="site-footer"></div>
 
   <script src="js/config.js"></script>
+  <script src="js/seo.js"></script>
   <script src="js/utils.js"></script>
   <script src="js/api.js"></script>
   <script src="js/wishlist.js"></script>

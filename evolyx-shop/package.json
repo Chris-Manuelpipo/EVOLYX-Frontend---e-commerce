@@ -1,0 +1,9 @@
+{
+  "name": "evolyx-shop",
+  "private": true,
+  "description": "Frontend statique EVOLYX Shop",
+  "scripts": {
+    "predeploy": "node scripts/inject-gsc.mjs && node scripts/generate-sitemap.mjs",
+    "sitemap": "node scripts/generate-sitemap.mjs"
+  }
+}
