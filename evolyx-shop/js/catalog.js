@@ -144,7 +144,7 @@ async function loadFeaturedProducts() {
     list = Utils.unwrapList(await API.getFeaturedProducts());
     featuredCount = list.length;
   } catch (error) {
-    console.warn('Vedettes indisponibles:', error);
+    /* featured products unavailable — fallback to full catalog */
   }
 
   if (list.length < HOME_LIMIT) {
@@ -158,7 +158,7 @@ async function loadFeaturedProducts() {
         }
       });
     } catch (error) {
-      console.warn('Catalogue accueil indisponible:', error);
+      /* catalog fallback unavailable */
     }
   }
 
@@ -179,6 +179,14 @@ async function loadFeaturedProducts() {
   grid.innerHTML = '';
   list.forEach((product) => grid.appendChild(createProductCard(product)));
   if (window.Wishlist) Wishlist.bind(grid);
+
+  let cta = section.querySelector('.featured-cta');
+  if (!cta) {
+    cta = document.createElement('div');
+    cta.className = 'featured-cta';
+    cta.innerHTML = '<a href="catalog.html" class="btn btn-outline">Tout voir</a>';
+    section.querySelector('.container').appendChild(cta);
+  }
 }
 
 async function loadProductsWithFilters() {

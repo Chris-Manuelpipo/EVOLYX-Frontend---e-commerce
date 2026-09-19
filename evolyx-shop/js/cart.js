@@ -42,7 +42,7 @@ async function backfillCartImages() {
           changed = true;
         }
       } catch (error) {
-        console.warn('Image panier indisponible:', error);
+        /* cart image backfill unavailable */
       }
     })
   );
@@ -79,7 +79,7 @@ async function ensureCartToken() {
       return token;
     }
   } catch (error) {
-    console.warn('Création panier serveur indisponible:', error);
+    /* server cart creation unavailable */
   }
   return null;
 }
@@ -144,7 +144,7 @@ async function mergeCartToServer(options = {}) {
     const response = await API.mergeCart(token, localCartLines(cart));
     hydrateLocalFromServer(response);
   } catch (error) {
-    console.warn('Merge panier indisponible:', error);
+    /* cart merge unavailable */
   }
 }
 
@@ -482,7 +482,12 @@ function showOrderConfirmation(order, whatsappLink, name, phone, address) {
   const safeWa = Utils.safeExternalUrl(whatsappLink);
   const token = order.invoice_token || '';
   const trackParams = new URLSearchParams({ id: String(order.id) });
-  if (token) trackParams.set('token', token);
+  if (token) {
+    // Store token in sessionStorage to avoid exposing it in URL (Referer leakage).
+    // The tracking page will read it from sessionStorage.
+    try { sessionStorage.setItem('evolyx_track_' + order.id, token); } catch (_) { /* ignore */ }
+    trackParams.set('token', token);
+  }
   const trackHref = `order-tracking.html?${trackParams.toString()}`;
 
   container.innerHTML = `

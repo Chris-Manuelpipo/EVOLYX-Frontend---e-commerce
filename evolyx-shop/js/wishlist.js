@@ -28,7 +28,7 @@ const Wishlist = {
         }
       }
     } catch (error) {
-      if (!Utils.isApiUnavailable(error)) console.warn('Wishlist token:', error);
+      /* wishlist token creation failed — fallback to local */
     }
     if (!token) {
       token =
@@ -191,7 +191,7 @@ const Wishlist = {
           const product = Utils.unwrapData(response) || response;
           if (product && product.id) products.push(product);
         } catch (error) {
-          console.warn('Favori introuvable', id, error);
+          /* wishlist product not found — skip */
         }
       })
     );

@@ -18,7 +18,15 @@ document.addEventListener('DOMContentLoaded', () => {
     currentInvoiceToken = token;
     searchOrder(new Event('submit'));
   } else if (orderId && !token) {
-    Utils.showToast('Lien de suivi incomplet : le jeton (?token=) est requis', 'warning');
+    // Try sessionStorage (set by cart.js to avoid Referer leakage)
+    const stored = sessionStorage.getItem('evolyx_track_' + orderId);
+    if (stored) {
+      currentInvoiceToken = stored;
+      sessionStorage.removeItem('evolyx_track_' + orderId);
+      searchOrder(new Event('submit'));
+    } else {
+      Utils.showToast('Lien de suivi incomplet : le jeton (?token=) est requis', 'warning');
+    }
   }
   if (window.Utils) {
     Utils.updateCartBadge();
@@ -52,7 +60,8 @@ async function searchOrder(event) {
   const result = document.getElementById('trackingResult');
   const url = new URL(location.href);
   url.searchParams.set('id', orderId);
-  url.searchParams.set('token', token);
+  // Remove token from URL after reading to prevent Referer/history leakage
+  url.searchParams.delete('token');
   history.replaceState(null, '', url);
 
   try {

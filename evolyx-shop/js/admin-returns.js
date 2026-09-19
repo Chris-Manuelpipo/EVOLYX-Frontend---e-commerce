@@ -35,13 +35,13 @@ function renderReturns(returns) {
     const orderId = item.order_id || item.order?.id || '';
     const row = document.createElement('tr');
     row.innerHTML = `
-      <td>#${item.id}</td>
+      <td>#${Utils.escapeHtml(item.id)}</td>
       <td>#${Utils.escapeHtml(orderId)}</td>
       <td>${Utils.escapeHtml(Utils.truncateText(item.reason || '', 80))}</td>
       <td>${Utils.statusBadge(status)}</td>
       <td>${Utils.formatDate(item.created_at)}</td>
       <td>
-        <select onchange="changeReturnStatus(${item.id}, this.value, this)" aria-label="Statut du retour">
+        <select onchange="changeReturnStatus(${Number(item.id) || 0}, this.value, this)" aria-label="Statut du retour">
           ${['requested', 'approved', 'rejected', 'refunded']
             .map(
               (key) =>
@@ -51,7 +51,7 @@ function renderReturns(returns) {
         </select>
         ${
           orderId
-            ? `<button class="btn btn-sm btn-secondary" type="button" onclick="openAdminInvoice(${orderId})">Facture</button>`
+            ? `<button class="btn btn-sm btn-secondary" type="button" onclick="openAdminInvoice(${Number(orderId) || 0})">Facture</button>`
             : ''
         }
       </td>`;

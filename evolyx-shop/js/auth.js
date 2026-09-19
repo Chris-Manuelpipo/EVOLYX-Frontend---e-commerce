@@ -69,9 +69,8 @@ async function logout() {
   } catch (e) {
     /* logout local même si l’API n’a pas la route */
   }
-  localStorage.removeItem('adminToken');
   localStorage.removeItem('userRole');
-  if (window.Utils) Utils.Storage.remove('adminToken');
+  Utils.Storage.clearAdminToken();
   if (window.Utils) Utils.showToast('Déconnecté', 'info');
   setTimeout(() => {
     window.location.href = window.location.pathname.includes('/admin/')
@@ -85,9 +84,8 @@ function isLoggedIn() {
 }
 
 function clearAuthAndRedirect() {
-  localStorage.removeItem('adminToken');
+  Utils.Storage.clearAdminToken();
   localStorage.removeItem('userRole');
-  if (window.Utils) Utils.Storage.remove('adminToken');
   window.location.href = '../login.html';
 }
 
@@ -111,6 +109,7 @@ function requireAuth() {
               Authorization: `Bearer ${Utils.Storage.getAdminToken()}`,
               'Content-Type': 'application/json',
             },
+            credentials: 'include',
           }
         ).then(async (res) => {
           if (!res.ok) {

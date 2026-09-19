@@ -45,8 +45,8 @@ function renderPromos(promos) {
       <td>${promo.uses_count || 0}${promo.max_uses ? ' / ' + promo.max_uses : ''}</td>
       <td>${promo.is_active ? 'Oui' : 'Non'}</td>
       <td>
-        <button class="btn btn-sm btn-primary" type="button" onclick="editPromo(${promo.id})"><i class="fas fa-edit"></i></button>
-        <button class="btn btn-sm btn-danger" type="button" onclick="deletePromo(${promo.id}, this)"><i class="fas fa-trash-alt"></i></button>
+        <button class="btn btn-sm btn-primary" type="button" onclick="editPromo(${Number(promo.id) || 0})"><i class="fas fa-edit"></i></button>
+        <button class="btn btn-sm btn-danger" type="button" onclick="deletePromo(${Number(promo.id) || 0}, this)"><i class="fas fa-trash-alt"></i></button>
       </td>`;
     tbody.appendChild(row);
   });

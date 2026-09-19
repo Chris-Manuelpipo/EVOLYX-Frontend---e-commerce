@@ -85,6 +85,7 @@ async function apiCall(endpoint, options = {}) {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
     headers,
+    credentials: 'include',
   });
 
   return handleResponse(response);
@@ -320,6 +321,7 @@ const API = {
       method: 'POST',
       body: formData,
       headers,
+      credentials: 'include',
     }).then(handleResponse);
   },
 

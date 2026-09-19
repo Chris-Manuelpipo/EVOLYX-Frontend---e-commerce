@@ -23,21 +23,17 @@ document.addEventListener('DOMContentLoaded', () => {
 // ============================================
 async function loadProducts() {
   try {
-    console.log('📦 Chargement des produits...');
     const response = await API.getAdminProducts();
     
     // ✅ Extraction des produits (response.products)
     if (response?.products && Array.isArray(response.products)) {
       allProducts = response.products;
-      console.log(`✅ ${allProducts.length} produits chargés`);
     } 
     // Fallback pour l'ancien format (au cas où)
     else if (response?.data?.products && Array.isArray(response.data.products)) {
       allProducts = response.data.products;
-      console.log(`✅ ${allProducts.length} produits chargés (ancien format)`);
     }
     else {
-      console.warn('⚠️ Format produits inattendu');
       allProducts = [];
     }
     
@@ -188,7 +184,6 @@ function closeVariationModal() {
 
 async function editVariation(variationId) {
   try {
-    console.log(`✏️ Édition variation #${variationId}`);
     const response = await API.getVariation(variationId);
     
     // Extraire les données

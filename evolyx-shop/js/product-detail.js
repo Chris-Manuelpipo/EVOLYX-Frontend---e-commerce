@@ -591,7 +591,7 @@ async function addToCart() {
       cart.token = response.data?.cart_token || response.data?.token || response.cart_token || null;
       Utils.Storage.setCart(cart);
     } catch (error) {
-      console.warn('Panier API indisponible, conservation locale:', error);
+      /* API cart unavailable — keeping local cart */
     }
   }
 
@@ -606,7 +606,7 @@ async function addToCart() {
         quantity: qty,
       });
     } catch (error) {
-      console.warn('Ajout panier serveur reporté au merge:', error);
+      /* server cart add deferred to merge */
     }
   }
 }

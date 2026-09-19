@@ -9,6 +9,8 @@
 
     const host = global.location ? global.location.hostname : '';
     if (host === 'localhost' || host === '127.0.0.1') {
+      // DEV ONLY: localhost API — HTTP is intentional for local dev servers.
+      // Production always uses the HTTPS fallback below.
       return 'http://localhost:5000/api';
     }
     return 'https://apievolyxcm.vercel.app/api';

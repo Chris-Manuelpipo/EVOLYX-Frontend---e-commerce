@@ -25,7 +25,7 @@
             <button type="button" class="brand-logo-btn" id="adminAccess" title="EVOLYX">
               <img src="assets/logo.png" alt="" class="brand-logo" width="32" height="32">
             </button>
-            <a class="brand-wordmark" href="${cfg.GROUP_URL || 'https://evolyx.cm'}" rel="noopener noreferrer">
+            <a class="brand-wordmark" href="${cfg.SHOP_URL || './'}">
               EVOLYX <span class="brand-accent">Shop</span>
             </a>
           </div>

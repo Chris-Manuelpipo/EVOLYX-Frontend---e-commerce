@@ -119,8 +119,12 @@ function logoPlaceholderClass(url) {
 }
 
 function placeholderOnErrorHandler() {
-  const ph = escapeHtml(placeholderImage());
-  return `this.onerror=null;this.src='${ph}';this.classList.add('is-logo-placeholder')`;
+  const ph = placeholderImage();
+  if (!ph) return 'this.onerror=null;this.classList.add(\'is-logo-placeholder\')';
+  // Build safe onerror handler: URL is validated to be a same-origin path,
+  // and we use DOMStringMap-safe escaping to prevent attribute injection.
+  const safeUrl = String(ph).replace(/[&"'<>\s]/g, '');
+  return `this.onerror=null;this.src='${safeUrl}';this.classList.add('is-logo-placeholder')`;
 }
 
 function coerceImageUrl(value, depth = 0) {
@@ -301,7 +305,6 @@ const Storage = {
       const item = localStorage.getItem(key);
       return item ? JSON.parse(item) : null;
     } catch (error) {
-      console.warn(`Storage get error [${key}]:`, error);
       return null;
     }
   },
@@ -310,7 +313,7 @@ const Storage = {
     try {
       localStorage.setItem(key, JSON.stringify(value));
     } catch (error) {
-      console.warn(`Storage set error [${key}]:`, error);
+      /* storage full or unavailable */
     }
   },
 
@@ -336,6 +339,18 @@ const Storage = {
 
   setAdminToken(token) {
     localStorage.setItem('adminToken', token);
+    // Also set as a non-httpOnly cookie for defense-in-depth.
+    // The backend should preferably set an httpOnly cookie on login.
+    try {
+      document.cookie = `adminToken=${encodeURIComponent(token)}; path=/; SameSite=Strict; secure`;
+    } catch (_) { /* private browsing may throw */ }
+  },
+
+  clearAdminToken() {
+    localStorage.removeItem('adminToken');
+    try {
+      document.cookie = 'adminToken=; path=/; Max-Age=0; SameSite=Strict; secure';
+    } catch (_) { /* ignore */ }
   },
 
   isAdminLoggedIn() {

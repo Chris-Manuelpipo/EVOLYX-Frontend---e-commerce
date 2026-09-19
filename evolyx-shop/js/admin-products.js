@@ -268,8 +268,8 @@ async function editProduct(productId) {
         const div = document.createElement('div');
         div.className = 'file-preview-item';
         div.innerHTML = `
-          <img src="${img.url}" alt="product">
-          <button type="button" class="file-preview-remove" onclick="removeExistingImage(${img.id})">✕</button>
+          <img src="${Utils.escapeHtml(img.url)}" alt="product">
+          <button type="button" class="file-preview-remove" onclick="removeExistingImage(${Number(img.id) || 0})">✕</button>
         `;
         preview.appendChild(div);
       });
@@ -387,7 +387,7 @@ async function saveProduct(event) {
         try {
           await API.deleteVariation(id);
         } catch (err) {
-          console.warn('Suppression variation:', err);
+          /* variation deletion failed — non-critical */
         }
       }
       deletedVariationIds = [];
@@ -558,7 +558,6 @@ function removeImage(index) {
 
 function removeExistingImage(imageId) {
   // TODO: Implement remove existing image
-  console.log('Remove existing image:', imageId);
 }
 
 // ============================================

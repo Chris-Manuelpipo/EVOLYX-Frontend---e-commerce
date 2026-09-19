@@ -130,10 +130,6 @@ async function loadStatsData() {
     const categoriesResponse = await API.getCategories();
     allCategories = categoriesResponse.data || [];
 
-    console.log('📦 Commandes:', allOrders.length);
-    console.log('📦 Produits:', allProducts.length);
-    console.log('🏷️ Catégories:', allCategories.length);
-
     setStatsPageSkeleton(false);
     loadOutOfStockProducts();
     updateStockValues();
@@ -685,7 +681,6 @@ function updateStockValues() {
   let totalSelling = 0;
 
   allProducts.forEach(product => {
-     console.log('Produit:', product.name, 'cost_price:', product.cost_price, 'type:', typeof product.cost_price);
     const stock = product.stock || 0;
     // Valeur au prix de vente
     totalSelling += (parseFloat(product.base_price) || 0) * stock;
@@ -694,7 +689,6 @@ function updateStockValues() {
       totalCost += parseFloat(product.cost_price) * stock;
     }
   });
-  console.log(totalCost)
   const costEl = document.getElementById('stockCostValue');
   const sellEl = document.getElementById('stockSellingValue');
   if (costEl) costEl.textContent = Utils.formatPrice(totalCost);

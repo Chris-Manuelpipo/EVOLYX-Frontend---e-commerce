@@ -54,7 +54,7 @@ async function loadDashboardData() {
       const statsResponse = await API.getDashboardStats();
       stats = statsResponse?.data || {};
     } catch (statsError) {
-      console.warn('⚠️ Erreur stats, utilisation valeurs par défaut', statsError);
+      /* stats unavailable — using defaults */
     }
 
     // 2. CHARGER LES COMMANDES
@@ -69,37 +69,28 @@ async function loadDashboardData() {
         allOrders = ordersResponse;
       }
     } catch (ordersError) {
-      console.warn('⚠️ Erreur commandes:', ordersError);
+      /* orders unavailable */
     }
 
     // 3. CHARGER LES PRODUITS
     let allProducts = [];
     try {
       const productsResponse = await API.getAdminProducts({limit: 999});
-      console.log('📦 Réponse produits brute:', productsResponse);
       
       // ✅ CORRIGÉ: Les produits sont dans response.products
       if (productsResponse?.products && Array.isArray(productsResponse.products)) {
         allProducts = productsResponse.products;
-        console.log('✅ Produits dans response.products');
       } 
       // Fallback pour ancien format
       else if (productsResponse?.data && Array.isArray(productsResponse.data)) {
         allProducts = productsResponse.data;
-        console.log('⚠️ Ancien format: produits dans response.data');
       }
       // Fallback si tableau direct
       else if (Array.isArray(productsResponse)) {
         allProducts = productsResponse;
-        console.log('⚠️ Format tableau direct');
-      }
-      
-      console.log('📦 Produits extraits:', allProducts.length);
-      if (allProducts.length > 0) {
-        console.log('📦 Premier produit:', allProducts[0]);
       }
     } catch (productsError) {
-      console.warn('⚠️ Erreur produits:', productsError);
+      /* products unavailable */
     }
 
     // 4. METTRE À JOUR L'AFFICHAGE

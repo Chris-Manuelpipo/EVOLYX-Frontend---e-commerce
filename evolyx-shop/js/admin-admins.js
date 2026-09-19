@@ -1,33 +1,60 @@
 /**
- * Création d’administrateurs (super_admin).
+ * Création d'administrateurs (super_admin).
+ * Le contrôle d'accès est vérifié via l'API (/admin/me),
+ * pas seulement via localStorage (bypassable).
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-  Auth.requireAuth();
-  const role = localStorage.getItem('userRole');
+  Auth.requireAuth().then((ok) => {
+    if (ok) verifySuperAdmin();
+  });
+});
+
+async function verifySuperAdmin() {
   const gate = document.getElementById('superadminGate');
   const formWrap = document.getElementById('superadminFormWrap');
 
-  if (role !== 'super_admin') {
-    if (formWrap) formWrap.hidden = true;
-    if (gate) {
-      gate.hidden = false;
-      gate.innerHTML = `
-        <div class="card catalog-state">
-          <p>Cette page est réservée au super administrateur.</p>
-          <a href="dashboard.html" class="btn btn-secondary">Retour au dashboard</a>
-        </div>
-      `;
+  // Hide form by default until API confirms super_admin role
+  if (formWrap) formWrap.hidden = true;
+
+  try {
+    const response = await API.adminMe();
+    const me = response?.data || response;
+    const role = me?.role;
+
+    // Update localStorage with server-confirmed role
+    if (role) localStorage.setItem('userRole', role);
+
+    if (role !== 'super_admin') {
+      showAccessDenied();
+      return;
     }
-    return;
+
+    // Role confirmed by backend — show form
+    if (gate) gate.hidden = true;
+    if (formWrap) formWrap.hidden = false;
+
+    const form = document.getElementById('adminCreateForm');
+    if (form) form.addEventListener('submit', createAdmin);
+  } catch (error) {
+    showAccessDenied();
   }
+}
 
-  if (gate) gate.hidden = true;
-  if (formWrap) formWrap.hidden = false;
-
-  const form = document.getElementById('adminCreateForm');
-  if (form) form.addEventListener('submit', createAdmin);
-});
+function showAccessDenied() {
+  const gate = document.getElementById('superadminGate');
+  const formWrap = document.getElementById('superadminFormWrap');
+  if (formWrap) formWrap.hidden = true;
+  if (gate) {
+    gate.hidden = false;
+    gate.innerHTML = `
+      <div class="card catalog-state">
+        <p>Cette page est réservée au super administrateur.</p>
+        <a href="dashboard.html" class="btn btn-secondary">Retour au dashboard</a>
+      </div>
+    `;
+  }
+}
 
 async function createAdmin(event) {
   event.preventDefault();
