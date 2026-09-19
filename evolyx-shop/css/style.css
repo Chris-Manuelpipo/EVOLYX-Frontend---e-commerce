@@ -2073,4 +2073,29 @@ img.cart-thumb.is-logo-placeholder,
   }
 
   .catalog-page .catalog-pills::-webkit-scrollbar { display: none; }
+
+  .catalog-page details.catalog-price {
+    flex-wrap: wrap;
+    width: 100%;
+    border-radius: var(--radius-md);
+    height: auto;
+    min-height: 2.5rem;
+  }
+
+  .catalog-page .catalog-price summary {
+    width: 100%;
+  }
+
+  .catalog-page .catalog-price-panel {
+    position: static;
+    width: 100%;
+    display: grid;
+    grid-template-columns: auto 1fr auto 1fr;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.9rem 0.7rem;
+    border: 0;
+    box-shadow: none;
+    background: transparent;
+  }
 }
