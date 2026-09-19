@@ -814,6 +814,13 @@ select:focus {
 
 .featured[hidden] { display: none !important; }
 
+.featured-cta {
+  display: flex;
+  justify-content: center;
+  padding-top: 2rem;
+  margin-top: 1rem;
+}
+
 .catalog-page { padding: 0.5rem 0 3.75rem; }
 
 .section-head {
