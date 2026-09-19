@@ -2074,19 +2074,45 @@ img.cart-thumb.is-logo-placeholder,
 
   .catalog-page .catalog-pills::-webkit-scrollbar { display: none; }
 
-  .catalog-page .catalog-price-panel {
-    position: fixed;
-    left: 50%;
-    transform: translateX(-50%);
-    bottom: 1rem;
-    right: auto;
-    width: calc(100vw - 2rem);
-    max-width: 18rem;
-    padding: 0.7rem 0.9rem;
-    border-radius: var(--radius-md);
+  .catalog-page details.catalog-price {
+    overflow: visible;
   }
 
-  .catalog-page .catalog-price-panel label { font-size: 0.75rem; margin-top: 0.3rem; }
-  .catalog-page .catalog-price-panel label:first-child { margin-top: 0; }
-  .catalog-page .catalog-price-panel input { height: 2rem; font-size: 0.8rem; }
+  .catalog-page details.catalog-price[open] {
+    position: static;
+    border-radius: 0;
+    height: auto;
+  }
+
+  .catalog-page details.catalog-price[open] summary {
+    height: 1.6rem;
+    min-height: 1.6rem;
+    font-size: 0.7rem;
+    padding: 0 0.6rem;
+  }
+
+  .catalog-page details.catalog-price[open] .catalog-price-panel {
+    position: static;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.6rem 0.5rem;
+    border: 0;
+    box-shadow: none;
+    background: transparent;
+  }
+
+  .catalog-page details.catalog-price[open] .catalog-price-panel label {
+    font-size: 0.7rem;
+    margin: 0;
+  }
+
+  .catalog-page details.catalog-price[open] .catalog-price-panel input {
+    height: 1.8rem;
+    min-width: 0;
+    width: 5rem;
+    font-size: 0.75rem;
+    padding: 0 0.4rem;
+  }
 }
