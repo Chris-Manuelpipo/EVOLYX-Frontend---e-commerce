@@ -32,6 +32,15 @@ function setupEventListeners() {
   const maxPrice = document.getElementById('maxPrice');
   const inStock = document.getElementById('inStockFilter');
 
+  const priceDetails = document.querySelector('details.catalog-price');
+  if (priceDetails) {
+    document.addEventListener('pointerdown', (e) => {
+      if (priceDetails.open && !priceDetails.contains(e.target)) {
+        priceDetails.open = false;
+      }
+    });
+  }
+
   if (searchInput) {
     searchInput.addEventListener(
       'input',
