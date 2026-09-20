@@ -36,7 +36,7 @@
     CANONICAL: 'https://shop.evolyx.cm',
     CITY: 'Yaoundé, Cameroun',
     /** Flux GA4 shop (surcharge : window.EVOLYX_GA_MEASUREMENT_ID avant config.js) */
-    GA_MEASUREMENT_ID: global.EVOLYX_GA_MEASUREMENT_ID || 'G-XGF4RPVJHR',
+    GA_MEASUREMENT_ID: global.EVOLYX_GA_MEASUREMENT_ID || 'G-RSC5F7C7P9',
     /* Même emblème que evolyx-digital (ProjectCover sans illustration) */
     PLACEHOLDER_IMAGE: resolveAsset('assets/logo.png'),
   };

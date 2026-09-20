@@ -5,8 +5,8 @@ Aligné sur [evolyx-digital](https://www.evolyx.cm) : métadonnées, `robots.txt
 ## Google Analytics 4
 
 1. Dans [Google Analytics](https://analytics.google.com), créez un **flux Web** pour `https://shop.evolyx.cm` (même propriété GA4 que evolyx.cm ou propriété dédiée).
-2. Copiez l’ID de mesure (`G-XXXXXXXX`).
-3. **Production** : avant le chargement de `js/config.js`, vous pouvez définir `window.EVOLYX_GA_MEASUREMENT_ID = 'G-…';` ou modifier `GA_MEASUREMENT_ID` dans `js/config.js` au déploiement.
+2. Copiez l’ID de mesure (`G-XXXXXXXX`). Flux shop actuel : **`G-RSC5F7C7P9`** (défaut dans `js/config.js`).
+3. **Production** : surcharge possible via `window.EVOLYX_GA_MEASUREMENT_ID` avant `config.js`, ou variable Vercel `EVOLYX_GA_MEASUREMENT_ID` si un script de build l’injecte.
 4. Le script ne se charge qu’**après acceptation** du bandeau cookies, uniquement sur `shop.evolyx.cm`.
 
 ## Google Search Console
