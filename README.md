@@ -252,7 +252,7 @@ admin/variations.html     - Gestion variations
 - [ ] Product reviews
 - [ ] Related products
 - [ ] Search suggestions
-- [ ] SEO meta tags
+- [x] SEO meta tags, sitemap, GA4 (consentement), voir `evolyx-shop/docs/SEO.md`
 - [ ] Progressive Web App (PWA)
 - [ ] Dark mode toggle
 - [ ] Multi-langue

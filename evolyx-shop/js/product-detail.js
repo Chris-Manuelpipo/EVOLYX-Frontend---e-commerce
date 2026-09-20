@@ -223,6 +223,55 @@ function setMeta(selector, attr, value) {
   if (el && value) el.setAttribute(attr, value);
 }
 
+function updateProductJsonLd() {
+  if (!product) return;
+  const url = `https://shop.evolyx.cm/product.html?id=${product.id}`;
+  const image = Utils.productImageUrl(product);
+  const price = Number(product.base_price);
+  const inStock = (product.stock ?? 0) > 0;
+  const ld = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'Product',
+        '@id': `${url}#product`,
+        name: product.name,
+        description: product.description || undefined,
+        image: image ? [image] : undefined,
+        sku: String(product.id),
+        url,
+        brand: { '@type': 'Brand', name: 'EVOLYX Shop' },
+        offers: {
+          '@type': 'Offer',
+          url,
+          priceCurrency: 'XAF',
+          price: Number.isFinite(price) ? price : undefined,
+          availability: inStock
+            ? 'https://schema.org/InStock'
+            : 'https://schema.org/OutOfStock',
+          seller: { '@type': 'Organization', name: 'EVOLYX Shop' },
+        },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Accueil', item: 'https://shop.evolyx.cm/' },
+          { '@type': 'ListItem', position: 2, name: 'Catalogue', item: 'https://shop.evolyx.cm/catalog.html' },
+          { '@type': 'ListItem', position: 3, name: product.name, item: url },
+        ],
+      },
+    ],
+  };
+  let el = document.getElementById('ld-json-product');
+  if (!el) {
+    el = document.createElement('script');
+    el.id = 'ld-json-product';
+    el.type = 'application/ld+json';
+    document.head.appendChild(el);
+  }
+  el.textContent = JSON.stringify(ld);
+}
+
 function updateProductSeo() {
   if (!product) return;
   const title = `${product.name} : EVOLYX Shop`;
@@ -235,7 +284,15 @@ function updateProductSeo() {
   setMeta('meta[property="og:description"]', 'content', description);
   setMeta('meta[property="og:url"]', 'content', url);
   setMeta('meta[property="og:image"]', 'content', image);
+  setMeta('meta[property="og:image:alt"]', 'content', product.name);
+  setMeta('meta[name="twitter:title"]', 'content', title);
+  setMeta('meta[name="twitter:description"]', 'content', description);
+  setMeta('meta[name="twitter:image"]', 'content', image);
   setMeta('link[rel="canonical"]', 'href', url);
+  updateProductJsonLd();
+  if (window.EvolyxSeo && typeof EvolyxSeo.trackPageView === 'function') {
+    EvolyxSeo.trackPageView();
+  }
 }
 
 async function loadRelated() {

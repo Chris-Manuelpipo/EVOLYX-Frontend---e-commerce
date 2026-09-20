@@ -31,7 +31,7 @@ async function fetchAllProducts() {
   const limit = 100;
 
   while (page <= totalPages) {
-    const url = `${API_BASE}/products?page=${page}&limit=${limit}&in_stock=true`;
+    const url = `${API_BASE}/products?page=${page}&limit=${limit}`;
     const res = await fetch(url);
     if (!res.ok) throw new Error(`API ${res.status} ${url}`);
     const body = await res.json();
