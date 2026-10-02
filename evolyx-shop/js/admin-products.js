@@ -47,6 +47,13 @@ function setupEventListeners() {
   // Image file input
   setupImageInput();
   document.getElementById('productImages').addEventListener('change', handleImageSelect);
+
+  // Stock du produit = somme des stocks de ses variations
+  const variationsContainer = document.getElementById('variationsContainer');
+  if (variationsContainer) {
+    variationsContainer.addEventListener('input', syncProductStock);
+    variationsContainer.addEventListener('change', syncProductStock);
+  }
 }
 
 // ============================================
@@ -219,6 +226,10 @@ function openProductModal() {
   document.getElementById('imagePreview').innerHTML = '';
   document.getElementById('productModal').classList.add('active');
   document.getElementById('productCostPrice').value = '';
+  // reset() ne vide pas les lignes de variation (ce sont des div ajoutées en JS)
+  Utils.DOM.empty(document.getElementById('variationsContainer'));
+  variationCount = 0;
+  syncProductStock();
   updateImagesLabel();
 }
 
@@ -264,6 +275,7 @@ async function editProduct(productId) {
     variationCount = 0;
     
     variations.forEach(v => addVariationField(v));
+    syncProductStock();
 
     // Afficher les images existantes
     const preview = document.getElementById('imagePreview');
@@ -372,6 +384,23 @@ async function saveProduct(event) {
       });
     }
   });
+
+  // Règle : stock du produit = somme des stocks de ses variations.
+  // Le champ est déjà calculé par syncProductStock ; on le recalcule ici pour
+  // qu'un stock désynchronisé ne puisse jamais partir à l'API.
+  if (variations.length) {
+    const total = variations.reduce((sum, v) => sum + (v.stock || 0), 0);
+    if (productData.stock !== total) {
+      document.getElementById('productStock').value = total;
+      productData.stock = total;
+    }
+    if (total === 0) {
+      Utils.showToast(
+        'Toutes les variations sont à 0 : le produit sera en rupture de stock.',
+        'warning'
+      );
+    }
+  }
 
   try {
     const wasUpdate = Boolean(selectedProductId);
@@ -659,6 +688,7 @@ function addVariationField(variation = null) {
   `;
   
   container.appendChild(div);
+  syncProductStock();
 }
 
 function removeVariationField(btn) {
@@ -668,6 +698,54 @@ function removeVariationField(btn) {
     deletedVariationIds.push(row.dataset.variationId);
   }
   row.remove();
+  syncProductStock();
+}
+
+// ============================================
+// STOCK ↔ VARIATIONS
+// ============================================
+
+// Règle : dès qu'un produit a des variations, son stock est la somme des
+// stocks de ses variations. Le champ Stock devient donc calculé (lecture
+// seule) au lieu d'être saisi à la main, ce qui rend l'écart impossible.
+
+// Mêmes lignes que celles réellement enregistrées par saveProduct :
+// une ligne sans couleur ni taille est ignorée.
+function countedVariationRows() {
+  return Array.from(document.querySelectorAll('.variation-row')).filter((row) => {
+    const color = row.querySelector('.variation-color-input')?.value;
+    const size = row.querySelector('.variation-size-input')?.value;
+    return Boolean(color || size);
+  });
+}
+
+function variationsStockTotal(rows = countedVariationRows()) {
+  return rows.reduce(
+    (total, row) => total + (parseInt(row.querySelector('.variation-stock-input')?.value, 10) || 0),
+    0
+  );
+}
+
+function syncProductStock() {
+  const input = document.getElementById('productStock');
+  const hint = document.getElementById('productStockHint');
+  if (!input) return;
+
+  const rows = countedVariationRows();
+  if (!rows.length) {
+    input.readOnly = false;
+    input.classList.remove('is-computed');
+    if (hint) hint.textContent = '';
+    return;
+  }
+
+  const total = variationsStockTotal(rows);
+  input.readOnly = true;
+  input.classList.add('is-computed');
+  input.value = total;
+  if (hint) {
+    hint.textContent = `Calculé automatiquement : somme des ${rows.length} variation${rows.length > 1 ? 's' : ''} (${total}).`;
+  }
 }
 
 function openColorPalette(input) {
@@ -688,6 +766,8 @@ function selectColor(colorName, colorHex) {
     currentColorInput.nextElementSibling.value = colorHex;
   }
   document.getElementById('colorPalette').style.display = 'none';
+  // Une ligne sans couleur ni taille n'était pas comptée : elle le devient.
+  syncProductStock();
 }
 
 // Fermer la palette en cliquant ailleurs

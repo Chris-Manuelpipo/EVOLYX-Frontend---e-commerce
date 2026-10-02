@@ -789,3 +789,9 @@ html[data-admin-auth='anonymous'] .admin-container {
 .status-switch:has(input:not(:checked)) .status-switch-text {
   color: var(--on-muted);
 }
+
+/* Champ calculé automatiquement (ex. stock = somme des variations) */
+input.is-computed {
+  background: var(--surface-muted, #f3f4f6);
+  cursor: not-allowed;
+}
