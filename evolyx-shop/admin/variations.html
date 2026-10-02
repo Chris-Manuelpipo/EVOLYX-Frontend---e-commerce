@@ -52,6 +52,14 @@
       <div class="admin-content">
         <!-- Filters -->
         <div class="admin-filters">
+          <div class="form-group" style="width: 100px;">
+            <select id="itemsPerPage" onchange="changeItemsPerPage()">
+              <option value="5">5</option>
+              <option value="10" selected>10</option>
+              <option value="20">20</option>
+              <option value="50">50</option>
+            </select>
+          </div>
           <div class="form-group">
             <select id="productFilter">
               <option value="">Tous les produits</option>
@@ -77,6 +85,14 @@
               <!-- Loaded dynamically -->
             </tbody>
           </table>
+          <div class="pagination-controls" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding: 10px 0;">
+            <div class="pagination-info" id="paginationInfo">Aucune variation</div>
+            <div class="pagination-buttons" style="display: flex; gap: 5px;">
+              <button class="btn btn-sm btn-secondary" id="prevPageBtn" onclick="changePage('prev')" disabled>Précédent</button>
+              <span id="currentPageDisplay" style="padding: 5px 10px;">Page 1</span>
+              <button class="btn btn-sm btn-secondary" id="nextPageBtn" onclick="changePage('next')" disabled>Suivant</button>
+            </div>
+          </div>
         </div>
       </div>
     </main>

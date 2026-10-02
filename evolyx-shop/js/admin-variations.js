@@ -8,6 +8,12 @@ let allVariations = [];
 let allProducts = [];
 let selectedVariationId = null;
 
+// Pagination côté serveur : allVariations ne contient que la page courante.
+let currentPage = 1;
+let itemsPerPage = 10;
+let totalVariations = 0;
+let totalPages = 1;
+
 // ============================================
 // INITIALIZATION
 // ============================================
@@ -26,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // ============================================
 async function loadProducts() {
   try {
-    const response = await API.getAdminProducts();
+    const response = await API.getAdminProducts({ limit: 999 });
     
     // ✅ Extraction des produits (response.products)
     if (response?.products && Array.isArray(response.products)) {
@@ -85,21 +91,41 @@ function populateProductSelects() {
 // LOAD VARIATIONS
 // ============================================
  
+function fetchVariationsPage() {
+  const productId = document.getElementById('productFilter')?.value;
+  return API.getAdminVariations({
+    page: currentPage,
+    limit: itemsPerPage,
+    product_id: productId,
+  });
+}
+
 async function loadVariations() {
   try {
     await Utils.withListLoading('variationsTableBody', async () => {
-      const response = await API.getAdminVariations();
-      if (response?.data && Array.isArray(response.data)) {
-        allVariations = response.data;
-      } else {
-        allVariations = [];
+      let response = await fetchVariationsPage();
+
+      // Dernière variation d'une page supprimée : on recule sur la dernière page.
+      const lastPage = response?.pagination?.totalPages || 1;
+      if (currentPage > lastPage) {
+        currentPage = lastPage;
+        response = await fetchVariationsPage();
       }
+
+      allVariations = Array.isArray(response?.data) ? response.data : [];
+      totalVariations = response?.pagination?.total ?? allVariations.length;
+      totalPages = response?.pagination?.totalPages || 1;
+
       renderVariations(allVariations);
+      updatePaginationControls();
     });
   } catch (error) {
     console.error('❌ Failed to load variations:', error);
     Utils.showToast('Erreur lors du chargement des variations', 'error');
     allVariations = [];
+    totalVariations = 0;
+    totalPages = 1;
+    updatePaginationControls();
   }
 }
 
@@ -108,15 +134,49 @@ async function loadVariations() {
 // ============================================
 
 function filterVariations() {
-  const productId = document.getElementById('productFilter').value;
-  
-  if (!productId) {
-    renderVariations(allVariations);
+  currentPage = 1;
+  loadVariations();
+}
+
+// ============================================
+// PAGINATION
+// ============================================
+
+function updatePaginationControls() {
+  const infoEl = document.getElementById('paginationInfo');
+  const pageEl = document.getElementById('currentPageDisplay');
+  const prevBtn = document.getElementById('prevPageBtn');
+  const nextBtn = document.getElementById('nextPageBtn');
+
+  if (infoEl) {
+    const start = (currentPage - 1) * itemsPerPage + 1;
+    const end = Math.min(currentPage * itemsPerPage, totalVariations);
+    infoEl.textContent = totalVariations > 0
+      ? `Affichage ${start}-${end} de ${totalVariations} variations`
+      : 'Aucune variation';
+  }
+  if (pageEl) pageEl.textContent = `Page ${currentPage} / ${totalPages}`;
+  if (prevBtn) prevBtn.disabled = currentPage <= 1;
+  if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
+}
+
+function changePage(direction) {
+  if (direction === 'prev' && currentPage > 1) {
+    currentPage--;
+  } else if (direction === 'next' && currentPage < totalPages) {
+    currentPage++;
+  } else {
     return;
   }
-  
-  const filtered = allVariations.filter(v => v.product_id == productId);
-  renderVariations(filtered);
+
+  loadVariations();
+  document.querySelector('.admin-content').scrollIntoView({ behavior: 'smooth' });
+}
+
+function changeItemsPerPage() {
+  itemsPerPage = parseInt(document.getElementById('itemsPerPage').value, 10);
+  currentPage = 1;
+  loadVariations();
 }
 
 // ============================================
@@ -280,6 +340,7 @@ async function saveVariation(event) {
           Utils.showToast('Variation créée', 'success');
         }
         closeVariationModal();
+        if (!selectedVariationId) currentPage = 1;
         await loadVariations();
     });
   } catch (error) {

@@ -159,6 +159,7 @@ function renderProducts(products) {
 
   products.forEach(product => {
     const row = document.createElement('tr');
+    row.dataset.productId = product.id;
     const categoryName = categories.find(c => c.id === product.category_id)?.name || '-';
     const isActive = product.is_active !== false && product.is_active !== 'false' && product.is_active !== 0;
     const statusToggle = `
@@ -186,7 +187,7 @@ function renderProducts(products) {
     row.innerHTML = `
       <td>${imageHtml}</td>
       <td>#${Utils.escapeHtml(product.id)}</td>
-      <td>${Utils.escapeHtml(product.name)}</td>
+      <td><button type="button" class="product-link">${Utils.escapeHtml(product.name)}</button></td>
       <td>${Utils.escapeHtml(categoryName)}</td>
       <td>${Utils.formatPrice(product.base_price)}</td>
       <td>${Utils.escapeHtml(product.stock)}</td>

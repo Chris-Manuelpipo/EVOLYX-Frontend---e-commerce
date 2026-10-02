@@ -227,6 +227,25 @@
     </div>
   </div>
 
+  <!-- ============================================
+       PRODUCT DETAIL MODAL (lecture seule)
+       ============================================ -->
+  <div class="admin-modal" id="productDetailModal" role="dialog" aria-modal="true" aria-labelledby="productDetailTitle">
+    <div class="modal-content product-detail">
+      <div class="modal-header">
+        <h2 id="productDetailTitle">Détails du produit</h2>
+        <button class="modal-close" onclick="closeProductDetail()" aria-label="Fermer">✕</button>
+      </div>
+      <div class="modal-body" id="productDetailBody"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeProductDetail()">Fermer</button>
+        <button type="button" class="btn btn-primary" id="productDetailEditBtn">
+          <i class="fas fa-edit"></i> Modifier
+        </button>
+      </div>
+    </div>
+  </div>
+
     <script src="../js/config.js"></script>
   <script src="../js/utils.js"></script>
   <script src="../js/api.js"></script>
@@ -234,5 +253,6 @@
   <script src="../js/theme.js"></script>
   <script src="../js/admin-layout.js"></script>
   <script src="../js/admin-products.js"></script>
+  <script src="../js/admin-product-details.js"></script>
 </body>
 </html>

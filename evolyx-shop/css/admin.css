@@ -323,6 +323,69 @@ html[data-admin-auth='anonymous'] .admin-container {
   border: 1px solid var(--outline);
 }
 
+/* Liste produits : la ligne ouvre la fiche détail. */
+.admin-table tbody tr[data-product-id] { cursor: pointer; }
+.product-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.product-link:hover { color: var(--gold-text); text-decoration: underline; }
+
+.admin-modal .modal-content.product-detail { max-width: 46rem; }
+.product-detail-layout {
+  display: grid;
+  grid-template-columns: 12rem 1fr;
+  gap: 1.25rem;
+}
+.product-detail-image {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--outline);
+}
+.product-detail-thumbs { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem; }
+.product-detail-thumb {
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: none;
+  cursor: pointer;
+}
+.product-detail-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.product-detail-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: 0.75rem 1rem;
+  margin: 0;
+}
+.product-detail-facts dt { font-size: 0.75rem; color: var(--on-muted); }
+.product-detail-facts dd { margin: 0.15rem 0 0; font-weight: 600; }
+.product-detail-description {
+  margin: 1rem 0 0;
+  font-size: 0.9rem;
+  color: var(--on-variant);
+  white-space: pre-wrap;
+}
+.product-detail-subtitle { margin: 1.5rem 0 0.6rem; font-size: 1rem; }
+.product-detail-variations tfoot td { font-weight: 600; border-top: 1px solid var(--outline); }
+.status-badge.is-on { background: var(--success-surface); color: var(--success); }
+.status-badge.is-off { background: var(--danger-surface); color: var(--danger); }
+
+@media (max-width: 40rem) {
+  .product-detail-layout { grid-template-columns: 1fr; }
+  .product-detail-image { max-width: 14rem; }
+}
+
 .form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
