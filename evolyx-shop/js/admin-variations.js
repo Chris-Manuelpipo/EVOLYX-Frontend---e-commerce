@@ -15,8 +15,9 @@ let selectedVariationId = null;
 document.addEventListener('DOMContentLoaded', () => {
   Auth.requireAuth().then((ok) => {
     if (!ok) return;
-    loadProducts();
-    loadVariations();
+    // Charger les produits d'abord pour les selects, même s'ils ne servent
+    // plus à la jointure côté client (le backend envoie maintenant product_name).
+    loadProducts().then(() => loadVariations());
   });
 });
 
@@ -134,13 +135,13 @@ function renderVariations(variations) {
   }
 
   variations.forEach(variation => {
-    // ✅ Trouver le produit correspondant
-    const product = allProducts.find(p => p.id === variation.product_id);
-    
+    // Le nom du produit vient du backend (JOIN dans getVariations)
+    const productName = variation.product_name || 'Produit inconnu';
+
     const row = document.createElement('tr');
     row.innerHTML = `
       <td>#${Utils.escapeHtml(variation.id || '?')}</td>
-      <td>${Utils.escapeHtml(product?.name || 'Produit inconnu')}</td>
+      <td>${Utils.escapeHtml(productName)}</td>
       <td>${Utils.escapeHtml(variation.color || '-')}</td>
       <td>${Utils.escapeHtml(variation.size || '-')}</td>
       <td>${Utils.escapeHtml(variation.stock || 0)}</td>
