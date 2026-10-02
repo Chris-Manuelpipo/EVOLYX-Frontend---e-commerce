@@ -42,6 +42,7 @@ function setupEventListeners() {
   document.getElementById('categoryFilter').addEventListener('change', filterProducts);
 
   // Image file input
+  setupImageInput();
   document.getElementById('productImages').addEventListener('change', handleImageSelect);
 }
 
@@ -447,19 +448,52 @@ async function deleteProduct(productId, trigger) {
 // IMAGE HANDLING
 // ============================================
 
+// Vrai quand la multi-sélection du sélecteur de fichiers est fiable.
+// Exclue sur Android (le bouton « Ouvrir » du picker reste souvent inactif,
+// surtout sous Firefox) et sur Firefox mobile en général. iOS/WebKit et les
+// navigateurs desktop gèrent `multiple` correctement.
+function supportsMultipleFileSelect() {
+  const ua = navigator.userAgent || '';
+  if (/Android/i.test(ua)) return false;
+  if (/Mobile|Tablet/i.test(ua) && /Firefox|FxiOS/i.test(ua)) return false;
+  return true;
+}
+
+let multipleImageSelect = false;
+
+function setupImageInput() {
+  const input = document.getElementById('productImages');
+  if (!input) return;
+  multipleImageSelect = supportsMultipleFileSelect();
+  if (multipleImageSelect) {
+    input.setAttribute('multiple', '');
+  } else {
+    input.removeAttribute('multiple');
+  }
+  updateImagesLabel();
+}
+
 function updateImagesLabel() {
   const label = document.getElementById('productImagesLabel');
   const hint = document.getElementById('productImagesHint');
   const n = selectedImages.length;
   if (label) {
-    label.textContent = n
-      ? `📸 Ajouter une autre image (${n} sélectionnée${n > 1 ? 's' : ''})`
-      : '📸 Ajouter une image';
+    if (n) {
+      label.textContent = multipleImageSelect
+        ? `📸 Ajouter d'autres images (${n} sélectionnée${n > 1 ? 's' : ''})`
+        : `📸 Ajouter une autre image (${n} sélectionnée${n > 1 ? 's' : ''})`;
+    } else {
+      label.textContent = multipleImageSelect ? '📸 Ajouter des images' : '📸 Ajouter une image';
+    }
   }
   if (hint) {
-    hint.textContent = n
-      ? `${n} image${n > 1 ? 's' : ''} prête${n > 1 ? 's' : ''} — rouvrez le sélecteur pour en ajouter.`
-      : 'Ajoutez les images une par une : rouvrez le sélecteur pour chaque photo. Elles s’accumulent ci-dessous.';
+    if (n) {
+      hint.textContent = `${n} image${n > 1 ? 's' : ''} prête${n > 1 ? 's' : ''} — rouvrez le sélecteur pour en ajouter.`;
+    } else {
+      hint.textContent = multipleImageSelect
+        ? 'Sélectionnez plusieurs photos à la fois. Elles s’accumulent ci-dessous.'
+        : 'Ajoutez les images une par une : rouvrez le sélecteur pour chaque photo. Elles s’accumulent ci-dessous.';
+    }
   }
 }
 

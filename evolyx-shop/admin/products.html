@@ -163,7 +163,9 @@
             <div class="form-group form-group-full">
               <label>Images</label>
               <div class="file-input-wrapper">
-                <!-- Pas de multiple : sur Firefox/Android le bouton Ouvrir bloque souvent la multi-sélection -->
+                <!-- Pas de multiple ici : sur Firefox/Android le bouton Ouvrir bloque souvent la
+                     multi-sélection. L'attribut est ajouté par JS (setupImageInput) sur les
+                     navigateurs où elle est fiable ; sans JS on reste en mode une-par-une. -->
                 <input type="file" id="productImages" name="images" accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif" />
                 <label for="productImages" class="file-input-label" id="productImagesLabel">
                   📸 Ajouter une image
