@@ -337,7 +337,14 @@ html[data-admin-auth='anonymous'] .admin-container {
 }
 .product-link:hover { color: var(--gold-text); text-decoration: underline; }
 
-.admin-modal .modal-content.product-detail { max-width: 46rem; }
+.admin-modal .modal-content.product-detail {
+  max-width: 46rem;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+/* Seul le corps défile : « Fermer » et « Modifier » restent toujours visibles. */
+.product-detail .modal-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
 .product-detail-layout {
   display: grid;
   grid-template-columns: 12rem 1fr;
@@ -378,12 +385,68 @@ html[data-admin-auth='anonymous'] .admin-container {
 }
 .product-detail-subtitle { margin: 1.5rem 0 0.6rem; font-size: 1rem; }
 .product-detail-variations tfoot td { font-weight: 600; border-top: 1px solid var(--outline); }
+/* Écrase le min-width global des tableaux admin : celui-ci vit dans une modale étroite. */
+.admin-table.product-detail-variations { min-width: 0; }
+.product-detail-variations th,
+.product-detail-variations td { padding: 0.5rem 0.6rem; }
 .status-badge.is-on { background: var(--success-surface); color: var(--success); }
 .status-badge.is-off { background: var(--danger-surface); color: var(--danger); }
+
+.pagination-controls { flex-wrap: wrap; gap: 0.75rem; }
 
 @media (max-width: 40rem) {
   .product-detail-layout { grid-template-columns: 1fr; }
   .product-detail-image { max-width: 14rem; }
+
+  /* Le HTML fixe justify-content en ligne : !important est nécessaire pour le centrer. */
+  .pagination-controls { justify-content: center !important; }
+  .pagination-info { width: 100%; text-align: center; }
+
+  /* Tableaux produits et variations : chaque ligne devient une carte, pour que
+     le stock et les actions restent visibles sans défilement latéral. */
+  .admin-table.table-stack { min-width: 0; }
+  .table-stack thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+  .table-stack,
+  .table-stack tbody { display: block; }
+  .table-stack tbody tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.75rem;
+    padding: 0.85rem 0;
+    border-bottom: 1px solid var(--outline);
+  }
+  .table-stack tbody td { display: block; padding: 0; border: 0; }
+  .table-stack tbody td[colspan] { flex: 1 1 100%; text-align: center; }
+  /* Saut de ligne entre l'en-tête de la carte (order 0-2) et ses détails (order 3) :
+     sans lui, les détails se glissent à côté des boutons et écrasent le nom. */
+  .table-stack tbody tr::after { content: ''; order: 2; flex: 0 0 100%; height: 0; }
+
+  /* Produits : image, nom et actions sur la 1re ligne, le reste en dessous. */
+  #productsTableBody td:nth-child(1) { order: 0; flex: 0 0 3.25rem; width: auto; text-align: left; }
+  #productsTableBody td:nth-child(3) { order: 1; flex: 1 1 0; min-width: 0; }
+  #productsTableBody td:nth-child(8) { order: 2; }
+  #productsTableBody td:nth-child(2),
+  #productsTableBody td:nth-child(4),
+  #productsTableBody td:nth-child(5),
+  #productsTableBody td:nth-child(6),
+  #productsTableBody td:nth-child(7) { order: 3; font-size: 0.8125rem; color: var(--on-variant); }
+  #productsTableBody td:nth-child(6)::before { content: 'Stock '; }
+
+  /* Variations : produit et actions sur la 1re ligne, le reste en dessous. */
+  #variationsTableBody td:nth-child(2) { order: 1; flex: 1 1 0; min-width: 0; font-weight: 600; }
+  #variationsTableBody td:nth-child(6) { order: 2; }
+  #variationsTableBody td:nth-child(1),
+  #variationsTableBody td:nth-child(3),
+  #variationsTableBody td:nth-child(4),
+  #variationsTableBody td:nth-child(5) { order: 3; font-size: 0.8125rem; color: var(--on-variant); }
+  #variationsTableBody td:nth-child(5)::before { content: 'Stock '; }
 }
 
 .form-grid {
@@ -720,6 +783,9 @@ html[data-admin-auth='anonymous'] .admin-container {
 
 /* Interrupteur statut produit */
 .status-switch {
+  /* Ancre la case cachée (position: absolute) : sans cela elle se place par
+     rapport à la page, échappe au défilement du tableau et étire la page. */
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 0.55rem;
