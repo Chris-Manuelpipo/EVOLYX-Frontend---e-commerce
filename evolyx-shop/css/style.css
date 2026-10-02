@@ -1391,6 +1391,10 @@ img.cart-thumb.is-logo-placeholder,
 .size-option.selected { background: var(--gold); color: var(--on-gold); border-color: var(--gold); }
 .size-option.disabled,
 .size-option:disabled { opacity: 0.35; cursor: not-allowed; }
+/* Indisponible mais toujours cliquable, pour pouvoir expliquer pourquoi. */
+.color-option.disabled { opacity: 0.35; cursor: not-allowed; }
+.color-option[aria-disabled='true'],
+.size-option[aria-disabled='true'] { cursor: not-allowed; }
 
 .product-meta {
   display: flex;

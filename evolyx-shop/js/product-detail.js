@@ -449,18 +449,65 @@ async function submitReview(event) {
   }
 }
 
+// Les options indisponibles restent cliquables (aria-disabled plutôt que
+// disabled) : un bouton réellement `disabled` n'émet aucun clic, donc aucun
+// message ne pourrait expliquer au client pourquoi son choix est refusé.
+function markUnavailable(button, reason, titleText) {
+  button.classList.add('disabled');
+  button.setAttribute('aria-disabled', 'true');
+  button.dataset.reason = reason;
+  if (titleText) button.title = titleText;
+}
+
+function markAvailable(button, titleText) {
+  button.classList.remove('disabled');
+  button.removeAttribute('aria-disabled');
+  delete button.dataset.reason;
+  if (titleText) button.title = titleText;
+}
+
+function isUnavailable(button) {
+  return button.getAttribute('aria-disabled') === 'true';
+}
+
+// Message convivial quand le client choisit une variante en rupture.
+function notifyUnavailable(button) {
+  const reason = button.dataset.reason;
+  if (reason === 'pick-color') {
+    Utils.showToast('Choisissez d’abord une couleur pour voir les tailles disponibles.', 'info');
+    return;
+  }
+  if (reason === 'color') {
+    const color = button.dataset.color;
+    Utils.showToast(
+      `Désolé, le coloris ${color} n’est pas disponible pour le moment. Veuillez en choisir un autre.`,
+      'warning'
+    );
+    return;
+  }
+  const size = button.dataset.size;
+  Utils.showToast(
+    `Désolé, la taille ${size} n’est pas disponible pour le moment. Veuillez en choisir une autre.`,
+    'warning'
+  );
+}
+
 function renderColorOptions() {
   return availableColors
-    .map(
-      (color) => `
-    <button type="button" class="color-option"
+    .map((color) => {
+      const stock = color.total_stock || 0;
+      const inStock = stock > 0;
+      return `
+    <button type="button" class="color-option${inStock ? '' : ' disabled'}"
             data-color="${Utils.escapeHtml(color.color)}"
+            data-stock="${stock}"
+            ${inStock ? '' : 'aria-disabled="true" data-reason="color"'}
             style="background-color: ${getColorCode(color.color)};"
-            title="${Utils.escapeHtml(color.color)} (${color.total_stock} en stock)"
+            title="${Utils.escapeHtml(color.color)}${inStock ? ` (${stock} en stock)` : ' — indisponible'}"
             onclick="selectColor(this)"
             aria-label="${Utils.escapeHtml(color.color)}">
-    </button>`
-    )
+    </button>`;
+    })
     .join('');
 }
 
@@ -468,14 +515,15 @@ function renderSizeOptions() {
   const lockUntilColor = hasColors();
   return availableSizes
     .map((size) => {
-      const inStock = (size.total_stock || 0) > 0;
-      const disabled = lockUntilColor || !inStock;
+      const stock = size.total_stock || 0;
+      const inStock = stock > 0;
+      const reason = lockUntilColor ? 'pick-color' : inStock ? null : 'size';
       return `
-        <button type="button" class="size-option${disabled ? ' disabled' : ''}"
+        <button type="button" class="size-option${reason ? ' disabled' : ''}"
                 data-size="${Utils.escapeHtml(size.size)}"
-                data-stock="${size.total_stock || 0}"
-                onclick="selectSize(this)"
-                ${disabled ? 'disabled' : ''}>
+                data-stock="${stock}"
+                ${reason ? `aria-disabled="true" data-reason="${reason}"` : ''}
+                onclick="selectSize(this)">
           ${Utils.escapeHtml(size.size)}
         </button>`;
     })
@@ -501,6 +549,10 @@ function getColorCode(color) {
 }
 
 async function selectColor(button) {
+  if (isUnavailable(button)) {
+    notifyUnavailable(button);
+    return;
+  }
   document.querySelectorAll('.color-option').forEach((btn) => btn.classList.remove('selected'));
   button.classList.add('selected');
   document.querySelectorAll('.size-option').forEach((btn) => btn.classList.remove('selected'));
@@ -526,13 +578,9 @@ async function enableSizesForColor(color) {
       const size = btn.dataset.size;
       const variation = colorVariations.find((v) => v.size === size);
       if (variation && variation.stock > 0) {
-        btn.classList.remove('disabled');
-        btn.disabled = false;
-        btn.title = `${variation.stock} en stock`;
+        markAvailable(btn, `${variation.stock} en stock`);
       } else {
-        btn.classList.add('disabled');
-        btn.disabled = true;
-        btn.title = 'Rupture de stock';
+        markUnavailable(btn, 'size', 'Indisponible dans ce coloris');
       }
     });
   } catch (error) {
@@ -541,7 +589,10 @@ async function enableSizesForColor(color) {
 }
 
 function selectSize(button) {
-  if (button.disabled) return;
+  if (isUnavailable(button)) {
+    notifyUnavailable(button);
+    return;
+  }
   document.querySelectorAll('.size-option').forEach((btn) => btn.classList.remove('selected'));
   button.classList.add('selected');
   updateSelectedVariation();
@@ -574,6 +625,19 @@ function updateSelectedVariation() {
     }
     selectedVariation = variations.find((v) => v.size === selectedSize) || null;
   } else {
+    selectedVariation = null;
+    if (info) info.hidden = true;
+    return;
+  }
+
+  // Filet de sécurité : la variante existe mais son stock est épuisé
+  // (stock modifié entre le chargement de la page et le clic).
+  if (selectedVariation && (selectedVariation.stock ?? 0) <= 0) {
+    const label = [selectedVariation.color, selectedVariation.size].filter(Boolean).join(' · ');
+    Utils.showToast(
+      `Désolé, ${label || 'cette variante'} n’est pas disponible pour le moment. Veuillez faire un autre choix.`,
+      'warning'
+    );
     selectedVariation = null;
     if (info) info.hidden = true;
     return;
