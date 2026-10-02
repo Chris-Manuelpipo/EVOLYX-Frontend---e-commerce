@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
-  Auth.requireAuth();
-  loadReturns();
+  Auth.requireAuth().then((ok) => {
+    if (ok) loadReturns();
+  });
 });
 
 async function loadReturns() {

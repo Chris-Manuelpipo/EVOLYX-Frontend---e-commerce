@@ -9,11 +9,11 @@
 // ============================================
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Check authentication
-  Auth.requireAuth();
+  // Les données n'arrivent qu'une fois la session validée par /admin/me.
+  Auth.requireAuth().then((ok) => {
+    if (ok) loadDashboardData();
+  });
 
-  // Load dashboard data
-  loadDashboardData();
   setupNavigation();
   updateUserGreeting();
 });

@@ -24,9 +24,12 @@ let totalPages = 1;
 // ============================================
 
 document.addEventListener('DOMContentLoaded', () => {
-  Auth.requireAuth();
-  loadCategories();
-  loadProducts();
+  Auth.requireAuth().then((ok) => {
+    if (!ok) return;
+    loadCategories();
+    loadProducts();
+  });
+
   setupEventListeners();
 });
 

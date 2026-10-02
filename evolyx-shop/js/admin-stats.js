@@ -54,8 +54,9 @@ function chartTextOptions() {
 // ============================================
 
 document.addEventListener('DOMContentLoaded', () => {
-  Auth.requireAuth();
-  loadStatsData();
+  Auth.requireAuth().then((ok) => {
+    if (ok) loadStatsData();
+  });
   window.addEventListener('evolyx-theme-change', () => {
     if (typeof updateStats === 'function') updateStats();
   });

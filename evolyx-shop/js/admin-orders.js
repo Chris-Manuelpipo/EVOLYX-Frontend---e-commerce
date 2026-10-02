@@ -9,8 +9,9 @@ let filteredOrders = [];
 // INITIALIZATION
 // ============================================
 document.addEventListener('DOMContentLoaded', () => {
-  Auth.requireAuth();
-  loadOrders();
+  Auth.requireAuth().then((ok) => {
+    if (ok) loadOrders();
+  });
   
   // Écouteurs pour les filtres
   document.getElementById('statusFilter').addEventListener('change', filterOrders);

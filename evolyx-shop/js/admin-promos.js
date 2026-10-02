@@ -1,8 +1,9 @@
 let selectedPromoId = null;
 
 document.addEventListener('DOMContentLoaded', () => {
-  Auth.requireAuth();
-  loadPromos();
+  Auth.requireAuth().then((ok) => {
+    if (ok) loadPromos();
+  });
 });
 
 async function loadPromos() {

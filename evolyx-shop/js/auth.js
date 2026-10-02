@@ -86,6 +86,10 @@ function isLoggedIn() {
 function clearAuthAndRedirect() {
   Utils.Storage.clearAdminToken();
   localStorage.removeItem('userRole');
+  // Même marqueur que js/admin-guard.js : masque le squelette admin le temps
+  // que la redirection parte, dans le cas d'un jeton présent mais refusé par
+  // /admin/me (session expirée).
+  document.documentElement.setAttribute('data-admin-auth', 'anonymous');
   window.location.href = '../login.html';
 }
 
@@ -95,6 +99,7 @@ function clearAuthAndRedirect() {
  */
 function requireAuth() {
   if (!isLoggedIn()) {
+    document.documentElement.setAttribute('data-admin-auth', 'anonymous');
     window.location.href = '../login.html';
     return Promise.resolve(false);
   }

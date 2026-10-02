@@ -13,9 +13,11 @@ let selectedVariationId = null;
 // ============================================
 
 document.addEventListener('DOMContentLoaded', () => {
-  Auth.requireAuth();
-  loadProducts();
-  loadVariations();
+  Auth.requireAuth().then((ok) => {
+    if (!ok) return;
+    loadProducts();
+    loadVariations();
+  });
 });
 
 // ============================================

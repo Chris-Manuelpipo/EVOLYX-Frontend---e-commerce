@@ -10,6 +10,14 @@
   background: var(--surface-page);
 }
 
+/* Visiteur sans jeton : js/admin-guard.js pose l'attribut dans le <head> et
+   redirige. On masque le squelette le temps que la redirection parte, sinon
+   il clignote. Masquer seulement ce cas garde la page visible si la garde
+   ne se charge pas. */
+html[data-admin-auth='anonymous'] .admin-container {
+  visibility: hidden;
+}
+
 .admin-nav-backdrop {
   display: none;
 }

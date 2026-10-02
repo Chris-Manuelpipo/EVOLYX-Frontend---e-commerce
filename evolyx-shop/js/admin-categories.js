@@ -8,8 +8,9 @@ let allCategories = [];
 let selectedCategoryId = null;
 
 document.addEventListener('DOMContentLoaded', () => {
-  Auth.requireAuth();
-  loadCategories();
+  Auth.requireAuth().then((ok) => {
+    if (ok) loadCategories();
+  });
 });
 
 async function loadCategories() {
