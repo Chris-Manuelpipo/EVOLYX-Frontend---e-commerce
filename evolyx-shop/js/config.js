@@ -31,7 +31,7 @@
     EMAIL: 'evolyxcmr@gmail.com',
     PHONE_DISPLAY: '+237 6 54 80 49 07',
     PHONE_TEL: '+237654804907',
-    GROUP_URL: 'https://evolyx.cm',
+    GROUP_URL: 'https://chat.whatsapp.com/KYHWLwa090C6aoKLcBsSxZ',
     SHOP_URL: 'https://shop.evolyx.cm',
     CANONICAL: 'https://shop.evolyx.cm',
     CITY: 'Yaoundé, Cameroun',

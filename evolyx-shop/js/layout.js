@@ -88,7 +88,11 @@
               <li><a href="catalog.html">Catalogue</a></li>
               <li><a href="wishlist.html">Favoris</a></li>
               <li><a href="order-tracking.html">Suivi de commande</a></li>
-              <li><a href="${group}" rel="noopener noreferrer">evolyx.cm</a></li>
+              <li>
+                <a href="${group}" target="_blank" rel="noopener noreferrer">
+                  <i class="fab fa-whatsapp" aria-hidden="true"></i> Rejoindre le groupe WhatsApp EVOLYX Shop
+                </a>
+              </li>
             </ul>
           </nav>
           <div>
@@ -116,6 +120,10 @@
           </div>
         </div>
       </footer>
+      <a class="whatsapp-group-fab" href="${group}" target="_blank" rel="noopener noreferrer" aria-label="Rejoindre le groupe WhatsApp EVOLYX Shop">
+        <i class="fab fa-whatsapp" aria-hidden="true"></i>
+        <span>Rejoindre le groupe</span>
+      </a>
     `;
   }
 
