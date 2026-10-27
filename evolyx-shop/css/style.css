@@ -940,6 +940,13 @@ img.cart-thumb.is-logo-placeholder,
   font-weight: 700;
 }
 
+.badge-low-stock {
+  top: auto;
+  bottom: 0.45rem;
+  background: var(--warning-surface);
+  color: var(--warning);
+}
+
 .product-info {
   padding: 0.65rem 0.7rem 0.75rem;
   display: flex;
@@ -1413,6 +1420,7 @@ img.cart-thumb.is-logo-placeholder,
 .stock { padding: 0.2rem 0.55rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
 .in-stock { background: var(--success-surface); color: var(--success); }
 .out-stock { background: var(--danger-surface); color: var(--danger); }
+.low-stock { background: var(--warning-surface); color: var(--warning); }
 
 .variations-section {
   display: flex;

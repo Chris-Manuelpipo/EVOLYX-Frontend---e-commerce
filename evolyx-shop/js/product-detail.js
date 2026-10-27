@@ -108,6 +108,7 @@ function renderProductDetail() {
   const descText = String(product.description || '').trim();
   const variationsBlock = hasColors() || hasSizes();
   const inStock = product.stock > 0;
+  const lowStock = Utils.isLowStock(product.stock);
 
   const activeThumb = Math.max(0, thumbs.findIndex((url) => url === mainSrc));
   const thumbsHtml =
@@ -148,8 +149,8 @@ function renderProductDetail() {
 
           <div class="product-detail-status">
             <span class="product-detail-cat">${Utils.escapeHtml(catLabel)}</span>
-            <span class="stock ${inStock ? 'in-stock' : 'out-stock'}">
-              ${inStock ? `${product.stock} en stock` : 'Rupture de stock'}
+            <span class="stock ${inStock ? (lowStock ? 'low-stock' : 'in-stock') : 'out-stock'}">
+              ${inStock ? (lowStock ? `Plus que ${product.stock} en stock` : `${product.stock} en stock`) : 'Rupture de stock'}
             </span>
           </div>
 
@@ -665,7 +666,12 @@ function updateSelectedVariation() {
     const stockEl = document.getElementById('variationStock');
     const parts = [selectedVariation.color, selectedVariation.size].filter(Boolean);
     if (nameEl) nameEl.textContent = parts.join(' · ');
-    if (stockEl) stockEl.textContent = selectedVariation.stock;
+    if (stockEl) {
+      stockEl.textContent = Utils.isLowStock(selectedVariation.stock)
+        ? `plus que ${selectedVariation.stock}`
+        : selectedVariation.stock;
+      stockEl.classList.toggle('text-warning', Utils.isLowStock(selectedVariation.stock));
+    }
     const quantityInput = document.getElementById('quantityInput');
     if (quantityInput) {
       quantityInput.max = selectedVariation.stock;

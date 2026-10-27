@@ -10,6 +10,14 @@ function formatPrice(price) {
   }).format(num);
 }
 
+// Seuil sous lequel on signale au client qu'il reste peu d'unités.
+const LOW_STOCK_THRESHOLD = 5;
+
+function isLowStock(stock) {
+  const n = Number(stock);
+  return Number.isFinite(n) && n > 0 && n <= LOW_STOCK_THRESHOLD;
+}
+
 function formatDate(date) {
   if (!date) return 'n.d.';
   return new Intl.DateTimeFormat('fr-FR', {
@@ -648,6 +656,8 @@ function setBusy() {
 
 window.Utils = {
   formatPrice,
+  LOW_STOCK_THRESHOLD,
+  isLowStock,
   formatDate,
   formatTime,
   truncateText,
