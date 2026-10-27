@@ -230,7 +230,8 @@ function renderProductDetail() {
 
 // Lien wa.me sans destinataire : le client choisit le contact ou le groupe.
 function whatsappShareUrl() {
-  const url = `https://shop.evolyx.cm/product.html?id=${encodeURIComponent(product.id)}`;
+  // /p/:id sert les balises Open Graph du produit (api/share.js) pour l'aperçu.
+  const url = `https://shop.evolyx.cm/p/${encodeURIComponent(product.id)}`;
   const message = `${product.name} : ${Utils.formatPrice(product.base_price)}\nÀ voir sur EVOLYX Shop : ${url}`;
   return `https://wa.me/?text=${encodeURIComponent(message)}`;
 }
