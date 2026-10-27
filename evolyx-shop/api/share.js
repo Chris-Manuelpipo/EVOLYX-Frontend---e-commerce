@@ -32,13 +32,13 @@ function mainImageUrl(product) {
 }
 
 // WhatsApp ignore souvent le WebP et les images lourdes : on demande à
-// Cloudinary un JPEG 1200×630 (format des aperçus) sur fond blanc.
+// Cloudinary un JPEG 1200×630 (format des aperçus), recadré sur le sujet.
 function previewImageUrl(url) {
   if (!/^https:\/\//.test(url)) return DEFAULT_IMAGE;
   const marker = '/image/upload/';
   if (!url.includes(marker)) return url;
   return url
-    .replace(marker, `${marker}c_pad,b_white,w_1200,h_630,q_80/`)
+    .replace(marker, `${marker}c_fill,g_auto,w_1200,h_630,q_80/`)
     .replace(/\.(webp|png|jpe?g|avif|gif)(\?.*)?$/i, '.jpg');
 }
 
