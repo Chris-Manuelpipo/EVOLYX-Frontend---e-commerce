@@ -814,6 +814,10 @@ select:focus {
 
 .featured[hidden] { display: none !important; }
 
+.recently-viewed { padding: 2rem 0 1rem; }
+.recently-viewed [hidden] { display: none !important; }
+.recently-viewed .product-description { display: none; }
+
 .featured-cta {
   display: flex;
   justify-content: center;

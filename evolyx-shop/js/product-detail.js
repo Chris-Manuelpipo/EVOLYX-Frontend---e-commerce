@@ -68,6 +68,10 @@ async function loadProduct(productId) {
     updateProductSeo();
     loadReviews();
     loadRelated();
+    if (window.RecentlyViewed) {
+      RecentlyViewed.render(document.getElementById('recentSection'), { excludeId: product.id });
+      RecentlyViewed.add(product);
+    }
     Utils.showLoading(container, false);
   } catch (error) {
     console.error('Failed to load product:', error);
