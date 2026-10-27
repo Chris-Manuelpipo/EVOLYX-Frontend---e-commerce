@@ -209,6 +209,11 @@ function renderProductDetail() {
             ${window.Wishlist ? Wishlist.heartButton(product.id) : ''}
           </div>
 
+          <a href="${Utils.escapeHtml(whatsappShareUrl())}" class="btn btn-secondary btn-share-whatsapp"
+             target="_blank" rel="noopener noreferrer">
+            <i class="fab fa-whatsapp" aria-hidden="true"></i> Partager sur WhatsApp
+          </a>
+
           <p class="product-meta">
             <span>Réf. ${Utils.escapeHtml(product.id)}</span>
             <span>${Utils.formatDate(product.updated_at || product.created_at)}</span>
@@ -220,6 +225,13 @@ function renderProductDetail() {
 
   container.innerHTML = html;
   if (window.Wishlist) Wishlist.bind(container);
+}
+
+// Lien wa.me sans destinataire : le client choisit le contact ou le groupe.
+function whatsappShareUrl() {
+  const url = `https://shop.evolyx.cm/product.html?id=${encodeURIComponent(product.id)}`;
+  const message = `${product.name} : ${Utils.formatPrice(product.base_price)}\nÀ voir sur EVOLYX Shop : ${url}`;
+  return `https://wa.me/?text=${encodeURIComponent(message)}`;
 }
 
 function setMeta(selector, attr, value) {

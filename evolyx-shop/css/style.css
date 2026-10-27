@@ -1479,6 +1479,14 @@ img.cart-thumb.is-logo-placeholder,
   background: var(--outline-strong);
 }
 
+.btn-share-whatsapp {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0 0 1.15rem;
+}
+.btn-share-whatsapp .fa-whatsapp { color: oklch(0.62 0.15 150); }
+
 .purchase-section {
   display: flex;
   flex-wrap: wrap;
