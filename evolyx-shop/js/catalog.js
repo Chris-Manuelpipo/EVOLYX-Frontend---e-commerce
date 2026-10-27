@@ -314,7 +314,7 @@ function createProductCard(product) {
              class="${placeholderClass.trim()}"
              loading="lazy" onerror="${onError}">
         ${product.is_featured ? '<span class="badge badge-featured">Vedette</span>' : ''}
-        ${Utils.isLowStock(product.stock) ? `<span class="badge badge-low-stock">Plus que ${Number(product.stock)}</span>` : ''}
+        ${Utils.isLowStock(product.stock) ? `<span class="badge badge-low-stock">Plus que ${Number(product.stock)} en stock</span>` : ''}
       </div>
       <div class="product-info">
         <p class="product-category text-sm">${Utils.escapeHtml(cat)}</p>

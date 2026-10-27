@@ -940,11 +940,13 @@ img.cart-thumb.is-logo-placeholder,
   font-weight: 700;
 }
 
-.badge-low-stock {
+/* Sur la photo : fond sombre translucide lisible en thème clair comme sombre. */
+.badge.badge-low-stock {
   top: auto;
   bottom: 0.45rem;
-  background: var(--warning-surface);
-  color: var(--warning);
+  background: oklch(0.2 0.02 70 / 0.82);
+  color: #fff;
+  white-space: nowrap;
 }
 
 .product-info {
@@ -1024,6 +1026,11 @@ img.cart-thumb.is-logo-placeholder,
     left: 0.65rem;
     font-size: 0.7rem;
     padding: 0.25rem 0.6rem;
+  }
+
+  .badge.badge-low-stock {
+    top: auto;
+    bottom: 0.65rem;
   }
 }
 
