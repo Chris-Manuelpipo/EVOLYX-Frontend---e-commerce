@@ -1657,6 +1657,19 @@ img.cart-thumb.is-logo-placeholder,
 .order-details { background: var(--surface-container); border-radius: var(--radius-md); padding: 1.25rem; margin: 1.25rem 0; }
 .order-details ul { padding-left: 1.1rem; margin: 0.5rem 0 1rem; }
 .order-actions { display: flex; flex-direction: column; gap: 0.6rem; }
+.order-track-link { margin: 0.75rem 0 0; overflow-wrap: anywhere; }
+
+@media print {
+  #site-header,
+  #site-footer,
+  .skip-link,
+  .order-actions,
+  .toast { display: none !important; }
+  body { background: #fff; color: #000; }
+  .order-confirmation { box-shadow: none; border: none; max-width: none; }
+  .order-details { background: none; padding: 0; }
+  .order-track-link a { color: #000; }
+}
 .badge-pending { background: var(--warning-surface); color: var(--warning); padding: 0.2rem 0.5rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
 .status-badge {
   display: inline-block;

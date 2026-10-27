@@ -489,6 +489,7 @@ function showOrderConfirmation(order, whatsappLink, name, phone, address) {
     trackParams.set('token', token);
   }
   const trackHref = `order-tracking.html?${trackParams.toString()}`;
+  const trackUrl = new URL(trackHref, window.location.href).href;
 
   container.innerHTML = `
     <div class="order-confirmation card">
@@ -509,8 +510,14 @@ function showOrderConfirmation(order, whatsappLink, name, phone, address) {
           <span>Total</span>
           <span class="product-price">${Utils.formatPrice(order.total_amount)}</span>
         </div>
+        <p class="order-track-link text-sm">
+          Suivi : <a href="${Utils.escapeHtml(trackHref)}">${Utils.escapeHtml(trackUrl)}</a>
+        </p>
       </div>
       <div class="order-actions">
+        <button type="button" class="btn btn-secondary btn-lg" onclick="window.print()">
+          <i class="fas fa-print" aria-hidden="true"></i> Imprimer / enregistrer en PDF
+        </button>
         ${
           safeWa
             ? `<a href="${Utils.escapeHtml(safeWa)}" target="_blank" rel="noopener noreferrer" class="btn btn-whatsapp btn-lg">
