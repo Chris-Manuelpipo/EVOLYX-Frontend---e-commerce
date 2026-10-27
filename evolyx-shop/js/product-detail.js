@@ -68,6 +68,7 @@ async function loadProduct(productId) {
     updateProductSeo();
     loadReviews();
     loadRelated();
+    warmSharePreview();
     if (window.RecentlyViewed) {
       RecentlyViewed.render(document.getElementById('recentSection'), { excludeId: product.id });
       RecentlyViewed.add(product);
@@ -226,6 +227,13 @@ function renderProductDetail() {
 
   container.innerHTML = html;
   if (window.Wishlist) Wishlist.bind(container);
+}
+
+// Prépare le cache CDN de /p/:id avant un partage : le robot WhatsApp
+// obtient alors l'aperçu sans attendre le démarrage de la fonction et de l'API.
+function warmSharePreview() {
+  if (!/(^|\.)evolyx\.cm$/.test(window.location.hostname)) return;
+  fetch(`/p/${encodeURIComponent(product.id)}`, { credentials: 'omit' }).catch(() => {});
 }
 
 // Lien wa.me sans destinataire : le client choisit le contact ou le groupe.

@@ -2,7 +2,8 @@
  * Page de partage produit (/p/:id) : balises Open Graph rendues côté serveur.
  * Les robots d'aperçu (WhatsApp, Facebook…) n'exécutent pas le JS de
  * product.html, ils ont donc besoin du nom et de l'image dans le HTML brut.
- * Les visiteurs sont redirigés aussitôt vers la fiche produit.
+ * Les visiteurs sont redirigés en JS vers la fiche produit ; pas de
+ * <meta refresh>, que certains robots suivent au lieu de lire la page.
  */
 
 const SITE_URL = 'https://shop.evolyx.cm';
@@ -60,7 +61,10 @@ module.exports = async function handler(req, res) {
 
   let product = null;
   try {
-    const response = await fetch(`${API_BASE_URL}/products/${id}`);
+    // Les robots d'aperçu abandonnent vite : on borne l'appel API.
+    const response = await fetch(`${API_BASE_URL}/products/${id}`, {
+      signal: AbortSignal.timeout(4000),
+    });
     if (response.ok) {
       const body = await response.json();
       product = body && (body.data || body);
@@ -97,7 +101,6 @@ module.exports = async function handler(req, res) {
   <meta name="twitter:title" content="${escapeHtml(title)}">
   <meta name="twitter:description" content="${escapeHtml(description)}">
   <meta name="twitter:image" content="${escapeHtml(image)}">
-  <meta http-equiv="refresh" content="0; url=${escapeHtml(productUrl)}">
   <script>location.replace(${JSON.stringify(productUrl)});</script>
 </head>
 <body>
@@ -107,6 +110,13 @@ module.exports = async function handler(req, res) {
 
   res.statusCode = 200;
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.setHeader('Cache-Control', 'public, s-maxage=600, stale-while-revalidate=86400');
+  // Aperçu réussi : cache CDN long (réponse instantanée pour les robots).
+  // Échec API : cache court pour réessayer vite.
+  res.setHeader(
+    'Cache-Control',
+    product
+      ? 'public, s-maxage=86400, stale-while-revalidate=604800'
+      : 'public, s-maxage=60'
+  );
   res.end(html);
 };
